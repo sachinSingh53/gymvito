@@ -3,6 +3,7 @@ import {
   calculateInclusiveEndDate,
   compareDateOnly,
   dateOnlyAtInstant,
+  daysBetweenDateOnly,
   parseDateOnly,
   renewalStartAfterExpiry,
   type DateOnly,
@@ -13,9 +14,9 @@ describe('date-only rules', () => {
     ['2026-01-01', { count: 1, unit: 'day' as const }, '2026-01-01'],
     ['2026-01-01', { count: 1, unit: 'week' as const }, '2026-01-07'],
     ['2026-01-15', { count: 1, unit: 'month' as const }, '2026-02-14'],
-    ['2026-01-31', { count: 1, unit: 'month' as const }, '2026-02-27'],
-    ['2024-01-31', { count: 1, unit: 'month' as const }, '2024-02-28'],
-    ['2024-02-29', { count: 1, unit: 'year' as const }, '2025-02-27'],
+    ['2026-01-31', { count: 1, unit: 'month' as const }, '2026-02-28'],
+    ['2024-01-31', { count: 1, unit: 'month' as const }, '2024-02-29'],
+    ['2024-02-29', { count: 1, unit: 'year' as const }, '2025-02-28'],
     ['2023-03-01', { count: 1, unit: 'year' as const }, '2024-02-29'],
   ])('%s plus %o ends on %s inclusively', (start, duration, expected) => {
     expect(calculateInclusiveEndDate(start as DateOnly, duration)).toBe(expected);
@@ -35,6 +36,7 @@ describe('date-only rules', () => {
     expect(compareDateOnly('2026-03-02', '2026-03-01')).toBe(1);
     expect(addDays('2024-02-28', 1)).toBe('2024-02-29');
     expect(renewalStartAfterExpiry('2026-12-31')).toBe('2027-01-01');
+    expect(daysBetweenDateOnly('2024-02-28', '2024-03-01')).toBe(2);
   });
 
   it('derives the local business date independently in two time zones', () => {

@@ -13,6 +13,7 @@ import {
 import { openGymVitoDatabase, type OpenedDatabase } from '@/data/database/open-database';
 import { AppStateRepository, type StartupSnapshot } from '@/data/repositories/app-state-repository';
 import { Phase2Repository } from '@/data/repositories/phase2-repository';
+import { Phase3Repository } from '@/data/repositories/phase3-repository';
 import type { AppLanguage, GymSetupInput, OnboardingStep } from '@/domain/onboarding/onboarding';
 import { SecurityService, type UnlockResult } from '@/features/security/security-service';
 import i18n, { setAppLanguage } from '@/i18n';
@@ -56,6 +57,7 @@ type AppSessionContextValue = Readonly<{
   recordActivity(): void;
   retryStartup(): void;
   getPhase2Repository(): Phase2Repository;
+  getPhase3Repository(): Phase3Repository;
 }>;
 
 const AppSessionContext = createContext<AppSessionContextValue | null>(null);
@@ -317,6 +319,12 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
     return new Phase2Repository(opened.database);
   }, []);
 
+  const getPhase3Repository = useCallback((): Phase3Repository => {
+    const opened = openedRef.current;
+    if (!opened || stateRef.current.status !== 'unlocked') throw new Error('SESSION_NOT_UNLOCKED');
+    return new Phase3Repository(opened.database);
+  }, []);
+
   useEffect(() => {
     return observeDeviceLocale((deviceLocale) => {
       const current = stateRef.current;
@@ -379,6 +387,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
         setStartupAttempt((attempt) => attempt + 1);
       },
       getPhase2Repository,
+      getPhase3Repository,
     }),
     [
       changeInactivityTimeout,
@@ -386,6 +395,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       chooseLanguage,
       completeOnboarding,
       getPhase2Repository,
+      getPhase3Repository,
       lock,
       reauthenticateOwner,
       recordActivity,

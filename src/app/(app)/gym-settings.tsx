@@ -132,7 +132,7 @@ export default function GymSettingsRoute() {
         />
       </View>
       <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        <View style={{ flex: 1 }}>
+        <View style={{ minWidth: 0, flex: 1 }}>
           <AppField
             error={errorFor('financialYearStartMonth')}
             keyboardType="number-pad"
@@ -141,7 +141,7 @@ export default function GymSettingsRoute() {
             value={String(form.financialYearStartMonth)}
           />
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={{ minWidth: 0, flex: 1 }}>
           <AppField
             error={errorFor('financialYearStartDay')}
             keyboardType="number-pad"

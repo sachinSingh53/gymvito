@@ -1,4 +1,5 @@
 import type { AppLanguage } from '@/domain/onboarding/onboarding';
+import { parseDateOnly, type DateOnly } from '@/domain/dates/date-rules';
 
 type RegionalSettings = Readonly<{
   language: AppLanguage;
@@ -33,4 +34,16 @@ export function formatInstant(
     hour12: settings.timeFormat === '12-hour',
     timeZone,
   }).format(instant);
+}
+
+export function formatDateOnly(
+  value: DateOnly,
+  settings: Pick<RegionalSettings, 'language' | 'dateFormat'>,
+): string {
+  return new Intl.DateTimeFormat(localeFor(settings.language), {
+    day: '2-digit',
+    month: settings.dateFormat === 'year-month-day' ? '2-digit' : 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(parseDateOnly(value));
 }

@@ -161,5 +161,5 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   description: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 14, lineHeight: 20 },
-  planActions: { flexDirection: 'row', gap: spacing.sm },
+  planActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 });

@@ -1,4 +1,4 @@
-import { router, type Href } from 'expo-router';
+import { router, type Href, usePathname } from 'expo-router';
 import type { PropsWithChildren, ReactNode } from 'react';
 import {
   Alert,
@@ -16,6 +16,9 @@ import { useAppSession } from '@/features/session/app-session-context';
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
 
 type NavKey = 'home' | 'members' | 'payments' | 'more';
+
+export const BUSINESS_NAV_PHONE_HEIGHT = 68;
+export const BUSINESS_NAV_TABLET_WIDTH = 84;
 
 type Props = PropsWithChildren<{
   title: string;
@@ -70,7 +73,6 @@ const NAV_ITEMS: readonly {
 export function OperationalShell({
   title,
   subtitle,
-  active,
   headerAction,
   scroll = true,
   contentStyle,
@@ -80,7 +82,124 @@ export function OperationalShell({
   const insets = useSafeAreaInsets();
   const tablet = width >= 600;
   const { t } = useTranslation();
-  const { state, changeLanguage, lock } = useAppSession();
+  const { state, changeLanguage } = useAppSession();
+  if (state.status !== 'unlocked') return null;
+  const language = state.snapshot.settings?.language ?? 'en';
+  const contentPadding = tablet ? spacing.lg : spacing.md;
+  const responsiveContentStyle = {
+    paddingLeft: contentPadding + (tablet ? 0 : insets.left),
+    paddingRight: contentPadding + insets.right,
+  };
+
+  const body = scroll ? (
+    <ScrollView
+      contentContainerStyle={[
+        styles.content,
+        tablet && styles.tabletContent,
+        responsiveContentStyle,
+        contentStyle,
+      ]}
+      keyboardShouldPersistTaps="handled"
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View
+      style={[
+        styles.content,
+        tablet && styles.tabletContent,
+        responsiveContentStyle,
+        styles.flex,
+        contentStyle,
+      ]}
+    >
+      {children}
+    </View>
+  );
+
+  return (
+    <View style={styles.safeArea}>
+      <View style={styles.appArea}>
+        <View
+          style={[
+            styles.header,
+            {
+              minHeight: 64 + insets.top,
+              paddingTop: insets.top + 8,
+              paddingLeft: spacing.md + (tablet ? 0 : insets.left),
+              paddingRight: spacing.md + insets.right,
+            },
+          ]}
+        >
+          <View style={styles.headerIdentity}>
+            {!tablet ? (
+              <View style={styles.brandMark}>
+                <MaterialSymbol color="#fff" name="fitness_center" size={24} />
+              </View>
+            ) : null}
+            <View style={styles.headerTitles}>
+              <View style={styles.brandLine}>
+                <Text style={styles.brandName}>GymVito</Text>
+                <Text style={styles.posBadge}>POS</Text>
+              </View>
+              <Text numberOfLines={1} style={styles.headerTitle}>
+                {title}
+              </Text>
+              {tablet && subtitle ? (
+                <Text numberOfLines={1} style={styles.headerSubtitle}>
+                  {subtitle}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          <View style={styles.headerActions}>
+            {headerAction}
+            <Pressable
+              accessibilityLabel={t('languageLabel')}
+              accessibilityRole="button"
+              onPress={() => void changeLanguage(language === 'en' ? 'hi' : 'en')}
+              style={styles.languageToggle}
+            >
+              <Text numberOfLines={1} style={styles.languageText}>
+                {language === 'en' ? 'EN|हिं' : 'हिन्दी|EN'}
+              </Text>
+            </Pressable>
+            <View style={styles.ownerAvatar}>
+              <Text style={styles.ownerAvatarText}>
+                {state.ownerName.trim().charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          </View>
+        </View>
+        {body}
+      </View>
+    </View>
+  );
+}
+
+function activeNavigationKey(pathname: string): NavKey | null {
+  if (pathname === '/home') return 'home';
+  if (pathname === '/members' || pathname.startsWith('/member/')) return 'members';
+  if (
+    pathname === '/more' ||
+    pathname === '/plans' ||
+    pathname.startsWith('/plan/') ||
+    pathname === '/settings' ||
+    pathname === '/gym-settings'
+  ) {
+    return 'more';
+  }
+  return null;
+}
+
+export function BusinessNavigation() {
+  const pathname = usePathname();
+  const active = activeNavigationKey(pathname);
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const tablet = width >= 600;
+  const { t } = useTranslation();
+  const { state, lock } = useAppSession();
   if (state.status !== 'unlocked') return null;
   const language = state.snapshot.settings?.language ?? 'en';
 
@@ -89,18 +208,32 @@ export function OperationalShell({
       Alert.alert(t('payments'), t('availablePhase4'));
       return;
     }
-    router.replace(item.route as Href);
+    if (item.key === active) return;
+    router.navigate(item.route as Href);
   };
 
-  const navigation = (
+  return (
     <View
       style={
         tablet
           ? [
               styles.sideNavigation,
-              { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.sm },
+              {
+                width: BUSINESS_NAV_TABLET_WIDTH + insets.left,
+                paddingTop: insets.top + spacing.sm,
+                paddingBottom: insets.bottom + spacing.sm,
+                paddingLeft: insets.left,
+              },
             ]
-          : [styles.bottomNavigation, { height: 64 + insets.bottom, paddingBottom: insets.bottom }]
+          : [
+              styles.bottomNavigation,
+              {
+                height: BUSINESS_NAV_PHONE_HEIGHT + insets.bottom,
+                paddingBottom: insets.bottom,
+                paddingLeft: insets.left,
+                paddingRight: insets.right,
+              },
+            ]
       }
     >
       {tablet ? (
@@ -144,6 +277,7 @@ export function OperationalShell({
                 size={tablet ? 22 : 24}
               />
               <Text
+                numberOfLines={1}
                 style={[
                   styles.navLabel,
                   tablet && styles.sideNavLabel,
@@ -154,7 +288,10 @@ export function OperationalShell({
                 {t(item.labelKey)}
               </Text>
               {tablet ? (
-                <Text style={[styles.navSecondaryLabel, selected && styles.sideNavTextSelected]}>
+                <Text
+                  numberOfLines={1}
+                  style={[styles.navSecondaryLabel, selected && styles.sideNavTextSelected]}
+                >
                   {language === 'hi' ? t(item.labelKey, { lng: 'en' }) : item.hindiLabel}
                 </Text>
               ) : null}
@@ -177,73 +314,6 @@ export function OperationalShell({
           </Pressable>
         </View>
       ) : null}
-    </View>
-  );
-
-  const body = scroll ? (
-    <ScrollView
-      contentContainerStyle={[styles.content, tablet && styles.tabletContent, contentStyle]}
-      keyboardShouldPersistTaps="handled"
-    >
-      {children}
-    </ScrollView>
-  ) : (
-    <View style={[styles.content, tablet && styles.tabletContent, styles.flex, contentStyle]}>
-      {children}
-    </View>
-  );
-
-  return (
-    <View style={styles.safeArea}>
-      {navigation}
-      <View
-        style={[
-          styles.appArea,
-          tablet && styles.tabletAppArea,
-          !tablet && { paddingBottom: 64 + insets.bottom },
-        ]}
-      >
-        <View style={[styles.header, { minHeight: 64 + insets.top, paddingTop: insets.top + 8 }]}>
-          <View style={styles.headerIdentity}>
-            {!tablet ? (
-              <View style={styles.brandMark}>
-                <MaterialSymbol color="#fff" name="fitness_center" size={24} />
-              </View>
-            ) : null}
-            <View style={styles.headerTitles}>
-              <View style={styles.brandLine}>
-                <Text style={styles.brandName}>GymVito</Text>
-                <Text style={styles.posBadge}>POS</Text>
-              </View>
-              <Text numberOfLines={1} style={styles.headerTitle}>
-                {title}
-              </Text>
-              {tablet && subtitle ? (
-                <Text numberOfLines={1} style={styles.headerSubtitle}>
-                  {subtitle}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-          <View style={styles.headerActions}>
-            {headerAction}
-            <Pressable
-              accessibilityLabel={t('languageLabel')}
-              accessibilityRole="button"
-              onPress={() => void changeLanguage(language === 'en' ? 'hi' : 'en')}
-              style={styles.languageToggle}
-            >
-              <Text style={styles.languageText}>{language === 'en' ? 'EN|हिं' : 'हिन्दी|EN'}</Text>
-            </Pressable>
-            <View style={styles.ownerAvatar}>
-              <Text style={styles.ownerAvatarText}>
-                {state.ownerName.trim().charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          </View>
-        </View>
-        {body}
-      </View>
     </View>
   );
 }
@@ -315,7 +385,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   safeArea: { flex: 1, backgroundColor: colors.background },
   appArea: { flex: 1 },
-  tabletAppArea: { paddingBottom: 0, paddingLeft: 84 },
   header: {
     minHeight: 64,
     flexDirection: 'row',
@@ -357,7 +426,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 20, lineHeight: 25 },
   headerSubtitle: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 12 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  headerActions: { flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   languageToggle: {
     minWidth: 48,
     minHeight: 48,
@@ -407,7 +476,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     zIndex: 30,
-    width: 84,
+    width: BUSINESS_NAV_TABLET_WIDTH,
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors.brandHeader,
@@ -444,11 +513,25 @@ const styles = StyleSheet.create({
   },
   sideNavItem: { width: '100%' },
   sideNavItemSelected: { backgroundColor: colors.primary },
-  navLabel: { color: colors.textMuted, fontFamily: fonts.semibold, fontSize: 11 },
+  navLabel: {
+    maxWidth: '100%',
+    color: colors.textMuted,
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: 'center',
+  },
   sideNavLabel: { color: colors.border },
   navTextSelected: { color: colors.primaryDark, fontFamily: fonts.bold },
   sideNavTextSelected: { color: '#a5f1e0' },
-  navSecondaryLabel: { color: colors.outline, fontFamily: fonts.medium, fontSize: 8 },
+  navSecondaryLabel: {
+    maxWidth: '100%',
+    color: colors.outline,
+    fontFamily: fonts.medium,
+    fontSize: 8,
+    lineHeight: 10,
+    textAlign: 'center',
+  },
   sideUtilities: { alignItems: 'center', gap: spacing.sm },
   localBadgeCompact: {
     paddingHorizontal: 6,
@@ -466,6 +549,7 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.72 },
   surfaceCard: {
+    minWidth: 0,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -473,7 +557,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   localBadge: {
+    minWidth: 0,
     minHeight: 28,
+    maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
@@ -485,12 +571,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#ebf3f1',
   },
   localDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.primary },
-  localBadgeText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 10 },
+  localBadgeText: {
+    minWidth: 0,
+    flexShrink: 1,
+    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 10,
+    lineHeight: 14,
+  },
   statusChip: {
+    minWidth: 0,
     minHeight: 28,
+    maxWidth: '100%',
+    flexShrink: 1,
     alignSelf: 'flex-start',
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.sm,
@@ -499,7 +596,15 @@ const styles = StyleSheet.create({
   statusActive: { borderColor: '#bee5d6', backgroundColor: colors.successSurface },
   statusWarning: { borderColor: colors.warningBorder, backgroundColor: colors.warningSurface },
   statusDanger: { borderColor: '#f5bebe', backgroundColor: colors.dangerSurface },
-  statusText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
+  statusText: {
+    minWidth: 0,
+    flexShrink: 1,
+    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+  },
   statusTextActive: { color: colors.successText },
   statusTextWarning: { color: colors.warningText },
   statusTextDanger: { color: colors.dangerText },

@@ -4,6 +4,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAppSession } from '@/features/session/app-session-context';
+import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { AppButton } from '@/ui/components/core-controls';
 import {
   LocalDataBadge,
@@ -14,27 +15,38 @@ import {
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
 
 export default function HomeRoute() {
-  const { state, getPhase2Repository, lock } = useAppSession();
+  const { state, getPhase2Repository, getPhase3Repository, lock } = useAppSession();
   const { t } = useTranslation();
-  const [counts, setCounts] = useState({ active: 0, archived: 0, total: 0 });
+  const today = useLocalBusinessDate(
+    state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC',
+  );
+  const [counts, setCounts] = useState({
+    active: 0,
+    upcoming: 0,
+    expired: 0,
+    noMembership: 0,
+    archived: 0,
+    expiringSoon: 0,
+  });
   const [planCount, setPlanCount] = useState<number | null>(null);
   const [showSensitive, setShowSensitive] = useState(true);
   useFocusEffect(
     useCallback(() => {
       let active = true;
       const repository = getPhase2Repository();
-      void Promise.all([repository.memberCounts(), repository.listPlans(false)]).then(
-        ([memberCounts, plans]) => {
-          if (active) {
-            setCounts(memberCounts);
-            setPlanCount(plans.length);
-          }
-        },
-      );
+      void Promise.all([
+        getPhase3Repository().dashboardCounts(today),
+        repository.listPlans(false),
+      ]).then(([membershipCounts, plans]) => {
+        if (active) {
+          setCounts(membershipCounts);
+          setPlanCount(plans.length);
+        }
+      });
       return () => {
         active = false;
       };
-    }, [getPhase2Repository]),
+    }, [getPhase2Repository, getPhase3Repository, today]),
   );
   if (state.status !== 'unlocked') return null;
   const gym = state.snapshot.gym;
@@ -107,28 +119,28 @@ export default function HomeRoute() {
       <Text style={styles.sectionTitle}>{t('operationsSnapshot')}</Text>
       <View style={styles.metricGrid}>
         <MetricCard
-          detail={t('localProfiles')}
+          detail={t('expiringSoonCount', { count: counts.expiringSoon })}
           label={t('activeMembers')}
           tone="active"
           value={String(counts.active)}
         />
         <MetricCard
           detail={t('activePlans')}
-          label={t('membershipPlans')}
+          label={t('upcomingMembers')}
           tone="neutral"
-          value={planCount === null ? '—' : String(planCount)}
+          value={String(counts.upcoming)}
         />
         <MetricCard
           detail={t('historyPreserved')}
-          label={t('archivedMembers')}
+          label={t('expiredMembers')}
           tone="danger"
-          value={String(counts.archived)}
+          value={String(counts.expired)}
         />
         <MetricCard
           detail={t('savedOnDevice')}
-          label={t('totalMembers')}
+          label={t('memberStatusNoMembership')}
           tone="neutral"
-          value={String(counts.total)}
+          value={String(counts.noMembership)}
         />
       </View>
       <SurfaceCard style={styles.nextPhaseCard}>
@@ -224,6 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   localRow: {
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -232,7 +245,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  device: { color: colors.textMuted, fontFamily: fonts.semibold, fontSize: 11 },
+  device: {
+    minWidth: 0,
+    flexShrink: 1,
+    color: colors.textMuted,
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: 'right',
+  },
   actionDeck: { width: '100%', flexDirection: 'row', gap: spacing.sm },
   counterAction: {
     minWidth: 0,
@@ -251,9 +272,12 @@ const styles = StyleSheet.create({
   counterActionPrimary: { borderColor: colors.primary, backgroundColor: colors.primary },
   counterActionText: {
     minWidth: 0,
+    flexShrink: 1,
     color: colors.primaryDark,
     fontFamily: fonts.semibold,
     fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
   },
   counterActionTextPrimary: { color: '#fff' },
   actionPressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
@@ -279,7 +303,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  metricLabel: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 13 },
+  metricLabel: {
+    minWidth: 0,
+    flex: 1,
+    color: colors.textMuted,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   metricDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.outline },
   metricDotActive: { backgroundColor: colors.primary },
   metricDotDanger: { backgroundColor: colors.danger },
@@ -290,7 +321,12 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   metricValueDanger: { color: colors.danger },
-  metricDetail: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 12 },
+  metricDetail: {
+    color: colors.textMuted,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    lineHeight: 17,
+  },
   nextPhaseCard: { gap: spacing.xs, backgroundColor: colors.surfaceLow },
   nextPhaseTitle: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 16 },
   nextPhaseText: {

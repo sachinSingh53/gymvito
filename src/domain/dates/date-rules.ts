@@ -49,6 +49,22 @@ function addCalendarMonths(start: Date, months: number): Date {
   return new Date(Date.UTC(targetYear, targetMonth, targetDay));
 }
 
+function calendarDurationExclusiveEnd(start: Date, months: number): Date {
+  const absoluteMonth = start.getUTCMonth() + months;
+  const targetYear = start.getUTCFullYear() + Math.floor(absoluteMonth / 12);
+  const targetMonth = ((absoluteMonth % 12) + 12) % 12;
+  const targetMonthDays = daysInMonth(targetYear, targetMonth);
+
+  // Product rule: use the day before the matching calendar day. When the
+  // matching day does not exist, the target month's final day is inclusive.
+  if (start.getUTCDate() > targetMonthDays) {
+    const dayAfterMonthEnd = new Date(Date.UTC(targetYear, targetMonth, targetMonthDays));
+    dayAfterMonthEnd.setUTCDate(dayAfterMonthEnd.getUTCDate() + 1);
+    return dayAfterMonthEnd;
+  }
+  return addCalendarMonths(start, months);
+}
+
 export function addDays(value: DateOnly, days: number): DateOnly {
   const date = parseDateOnly(value);
   date.setUTCDate(date.getUTCDate() + days);
@@ -77,15 +93,21 @@ export function calculateInclusiveEndDate(startDate: DateOnly, duration: PlanDur
       exclusiveEnd.setUTCDate(exclusiveEnd.getUTCDate() + duration.count * 7);
       break;
     case 'month':
-      exclusiveEnd = addCalendarMonths(start, duration.count);
+      exclusiveEnd = calendarDurationExclusiveEnd(start, duration.count);
       break;
     case 'year':
-      exclusiveEnd = addCalendarMonths(start, duration.count * 12);
+      exclusiveEnd = calendarDurationExclusiveEnd(start, duration.count * 12);
       break;
   }
 
   exclusiveEnd.setUTCDate(exclusiveEnd.getUTCDate() - 1);
   return toDateOnly(exclusiveEnd);
+}
+
+export function daysBetweenDateOnly(startDate: DateOnly, endDate: DateOnly): number {
+  const start = parseDateOnly(startDate).getTime();
+  const end = parseDateOnly(endDate).getTime();
+  return Math.round((end - start) / 86_400_000);
 }
 
 export function compareDateOnly(left: DateOnly, right: DateOnly): -1 | 0 | 1 {

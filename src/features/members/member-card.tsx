@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { MemberListItem } from '@/data/repositories/phase2-repository';
+import type { MembershipDirectoryItem } from '@/data/repositories/phase3-repository';
 import { memberInitials } from '@/domain/members/member';
 import { StatusChip } from '@/ui/components/operational-shell';
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
@@ -11,11 +11,20 @@ export function MemberCard({
   selected = false,
   onPress,
 }: {
-  member: MemberListItem;
+  member: MembershipDirectoryItem;
   selected?: boolean;
   onPress(): void;
 }) {
   const { t } = useTranslation();
+  const featured = member.current ?? member.upcoming ?? member.latest;
+  const statusLabel =
+    member.status === 'no-membership'
+      ? t('memberStatusNoMembership')
+      : member.status === 'upcoming'
+        ? t('membershipStatusScheduled')
+        : member.status === 'expired'
+          ? t('membershipStatusExpired')
+          : t(member.status);
   return (
     <Pressable
       accessibilityLabel={t('openMemberProfile', { name: member.name })}
@@ -33,21 +42,37 @@ export function MemberCard({
               {member.name}
             </Text>
             <StatusChip
-              label={member.isArchived ? t('archived') : t('active')}
-              tone={member.isArchived ? 'neutral' : 'active'}
+              label={statusLabel}
+              tone={
+                member.status === 'active'
+                  ? 'active'
+                  : member.status === 'upcoming'
+                    ? 'warning'
+                    : member.status === 'expired'
+                      ? 'danger'
+                      : 'neutral'
+              }
             />
           </View>
           <View style={styles.metaRow}>
             <Text style={styles.code}>{member.memberCode}</Text>
             <Text numberOfLines={1} style={styles.meta}>
-              {t('noMembership')}
+              {featured?.planName ?? t('noMembership')}
             </Text>
           </View>
         </View>
       </View>
       <View style={styles.statusStrip}>
-        <Text style={styles.statusText}>{t('membershipNotStarted')}</Text>
-        <Text style={styles.statusAction}>{t('createInPhase3')}</Text>
+        <Text numberOfLines={2} style={styles.statusText}>
+          {featured
+            ? featured.status === 'scheduled'
+              ? t('startsOn', { date: featured.startDate })
+              : t('validThrough', { date: featured.endDate })
+            : t('membershipNotStarted')}
+        </Text>
+        <Text numberOfLines={2} style={styles.statusAction}>
+          {featured ? t('renewMembership') : t('createInPhase3')}
+        </Text>
       </View>
       <View style={styles.contactRow}>
         <Text numberOfLines={1} style={styles.contact}>
@@ -112,8 +137,23 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     backgroundColor: colors.canvas,
   },
-  statusText: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 12 },
-  statusAction: { color: colors.primary, fontFamily: fonts.semibold, fontSize: 11 },
+  statusText: {
+    minWidth: 0,
+    flex: 1,
+    color: colors.textMuted,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  statusAction: {
+    minWidth: 0,
+    flexShrink: 1,
+    color: colors.primary,
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: 'right',
+  },
   contactRow: {
     minHeight: 40,
     flexDirection: 'row',

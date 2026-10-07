@@ -1,0 +1,28 @@
+{
+  "cli": {
+    "version": ">= 16.20.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "GYMVITO_ENV": "development"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "autoIncrement": true,
+      "env": {
+        "GYMVITO_ENV": "preview"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  }
+}

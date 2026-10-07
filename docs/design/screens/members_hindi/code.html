@@ -1,0 +1,878 @@
+<!doctype html>
+<html class="h-full" lang="hi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      name="viewport"
+    />
+    <meta content="mobile_tab" name="shell-type" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Devanagari:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'on-tertiary-container': '#dcd2b5',
+              outline: '#6f7976',
+              'inverse-surface': '#1e3530',
+              'primary-fixed': '#a5f1e0',
+              'primary-fixed-dim': '#89d5c4',
+              'surface-container-low': '#dff9f3',
+              'surface-dim': '#c6e0d9',
+              'inverse-on-surface': '#dcf6f0',
+              'error-container': '#ffdad6',
+              'surface-container-high': '#d4eee7',
+              'secondary-container': '#cfe4e0',
+              secondary: '#4f625f',
+              'on-primary-fixed-variant': '#005046',
+              'surface-variant': '#cee8e1',
+              'on-background': '#071f1c',
+              error: '#ba1a1a',
+              'surface-container-lowest': '#ffffff',
+              'inverse-primary': '#89d5c4',
+              'surface-tint': '#156a5d',
+              'surface-container-highest': '#cee8e1',
+              'on-tertiary': '#ffffff',
+              'on-surface-variant': '#3f4946',
+              'on-surface': '#071f1c',
+              'on-primary-container': '#95e1d0',
+              'on-secondary-fixed': '#0c1f1d',
+              'on-secondary': '#ffffff',
+              'on-secondary-fixed-variant': '#374a48',
+              'on-tertiary-fixed': '#201b09',
+              'primary-container': '#0d6659',
+              tertiary: '#49432d',
+              primary: '#004c42',
+              'tertiary-fixed': '#ede2c5',
+              background: '#e5fff8',
+              'on-error': '#ffffff',
+              'on-primary': '#ffffff',
+              'surface-container': '#d9f3ed',
+              'secondary-fixed': '#d2e7e3',
+              'on-secondary-container': '#536664',
+              'surface-bright': '#e5fff8',
+              'tertiary-container': '#615a43',
+              'on-tertiary-fixed-variant': '#4d4731',
+              'on-error-container': '#93000a',
+              surface: '#e5fff8',
+              'outline-variant': '#bec9c5',
+              'on-primary-fixed': '#00201b',
+              'secondary-fixed-dim': '#b6cbc7',
+              'tertiary-fixed-dim': '#d0c6aa',
+            },
+            borderRadius: { DEFAULT: '0.25rem', lg: '0.5rem', xl: '0.75rem', full: '9999px' },
+            spacing: {
+              'space-sm': '8px',
+              'space-xs': '4px',
+              gutter: '16px',
+              'space-xl': '32px',
+              'space-lg': '24px',
+              margin: '16px',
+              'margin-tablet': '24px',
+              'space-md': '16px',
+              'margin-desktop': '32px',
+              'gutter-tablet': '24px',
+            },
+            fontFamily: {
+              'body-lg': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'headline-lg': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'title-lg': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'label-lg': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'headline-md': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'body-md': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'label-md': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'label-sm': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'title-sm': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'headline-sm': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'body-sm': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'title-md': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+            },
+            fontSize: {
+              'body-lg': ['16px', { lineHeight: '26px', fontWeight: '400' }],
+              'headline-lg': ['28px', { lineHeight: '38px', fontWeight: '700' }],
+              'title-lg': ['18px', { lineHeight: '26px', fontWeight: '600' }],
+              'label-lg': ['14px', { lineHeight: '22px', fontWeight: '600' }],
+              'headline-md': ['22px', { lineHeight: '32px', fontWeight: '600' }],
+              'body-md': ['14px', { lineHeight: '22px', fontWeight: '400' }],
+              'label-md': ['12px', { lineHeight: '18px', fontWeight: '500' }],
+              'label-sm': ['11px', { lineHeight: '16px', fontWeight: '700' }],
+              'title-sm': ['14px', { lineHeight: '22px', fontWeight: '600' }],
+              'headline-sm': ['20px', { lineHeight: '30px', fontWeight: '600' }],
+              'body-sm': ['12px', { lineHeight: '18px', fontWeight: '400' }],
+              'title-md': ['16px', { lineHeight: '24px', fontWeight: '600' }],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @layer base {
+        html,
+        body {
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          overscroll-behavior-y: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .pt-safe {
+          padding-top: env(safe-area-inset-top, 0px);
+        }
+        main > :first-child {
+          margin-top: 0 !important;
+        }
+        main > :last-child {
+          margin-bottom: 0 !important;
+        }
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-full flex flex-col"
+  >
+    <header
+      class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(7,31,28,0.04)]"
+    >
+      <div class="h-16 px-margin flex items-center justify-between gap-space-sm">
+        <div class="flex items-center gap-space-sm min-w-0 flex-1">
+          <img
+            alt="GymVito Brand Mark"
+            class="h-8 w-auto object-contain shrink-0"
+            src="https://lh3.googleusercontent.com/aida/AEtjO1X4mJ9ARvHnjc7wntBdUwygXzYZZ5KwWeMMM3Y0ch5Si4AudQL4kJdsE9x1KuVlU1MnAv-JvTQPtBOjmQ6c6mclJ4C28IkQnCWFdpL1qo2gFu_Z9kzvX6gEUj1ta0vyb7fjqwQhaxU-V4AZiJgBZc1KhTSWIiumwU7EOh89J8PtLUKYnCdLedNe6CJuRGLqXbIcDS72DUy1Dy5-oa-VQa3WY4ZH_yCOK4JmkdVjQxOR"
+          />
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-space-xs">
+              <span
+                class="font-title-sm text-title-sm text-primary truncate tracking-tight font-bold"
+                >GymVito</span
+              ><span
+                class="px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm leading-none shrink-0 font-medium"
+                >पीओएस</span
+              >
+            </div>
+            <h1
+              class="font-headline-sm text-headline-sm text-on-surface truncate leading-tight mt-0.5 font-bold"
+            >
+              सदस्य निर्देशिका
+            </h1>
+          </div>
+        </div>
+        <div class="flex items-center gap-space-xs shrink-0">
+          <button
+            aria-label="भाषा विकल्प - हिन्दी"
+            class="min-h-[44px] px-3 py-1.5 rounded-full bg-surface-container flex items-center justify-center font-label-md text-label-md text-primary font-bold hover:bg-surface-container-high transition-colors"
+          >
+            <span class="leading-none">हिन्दी</span></button
+          ><button
+            aria-label="कर्मचारी प्रोफ़ाइल खाता"
+            class="min-h-[44px] min-w-[44px] p-1 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors"
+          >
+            <img
+              alt="स्टाफ प्रोफ़ाइल"
+              class="w-8 h-8 rounded-full object-cover"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7tuETCMOT12116e5e8jZytjv1nVtLz3E0xcWdKYMElkc0sTp3jCqO34UX4QjAc1ctod9q-Et3lhzmregqxWsPTdHAE3bowN8TRq-DtGJD_6VK4rewVGCtC9ldp9gjShZZbhun_rg8aK_MBr6FavjlIxdnUpeU48-UBuZI0Ba6sgplOGV6Z9CJj48tIgeZ6kNxrN8MSpyUpPtdbC2iagNNQv9YpFgcPHuoKWV-K_c2"
+            />
+          </button>
+        </div>
+      </div>
+    </header>
+    <main class="flex-1 w-full bg-surface pt-16 pb-28">
+      <div class="flex flex-col w-full pb-6">
+        <!-- Search and Barcode Quick Action Zone -->
+        <div class="px-margin pt-2 pb-3">
+          <div class="flex items-center gap-space-sm">
+            <div
+              class="relative flex-1 flex items-center min-h-[52px] bg-surface-container-lowest rounded-xl shadow-sm px-3"
+            >
+              <span class="material-symbols-outlined text-outline text-[22px] shrink-0 mr-2"
+                >search</span
+              >
+              <input
+                class="w-full bg-transparent text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none py-2"
+                id="memberSearchInput"
+                placeholder="नाम, मोबाइल +91, सदस्य कोड खोजें..."
+                type="text"
+                value=""
+              />
+              <button
+                aria-label="खोज साफ़ करें"
+                class="min-h-[48px] min-w-[48px] flex items-center justify-center text-outline hover:text-on-surface opacity-0 pointer-events-none transition-opacity"
+                id="clearSearchBtn"
+              >
+                <span class="material-symbols-outlined text-[20px]">cancel</span>
+              </button>
+            </div>
+            <button
+              aria-label="बारकोड या डिजिटल कार्ड स्कैन करें"
+              class="min-h-[52px] min-w-[52px] rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-center text-primary hover:bg-surface-container-high transition-colors active:scale-95 shrink-0"
+            >
+              <span class="material-symbols-outlined text-[24px]">document_scanner</span>
+            </button>
+          </div>
+        </div>
+        <!-- Horizontal Filter Chips (Glanceable Quick Toggles) -->
+        <div class="w-full overflow-x-auto no-scrollbar py-1 px-margin">
+          <div class="flex items-center gap-2 whitespace-nowrap min-w-max">
+            <button
+              class="filter-chip h-[38px] px-3.5 rounded-full font-label-md text-label-md flex items-center gap-1.5 transition-all bg-primary text-on-primary shadow-sm"
+              data-filter="all"
+            >
+              <span class="">सभी</span>
+              <span
+                class="text-xs px-1.5 py-0.5 rounded-full bg-surface-container-lowest/20 font-bold leading-none"
+                >248</span
+              >
+            </button>
+            <button
+              class="filter-chip h-[38px] px-3.5 rounded-full font-label-md text-label-md flex items-center gap-1.5 transition-all bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container"
+              data-filter="active"
+            >
+              <span class="">सक्रिय</span>
+              <span
+                class="text-xs px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-bold leading-none"
+                >228</span
+              >
+            </button>
+            <button
+              class="filter-chip h-[38px] px-3.5 rounded-full font-label-md text-label-md flex items-center gap-1.5 transition-all bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container"
+              data-filter="expiring"
+            >
+              <span class="material-symbols-outlined text-[16px] text-[#7C5300]"
+                >history_toggle_off</span
+              >
+              <span class="">समाप्त हो रहे</span>
+              <span
+                class="text-xs px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-bold leading-none"
+                >12</span
+              >
+            </button>
+            <button
+              class="filter-chip h-[38px] px-3.5 rounded-full font-label-md text-label-md flex items-center gap-1.5 transition-all bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container"
+              data-filter="overdue"
+            >
+              <span class="material-symbols-outlined text-[16px] text-error">priority_high</span>
+              <span class="">बकाया शुल्क</span>
+              <span
+                class="text-xs px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-bold leading-none"
+                >15</span
+              >
+            </button>
+            <button
+              class="filter-chip h-[38px] px-3.5 rounded-full font-label-md text-label-md flex items-center gap-1.5 transition-all bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container"
+              data-filter="expired"
+            >
+              <span class="">समाप्त</span>
+              <span
+                class="text-xs px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-bold leading-none"
+                >8</span
+              >
+            </button>
+          </div>
+        </div>
+        <!-- Operational Sync & Roster Stat Strip -->
+        <div class="px-margin mt-3 mb-2 flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="font-label-md text-label-md text-on-surface-variant font-semibold"
+              >248 में से 5 सदस्य प्रदर्शित</span
+            >
+            <span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+            <span class="font-label-sm text-label-sm text-outline">स्थानीय कैश्ड</span>
+          </div>
+          <button
+            aria-label="क्रमबद्ध करें - हाल के सदस्य"
+            class="min-h-[44px] px-2.5 py-1.5 flex items-center gap-1 font-label-md text-label-md text-primary font-semibold hover:bg-surface-container-low rounded-lg transition-colors"
+          >
+            <span class="material-symbols-outlined text-[18px]">swap_vert</span>
+            <span class="">हाल के सदस्य</span>
+          </button>
+        </div>
+        <!-- Member List Cards Container -->
+        <div class="px-margin flex flex-col gap-3" id="memberDirectoryList">
+          <!-- Row 1: Amit Sharma (Overdue Dues) -->
+          <article
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm hover:shadow transition-shadow flex flex-col gap-2.5"
+            data-search="अमित शर्मा amit sharma gv-082 9820144521"
+            data-status="overdue"
+          >
+            <div class="flex items-start gap-3 min-w-0">
+              <div
+                class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary font-headline-sm text-headline-sm shrink-0 overflow-hidden relative"
+              >
+                <img
+                  class="w-full h-full object-cover"
+                  data-alt="भारतीय फिटनेस एथलीट अमित शर्मा - जिम पोर्ट्रेट"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz9T5TzB3Yv8FE8LL1JzES1d7tYjpeI2PBG_HsFxPhwhvPqzqkDj3nidkS9aE2tsPFa2ZJm33gam7uuJhrkrr66fYZfW2O4PpMV2C9f5cXbn2knL0v3vQSZ-lP0E_dQturEZeu78LNxhnWq3xY2nnWOjtmmumqfKQbPZZlOJ6RBvCdaQVCc4XLcsHtBU2uqtpYIZsTi9fVZ_TcGDwMFCptHVkk-L0q9s18uDIniVu8"
+                />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <h2 class="font-title-md text-title-md text-on-surface truncate font-bold">
+                    अमित शर्मा
+                  </h2>
+                  <div
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-error-container text-on-error-container shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[14px]">warning</span>
+                    <span class="font-label-sm text-label-sm font-bold tracking-tight"
+                      >₹2,500 बकाया</span
+                    >
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-mono"
+                    >GV-082</span
+                  >
+                  <span class="font-body-sm text-body-sm text-on-surface-variant truncate"
+                    >वार्षिक स्ट्रेंथ</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-1 text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/40 rounded-lg px-2.5 py-1.5"
+            >
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-outline">event</span>
+                <span class=""
+                  >समाप्ति: <strong class="text-on-surface font-semibold">24 नव 2025</strong></span
+                >
+              </div>
+              <div
+                class="flex items-center gap-1 text-error font-semibold font-label-md text-label-md"
+              >
+                <span class="">4 दिन अतिदेय</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-0.5">
+              <div
+                class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm"
+              >
+                <span class="material-symbols-outlined text-[16px] text-outline">call</span>
+                <span class="font-mono">+91 98201 44521</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <a
+                  aria-label="अमित शर्मा को कॉल करें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-primary hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                  href="tel:+919820144521"
+                >
+                  <span class="material-symbols-outlined text-[20px]">phone</span>
+                </a>
+                <button
+                  aria-label="अमित शर्मा को व्हाट्सऐप शुल्क रिमाइंडर भेजें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[#25D366] hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chat</span>
+                </button>
+                <button
+                  aria-label="अमित शर्मा का विवरण खोलें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </article>
+          <!-- Row 2: Priya Patel (Expiring Today) -->
+          <article
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm hover:shadow transition-shadow flex flex-col gap-2.5"
+            data-search="प्रिया पटेल priya patel gv-114 9845012890"
+            data-status="expiring"
+          >
+            <div class="flex items-start gap-3 min-w-0">
+              <div
+                class="w-12 h-12 rounded-xl bg-tertiary-fixed flex items-center justify-center text-tertiary font-title-lg text-title-lg shrink-0 font-bold"
+              >
+                PP
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <h2 class="font-title-md text-title-md text-on-surface truncate font-bold">
+                    प्रिया पटेल
+                  </h2>
+                  <div
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[14px]">alarm</span>
+                    <span class="font-bold">आज समाप्त हो रहा</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-mono"
+                    >GV-114</span
+                  >
+                  <span class="font-body-sm text-body-sm text-on-surface-variant truncate"
+                    >3-माह कार्डियो</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-1 text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/40 rounded-lg px-2.5 py-1.5"
+            >
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-outline">schedule</span>
+                <span class=""
+                  >समाप्ति: <strong class="text-tertiary font-semibold">आज (18 मई)</strong></span
+                >
+              </div>
+              <div
+                class="flex items-center gap-1 text-primary-container font-label-sm text-label-sm font-semibold"
+              >
+                <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                <span class="">पूर्ण भुगतान</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-0.5">
+              <div
+                class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm"
+              >
+                <span class="material-symbols-outlined text-[16px] text-outline">call</span>
+                <span class="font-mono">+91 98450 12890</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <a
+                  aria-label="प्रिया पटेल को कॉल करें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-primary hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                  href="tel:+919845012890"
+                >
+                  <span class="material-symbols-outlined text-[20px]">phone</span>
+                </a>
+                <button
+                  aria-label="प्रिया पटेल को व्हाट्सऐप नवीनीकरण संदेश भेजें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[#25D366] hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chat</span>
+                </button>
+                <button
+                  aria-label="प्रिया पटेल का विवरण खोलें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </article>
+          <!-- Row 3: Vikram Malhotra (Active & Paid) -->
+          <article
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm hover:shadow transition-shadow flex flex-col gap-2.5"
+            data-search="विक्रम मल्होत्रा vikram malhotra gv-045 9167233412"
+            data-status="active"
+          >
+            <div class="flex items-start gap-3 min-w-0">
+              <div
+                class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary font-headline-sm text-headline-sm shrink-0 overflow-hidden relative"
+              >
+                <img
+                  class="w-full h-full object-cover"
+                  data-alt="भारतीय जिम सदस्य विक्रम मल्होत्रा - पोर्ट्रेट"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrSA9wmMd1o_Db_5jVrVde4fVBEKXL-kdeVJ_xCBRHKWJeNLEdwD5qBOOinGbWPY1rkbfn7WuoS3Hy8k6fcwsdrWmF7IOKmHlXxA9-tVeBvb1-56TOFEbODci6xjGYPA6sHIkTEu04FrVCX3X5_YuiLo3jSXdRLy2Db3s8mGDe3ZDCm0qAZTu-MTkPP-QDi1RCHIsY0nww2LDY9KifJDnrDYHGGP81BiENERtlRtoV"
+                />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <h2 class="font-title-md text-title-md text-on-surface truncate font-bold">
+                    विक्रम मल्होत्रा
+                  </h2>
+                  <div
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[14px]">verified</span>
+                    <span class="font-bold">सक्रिय</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-mono"
+                    >GV-045</span
+                  >
+                  <span class="font-body-sm text-body-sm text-on-surface-variant truncate"
+                    >6-माह हेवी लिफ्ट</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-1 text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/40 rounded-lg px-2.5 py-1.5"
+            >
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-outline"
+                  >event_available</span
+                >
+                <span class=""
+                  >समाप्ति: <strong class="text-on-surface font-semibold">12 जन 2026</strong></span
+                >
+              </div>
+              <div
+                class="flex items-center gap-1 text-primary-container font-label-sm text-label-sm font-semibold"
+              >
+                <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                <span class="">पूर्ण भुगतान</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-0.5">
+              <div
+                class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm"
+              >
+                <span class="material-symbols-outlined text-[16px] text-outline">call</span>
+                <span class="font-mono">+91 91672 33412</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <a
+                  aria-label="विक्रम मल्होत्रा को कॉल करें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-primary hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                  href="tel:+919167233412"
+                >
+                  <span class="material-symbols-outlined text-[20px]">phone</span>
+                </a>
+                <button
+                  aria-label="विक्रम मल्होत्रा को व्हाट्सऐप संदेश भेजें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[#25D366] hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chat</span>
+                </button>
+                <button
+                  aria-label="विक्रम मल्होत्रा का विवरण खोलें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </article>
+          <!-- Row 4: Neha Deshmukh (Expired with Dues) -->
+          <article
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm hover:shadow transition-shadow flex flex-col gap-2.5 opacity-90"
+            data-search="नेहा देशमुख neha deshmukh gv-190 9920887102"
+            data-status="expired"
+          >
+            <div class="flex items-start gap-3 min-w-0">
+              <div
+                class="w-12 h-12 rounded-xl bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-title-lg text-title-lg shrink-0 font-bold"
+              >
+                ND
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <h2 class="font-title-md text-title-md text-on-surface truncate font-bold">
+                    नेहा देशमुख
+                  </h2>
+                  <div
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-error-container text-error font-label-sm text-label-sm shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[14px]">cancel</span>
+                    <span class="font-bold">समाप्त</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-mono"
+                    >GV-190</span
+                  >
+                  <span class="font-body-sm text-body-sm text-on-surface-variant truncate"
+                    >मासिक सामान्य</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-1 text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/40 rounded-lg px-2.5 py-1.5"
+            >
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-error">event_busy</span>
+                <span class=""
+                  >समाप्ति: <strong class="text-error font-semibold">14 मई 2025</strong></span
+                >
+              </div>
+              <div
+                class="flex items-center gap-1 text-error font-label-sm text-label-sm font-semibold"
+              >
+                <span class="">₹800 बकाया</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-0.5">
+              <div
+                class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm"
+              >
+                <span class="material-symbols-outlined text-[16px] text-outline">call</span>
+                <span class="font-mono">+91 99208 87102</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <a
+                  aria-label="नेहा देशमुख को कॉल करें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-primary hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                  href="tel:+919920887102"
+                >
+                  <span class="material-symbols-outlined text-[20px]">phone</span>
+                </a>
+                <button
+                  aria-label="नेहा देशमुख को व्हाट्सऐप संदेश भेजें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[#25D366] hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chat</span>
+                </button>
+                <button
+                  aria-label="नेहा देशमुख का विवरण खोलें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </article>
+          <!-- Row 5: Rahul Roy (Annual Active) -->
+          <article
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm hover:shadow transition-shadow flex flex-col gap-2.5"
+            data-search="राहुल रॉय rahul roy gv-205 9711255431"
+            data-status="active"
+          >
+            <div class="flex items-start gap-3 min-w-0">
+              <div
+                class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary font-headline-sm text-headline-sm shrink-0 overflow-hidden relative"
+              >
+                <img
+                  class="w-full h-full object-cover"
+                  data-alt="भारतीय जिम सदस्य राहुल रॉय - पोर्ट्रेट"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgiQhynOXUhdjnf_d4G9jDi78gwRqBmJRPAQzRWnhN7qA_spBI98_ZtR3V8zXo1PuxjskOPCpJgdIc-T1D8Ec1jJGHJFl5mN0j2_nLbY-RS23c70sMCd4oaBhvgcLx1oS5DRjyY43gfuC2nd7V0YYONVfNdwdahc65mz17drIlmw6v0cSBcWisP94WqLwKrbth7KtK4cAweAmQC-i8Kz34ZstdiesKzfp2rHuE2rt5"
+                />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <h2 class="font-title-md text-title-md text-on-surface truncate font-bold">
+                    राहुल रॉय
+                  </h2>
+                  <div
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm shrink-0"
+                  >
+                    <span class="material-symbols-outlined text-[14px]">verified</span>
+                    <span class="font-bold">सक्रिय</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface-variant font-mono"
+                    >GV-205</span
+                  >
+                  <span class="font-body-sm text-body-sm text-on-surface-variant truncate"
+                    >वार्षिक फिटनेस</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between pt-1 text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/40 rounded-lg px-2.5 py-1.5"
+            >
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-outline"
+                  >event_available</span
+                >
+                <span class=""
+                  >समाप्ति: <strong class="text-on-surface font-semibold">30 दिस 2025</strong></span
+                >
+              </div>
+              <div
+                class="flex items-center gap-1 text-primary-container font-label-sm text-label-sm font-semibold"
+              >
+                <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                <span class="">पूर्ण भुगतान</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-0.5">
+              <div
+                class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm"
+              >
+                <span class="material-symbols-outlined text-[16px] text-outline">call</span>
+                <span class="font-mono">+91 97112 55431</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <a
+                  aria-label="राहुल रॉय को कॉल करें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-primary hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                  href="tel:+919711255431"
+                >
+                  <span class="material-symbols-outlined text-[20px]">phone</span>
+                </a>
+                <button
+                  aria-label="राहुल रॉय को व्हाट्सऐप संदेश भेजें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[#25D366] hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chat</span>
+                </button>
+                <button
+                  aria-label="राहुल रॉय का विवरण खोलें"
+                  class="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:bg-surface-container-high transition-colors"
+                >
+                  <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+        <!-- Empty Search Result Micro-State (Hidden by default) -->
+        <div
+          class="hidden px-margin py-10 flex-col items-center justify-center text-center"
+          id="noResultsState"
+        >
+          <div
+            class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-3"
+          >
+            <span class="material-symbols-outlined text-[32px]">person_search</span>
+          </div>
+          <h3 class="font-title-md text-title-md text-on-surface font-bold">कोई सदस्य नहीं मिला</h3>
+          <p
+            class="font-body-sm text-body-sm text-on-surface-variant mt-1 max-w-xs leading-relaxed"
+          >
+            अन्य नाम, 10-अंकीय मोबाइल नंबर से खोजें या नया वॉक-इन सदस्य जोड़ें।
+          </p>
+          <button
+            class="mt-4 h-12 px-5 rounded-full bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm"
+          >
+            <span class="material-symbols-outlined text-[20px]">person_add</span>
+            <span class="">नया वॉक-इन सदस्य जोड़ें</span>
+          </button>
+        </div>
+        <!-- Primary Floating Action Button for Adding New Member -->
+        <div class="fixed bottom-24 z-50 right-margin">
+          <button
+            aria-label="नया सदस्य जोड़ें"
+            class="h-14 px-5 rounded-full bg-primary text-on-primary font-label-lg text-label-lg flex items-center gap-2 shadow-[0_6px_18px_rgba(7,26,24,0.22)] hover:bg-primary-container transition-all active:scale-95"
+          >
+            <span class="material-symbols-outlined text-[24px]">person_add</span>
+            <span class="leading-none tracking-wide font-bold">+ नया सदस्य</span>
+          </button>
+        </div>
+      </div>
+      <script>
+        (function () {
+          const searchInput = document.getElementById('memberSearchInput');
+          const clearBtn = document.getElementById('clearSearchBtn');
+          const filterChips = document.querySelectorAll('.filter-chip');
+          const rows = document.querySelectorAll('#memberDirectoryList > article');
+          const noResults = document.getElementById('noResultsState');
+
+          let currentFilter = 'all';
+
+          function applyFilterAndSearch() {
+            const query = (searchInput.value || '').trim().toLowerCase();
+            let visibleCount = 0;
+
+            rows.forEach((row) => {
+              const rowSearch = (row.getAttribute('data-search') || '').toLowerCase();
+              const rowStatus = row.getAttribute('data-status') || '';
+
+              const matchesQuery = !query || rowSearch.includes(query);
+              const matchesFilter = currentFilter === 'all' || rowStatus === currentFilter;
+
+              if (matchesQuery && matchesFilter) {
+                row.style.display = 'flex';
+                visibleCount++;
+              } else {
+                row.style.display = 'none';
+              }
+            });
+
+            if (visibleCount === 0) {
+              noResults.classList.remove('hidden');
+              noResults.classList.add('flex');
+            } else {
+              noResults.classList.add('hidden');
+              noResults.classList.remove('flex');
+            }
+
+            if (query.length > 0) {
+              clearBtn.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+              clearBtn.classList.add('opacity-0', 'pointer-events-none');
+            }
+          }
+
+          searchInput.addEventListener('input', applyFilterAndSearch);
+
+          clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchInput.focus();
+            applyFilterAndSearch();
+          });
+
+          filterChips.forEach((chip) => {
+            chip.addEventListener('click', () => {
+              filterChips.forEach((c) => {
+                c.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+                c.classList.add('bg-surface-container-lowest', 'text-on-surface-variant');
+              });
+              chip.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+              chip.classList.remove('bg-surface-container-lowest', 'text-on-surface-variant');
+
+              currentFilter = chip.getAttribute('data-filter') || 'all';
+              applyFilterAndSearch();
+            });
+          });
+        })();
+      </script>
+    </main>
+    <nav
+      class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_16px_rgba(7,26,24,0.05)]"
+      data-active-classes="text-primary font-bold"
+    >
+      <div class="flex justify-around items-center h-16 px-space-xs">
+        <a
+          class="flex-1 min-h-[48px] flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface"
+          data-path="dashboard"
+          href="#"
+          ><span class="material-symbols-outlined text-[24px]">dashboard</span
+          ><span class="font-label-sm text-label-sm leading-tight">होम</span></a
+        ><a
+          aria-current="page"
+          class="flex-1 min-h-[48px] flex flex-col items-center justify-center gap-0.5 text-primary font-bold"
+          data-path="members"
+          href="#"
+          ><span class="material-symbols-outlined text-[24px]">group</span
+          ><span class="font-label-sm text-label-sm leading-tight">सदस्य</span></a
+        ><a
+          class="flex-1 min-h-[48px] flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface"
+          data-path="payments"
+          href="#"
+          ><span class="material-symbols-outlined text-[24px]">currency_rupee</span
+          ><span class="font-label-sm text-label-sm leading-tight">भुगतान</span></a
+        ><a
+          class="flex-1 min-h-[48px] flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface"
+          data-path="more-hub"
+          href="#"
+          ><span class="material-symbols-outlined text-[24px]">widgets</span
+          ><span class="font-label-sm text-label-sm leading-tight">अधिक</span></a
+        >
+      </div>
+    </nav>
+  </body>
+</html>

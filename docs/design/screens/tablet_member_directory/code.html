@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_dashboard" name="shell-type" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @layer base {
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          overscroll-behavior: none;
+        }
+        main > :first-child {
+          margin-top: 0 !important;
+        }
+        main > :last-child {
+          margin-bottom: 0 !important;
+        }
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              surface: '#e5fff8',
+              'on-tertiary-fixed': '#201b09',
+              'surface-variant': '#cee8e1',
+              'on-secondary-fixed-variant': '#374a48',
+              'surface-container-lowest': '#ffffff',
+              tertiary: '#49432d',
+              'secondary-fixed': '#d2e7e3',
+              background: '#e5fff8',
+              'tertiary-fixed': '#ede2c5',
+              'on-secondary-fixed': '#0c1f1d',
+              'on-surface-variant': '#3f4946',
+              'inverse-on-surface': '#dcf6f0',
+              'on-primary-fixed-variant': '#005046',
+              'tertiary-container': '#615a43',
+              'surface-container-low': '#dff9f3',
+              'on-primary': '#ffffff',
+              'on-error-container': '#93000a',
+              'primary-container': '#0d6659',
+              'on-error': '#ffffff',
+              'on-tertiary-container': '#dcd2b5',
+              'primary-fixed-dim': '#89d5c4',
+              'tertiary-fixed-dim': '#d0c6aa',
+              'outline-variant': '#bec9c5',
+              'on-secondary': '#ffffff',
+              'primary-fixed': '#a5f1e0',
+              'on-tertiary-fixed-variant': '#4d4731',
+              'surface-container-highest': '#cee8e1',
+              'secondary-container': '#cfe4e0',
+              'on-primary-fixed': '#00201b',
+              'on-primary-container': '#95e1d0',
+              'on-surface': '#071f1c',
+              error: '#ba1a1a',
+              secondary: '#4f625f',
+              'surface-container': '#d9f3ed',
+              'inverse-primary': '#89d5c4',
+              primary: '#004c42',
+              'on-secondary-container': '#536664',
+              'surface-container-high': '#d4eee7',
+              outline: '#6f7976',
+              'surface-bright': '#e5fff8',
+              'inverse-surface': '#1e3530',
+              'error-container': '#ffdad6',
+              'on-tertiary': '#ffffff',
+              'surface-dim': '#c6e0d9',
+              'surface-tint': '#156a5d',
+              'on-background': '#071f1c',
+              'secondary-fixed-dim': '#b6cbc7',
+            },
+            borderRadius: {
+              DEFAULT: '0.25rem',
+              lg: '0.5rem',
+              xl: '0.75rem',
+              full: '9999px',
+            },
+            spacing: {
+              'space-xl': '32px',
+              'space-lg': '24px',
+              'space-md': '16px',
+              'space-sm': '8px',
+              margin: '16px',
+              'space-xs': '4px',
+              'margin-desktop': '32px',
+              gutter: '16px',
+              'gutter-tablet': '24px',
+              'margin-tablet': '24px',
+            },
+            fontFamily: {
+              'body-md': ['Inter'],
+              'title-lg': ['Inter'],
+              'headline-md': ['Inter'],
+              'label-lg': ['Inter'],
+              'headline-sm': ['Inter'],
+              'label-sm': ['Inter'],
+              'headline-lg': ['Inter'],
+              'label-md': ['Inter'],
+              'title-sm': ['Inter'],
+              'body-sm': ['Inter'],
+              'title-md': ['Inter'],
+              'body-lg': ['Inter'],
+            },
+            fontSize: {
+              'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+              'title-lg': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+              'headline-md': ['24px', { lineHeight: '32px', fontWeight: '600' }],
+              'label-lg': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+              'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+              'label-sm': ['10px', { lineHeight: '14px', fontWeight: '700' }],
+              'headline-lg': ['30px', { lineHeight: '38px', fontWeight: '700' }],
+              'label-md': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+              'title-sm': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+              'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+              'title-md': ['16px', { lineHeight: '22px', fontWeight: '600' }],
+              'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-surface font-body-md text-on-surface antialiased select-none">
+    <aside
+      class="fixed left-0 top-0 h-full w-[84px] bg-on-surface z-50 flex flex-col items-center justify-between py-space-sm shadow-[0_1px_8px_rgba(0,0,0,0.04)]"
+    >
+      <div class="flex flex-col items-center w-full gap-space-sm">
+        <div
+          class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm"
+        >
+          <span class="material-symbols-outlined text-[26px]">fitness_center</span>
+        </div>
+        <div class="flex flex-col items-center leading-none">
+          <span class="font-label-sm text-label-sm uppercase tracking-widest text-primary-fixed"
+            >GymVito</span
+          ><span class="font-label-sm text-label-sm text-outline-variant scale-90">POS·v2</span>
+        </div>
+        <nav
+          class="flex flex-col items-center gap-space-xs w-full px-space-xs mt-space-sm"
+          data-active-classes="bg-primary-container text-on-primary-container font-label-md rounded-xl"
+        >
+          <a
+            class="flex flex-col items-center justify-center w-full h-[60px] rounded-xl text-outline-variant hover:bg-inverse-surface hover:text-surface-bright transition-colors group"
+            data-path="counter-overview"
+            href="#"
+            ><span class="material-symbols-outlined text-[22px]">home</span
+            ><span class="font-label-sm text-label-sm mt-0.5 leading-tight">होम</span
+            ><span class="font-label-sm text-label-sm opacity-60 scale-75 -mt-0.5">Home</span></a
+          ><a
+            aria-current="page"
+            class="flex flex-col items-center justify-center w-full h-[60px] transition-colors group bg-primary-container text-on-primary-container font-label-md rounded-xl"
+            data-path="members-ledger"
+            href="#"
+            ><span class="material-symbols-outlined text-[22px]">group</span
+            ><span class="font-label-sm text-label-sm mt-0.5 leading-tight">सदस्य</span
+            ><span class="font-label-sm text-label-sm opacity-60 scale-75 -mt-0.5">Members</span></a
+          ><a
+            class="flex flex-col items-center justify-center w-full h-[60px] rounded-xl text-outline-variant hover:bg-inverse-surface hover:text-surface-bright transition-colors group"
+            data-path="payments-cashflow"
+            href="#"
+            ><span class="material-symbols-outlined text-[22px]">payments</span
+            ><span class="font-label-sm text-label-sm mt-0.5 leading-tight">भुगतान</span
+            ><span class="font-label-sm text-label-sm opacity-60 scale-75 -mt-0.5"
+              >Payments</span
+            ></a
+          ><a
+            class="flex flex-col items-center justify-center w-full h-[60px] rounded-xl text-outline-variant hover:bg-inverse-surface hover:text-surface-bright transition-colors group"
+            data-path="quick-actions-menu"
+            href="#"
+            ><span class="material-symbols-outlined text-[22px]">widgets</span
+            ><span class="font-label-sm text-label-sm mt-0.5 leading-tight">अधिक</span
+            ><span class="font-label-sm text-label-sm opacity-60 scale-75 -mt-0.5">More</span></a
+          >
+        </nav>
+      </div>
+      <div class="flex flex-col items-center w-full gap-space-sm px-space-xs pb-space-xs">
+        <button
+          class="w-full py-1 px-1 rounded-lg bg-inverse-surface text-primary-fixed flex flex-col items-center justify-center gap-0.5 border-0 hover:bg-secondary transition-colors"
+          title="On-Device SQLite Active"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-[16px]">database</span
+          ><span class="font-label-sm text-label-sm scale-90">Local DB</span></button
+        ><button
+          class="w-10 h-10 rounded-full bg-inverse-surface text-outline-variant flex items-center justify-center hover:bg-surface-variant hover:text-on-surface transition-colors"
+          title="Quick Screen Lock"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-[18px]">lock</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+        </div>
+      </div>
+    </aside>
+    <div class="pl-[84px]">
+      <header
+        class="fixed top-0 left-[84px] right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 px-gutter-tablet flex items-center justify-between"
+      >
+        <div class="flex items-center gap-space-md">
+          <div
+            class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1 rounded-full"
+          >
+            <span class="material-symbols-outlined text-[18px] text-primary">meeting_room</span
+            ><span class="font-label-md text-label-md text-on-surface"
+              >Counter: Shift A (सवेरा)</span
+            >
+          </div>
+          <div
+            class="hidden sm:flex items-center gap-space-xs bg-surface-container px-space-sm py-1 rounded-full"
+          >
+            <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span
+            ><span class="font-label-sm text-label-sm text-on-surface-variant"
+              >Local Cache: Active (स्थानीय)</span
+            >
+          </div>
+        </div>
+        <div class="flex items-center gap-space-md">
+          <button
+            class="flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors"
+            title="Toggle Financial Privacy"
+            type="button"
+          >
+            <span class="material-symbols-outlined text-[18px]">visibility</span
+            ><span class="font-label-sm text-label-sm hidden md:inline">₹ Display</span>
+          </button>
+          <div class="flex items-center bg-surface-container-high rounded-full p-0.5">
+            <button
+              class="px-space-sm py-0.5 rounded-full font-label-sm text-label-sm bg-primary text-on-primary shadow-xs"
+              type="button"
+            >
+              EN</button
+            ><button
+              class="px-space-sm py-0.5 rounded-full font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface"
+              type="button"
+            >
+              हिन्दी
+            </button>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+          </div>
+        </div>
+      </header>
+      <main class="w-full pt-16 bg-surface min-h-screen">
+        <div class="flex flex-col w-full">
+          <div
+            class="w-full max-w-[1440px] mx-auto p-space-sm md:p-space-md lg:p-space-lg flex flex-col gap-space-md"
+          >
+            <div
+              class="flex flex-wrap items-center justify-between gap-space-sm bg-surface-container-lowest p-space-md rounded-xl shadow-sm"
+            >
+              <div class="flex items-center gap-space-md min-w-0">
+                <div
+                  class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shadow-xs shrink-0"
+                >
+                  <span class="material-symbols-outlined text-[26px]">badge</span>
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-space-xs">
+                    <h1 class="font-headline-sm text-headline-sm text-on-surface truncate">
+                      सदस्य पंजीयन • Member Ledger
+                    </h1>
+                    <span
+                      class="px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm"
+                      >POS v2.4</span
+                    >
+                  </div>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                    Master Desk Directory • Counter Shift A (सवेरा)
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-space-sm">
+                <div
+                  class="hidden sm:flex items-center gap-space-xs px-space-md py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md"
+                >
+                  <span class="material-symbols-outlined text-[16px] text-primary">cloud_done</span>
+                  <span class="">Indexed: 248 records (SQLite Local)</span>
+                </div>
+                <button
+                  class="h-10 px-space-md rounded-full bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md flex items-center gap-space-xs transition-colors shadow-xs"
+                  type="button"
+                >
+                  <span class="material-symbols-outlined text-[18px]">person_add</span>
+                  <span class="hidden sm:inline">New Admission</span>
+                  <span class="sm:hidden">Add</span>
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
+              <!-- MASTER LIST PANE (~42%) -->
+              <section
+                class="lg:col-span-5 flex flex-col gap-space-sm bg-surface-container-lowest p-space-md rounded-xl shadow-sm"
+              >
+                <div class="flex flex-col gap-space-sm">
+                  <div class="relative w-full">
+                    <div
+                      class="absolute inset-y-0 left-0 pl-space-md flex items-center pointer-events-none text-on-surface-variant"
+                    >
+                      <span class="material-symbols-outlined text-[20px]">search</span>
+                    </div>
+                    <input
+                      class="w-full h-[48px] pl-11 pr-14 rounded-lg bg-surface-container-low text-on-surface placeholder-on-surface-variant font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none transition-all"
+                      placeholder="Search name, +91 phone, GV-code..."
+                      type="text"
+                      value="Amit"
+                    />
+                    <button
+                      class="absolute inset-y-1 right-1 px-space-sm flex items-center justify-center rounded-md text-primary hover:bg-surface-container-high transition-colors"
+                      title="Scan Member Card / Barcode Lookup"
+                      type="button"
+                    >
+                      <span class="material-symbols-outlined text-[22px]">qr_code_scanner</span>
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
+                    <button
+                      class="px-space-sm py-1 rounded-full font-label-md text-label-md shrink-0 bg-surface-container-high text-on-surface hover:bg-surface-variant"
+                    >
+                      All <span class="ml-1 opacity-75">248</span>
+                    </button>
+                    <button
+                      class="px-space-sm py-1 rounded-full font-label-md text-label-md shrink-0 bg-surface-container-high text-on-surface hover:bg-surface-variant"
+                    >
+                      Active <span class="ml-1 opacity-75">228</span>
+                    </button>
+                    <button
+                      class="px-space-sm py-1 rounded-full font-label-md text-label-md shrink-0 bg-tertiary-fixed text-on-tertiary-fixed"
+                    >
+                      Expiring <span class="ml-1 font-bold">12</span>
+                    </button>
+                    <button
+                      class="px-space-sm py-1 rounded-full font-label-md text-label-md shrink-0 bg-primary-container text-on-primary"
+                    >
+                      Overdue <span class="ml-1 font-bold">5</span>
+                    </button>
+                    <button
+                      class="px-space-sm py-1 rounded-full font-label-md text-label-md shrink-0 bg-surface-container-high text-on-surface hover:bg-surface-variant"
+                    >
+                      Expired <span class="ml-1 opacity-75">8</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-space-xs mt-space-xs">
+                  <!-- Member 1: Selected (Amit Sharma) -->
+                  <article
+                    class="p-space-md rounded-xl bg-surface-container-low text-on-surface flex flex-col gap-space-xs cursor-pointer shadow-xs transition-transform active:scale-[0.99]"
+                  >
+                    <div class="flex items-start justify-between gap-space-xs">
+                      <div class="flex items-center gap-space-sm min-w-0">
+                        <div class="relative shrink-0">
+                          <div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container">
+                            <img
+                              class="w-full h-full object-cover"
+                              data-alt="Close up front portrait of an Indian male fitness enthusiast with a focused warm smile, gym towel around shoulders, soft ambient green lighting, crisp sharp camera focus, modern lifestyle portrait."
+                              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhUnc-5JinMdhVKphh2hz3oGZad6kcblwyC6uY2hH01Ffza_gjs534wsuTaEoMisz8DPfOpZxCHYKS_YWsQMQP8kFhzGUSlav-OkANfdagl5u9Gq4MaZgRzgLR_6mvjDfYR9RMHCpJDJSUE7REdUJQOqp_jYCv7FNlbn-CJAHnDqmB1d2hV3QfW0xMR4pxpurzUoTQG4jV8WL8vA4to5Iyc96kBcQ7G8mqrKB4m9Sx"
+                            />
+                          </div>
+                          <span
+                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-error ring-2 ring-surface-container-lowest"
+                          ></span>
+                        </div>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-space-xs">
+                            <span class="font-title-sm text-title-sm truncate text-on-surface"
+                              >Amit Sharma</span
+                            >
+                            <span
+                              class="px-1.5 py-0.2 rounded bg-surface-container text-primary font-label-sm text-label-sm font-bold"
+                              >GV-082</span
+                            >
+                          </div>
+                          <p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                            Annual Strength &amp; Conditioning
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container shrink-0 flex items-center gap-1 font-bold"
+                      >
+                        <span class="material-symbols-outlined text-[13px]">warning</span>
+                        Due ₹2,500
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between text-on-surface-variant pt-1">
+                      <span class="font-label-sm text-label-sm text-error font-medium"
+                        >Exp: 24 Nov 2025 • Overdue 4d</span
+                      >
+                      <span
+                        class="font-label-sm text-label-sm text-primary font-bold flex items-center gap-0.5"
+                      >
+                        Selected
+                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                      </span>
+                    </div>
+                  </article>
+                  <!-- Member 2: Priya Patel -->
+                  <article
+                    class="p-space-md rounded-xl bg-surface-container-lowest hover:bg-surface-container-low text-on-surface flex flex-col gap-space-xs cursor-pointer transition-colors"
+                  >
+                    <div class="flex items-start justify-between gap-space-xs">
+                      <div class="flex items-center gap-space-sm min-w-0">
+                        <div class="relative shrink-0">
+                          <div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container">
+                            <img
+                              class="w-full h-full object-cover"
+                              data-alt="Portrait of an active Indian woman in dark teal sportswear with braided hair at a modern gym reception, natural soft lighting, high detail, friendly counter expression."
+                              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB94yQweLOAhQ2heI1k0jae8M5uw25Mz0Bfz3bzOwII8OUpq9c4HwfVStzjK8etuGBM6lWf5C7r1a05zhgDR7xHSTzKvGpB3oSjDElFV3avE-4oyXSl-jYRQ_YhjIqktcr1AoOLOiI4F6dQGNyecPFTwDPZWRuHLUhU6RUBa9fKzMtkJM1yIfh7pXox7KmDiQHHeanAN6tJN9VC5p8vizPDmARk6fDMU16fmJtS7M8d"
+                            />
+                          </div>
+                          <span
+                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-tertiary-container ring-2 ring-surface-container-lowest"
+                          ></span>
+                        </div>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-space-xs">
+                            <span class="font-title-sm text-title-sm truncate text-on-surface"
+                              >Priya Patel</span
+                            >
+                            <span
+                              class="px-1.5 py-0.2 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm"
+                              >GV-114</span
+                            >
+                          </div>
+                          <p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                            3-Month Cardio Plus
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed shrink-0 font-medium"
+                      >
+                        Expires Today
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between text-on-surface-variant pt-1">
+                      <span class="font-label-sm text-label-sm">Today 18 May • Paid in Full</span>
+                      <span class="font-label-sm text-label-sm text-primary-container font-semibold"
+                        >₹6,200 (Paid)</span
+                      >
+                    </div>
+                  </article>
+                  <!-- Member 3: Vikram Malhotra -->
+                  <article
+                    class="p-space-md rounded-xl bg-surface-container-lowest hover:bg-surface-container-low text-on-surface flex flex-col gap-space-xs cursor-pointer transition-colors"
+                  >
+                    <div class="flex items-start justify-between gap-space-xs">
+                      <div class="flex items-center gap-space-sm min-w-0">
+                        <div class="relative shrink-0">
+                          <div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container">
+                            <img
+                              class="w-full h-full object-cover"
+                              data-alt="Athletic Indian male weightlifter smiling gently in athletic shirt, gym barbell background with subtle depth of field and warm rim light, authentic Indian fitness lifestyle."
+                              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCigaJqjhqXVHpi_b4lge_GO85AxazcwO-jncGZdYAuKy18_Jaa_lORBJwfKRcq9XQKuAHVjfc-9qytQ_lM3LaX8zTJa5DXEDVpFgrR88ziADZbcl-RLlOxHMZJRXI2wYA3TAVWgBiW_jdjm1FEr_ZysUPpYK9qFQ_cjXI5hg3qGfCImiw6JAWYkcF_bkUPMQ6ErVDgO0bPgjY9gtuTISFEbVF4Eg96c7Gj403e2vsR"
+                            />
+                          </div>
+                          <span
+                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary ring-2 ring-surface-container-lowest"
+                          ></span>
+                        </div>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-space-xs">
+                            <span class="font-title-sm text-title-sm truncate text-on-surface"
+                              >Vikram Malhotra</span
+                            >
+                            <span
+                              class="px-1.5 py-0.2 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm"
+                              >GV-045</span
+                            >
+                          </div>
+                          <p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                            6-Month Heavy Lift Pass
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed shrink-0 font-medium"
+                      >
+                        Active
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between text-on-surface-variant pt-1">
+                      <span class="font-label-sm text-label-sm">Exp: 12 Jan 2026</span>
+                      <span class="font-label-sm text-label-sm text-outline">Balance ₹0</span>
+                    </div>
+                  </article>
+                  <!-- Member 4: Neha Deshmukh -->
+                  <article
+                    class="p-space-md rounded-xl bg-surface-container-lowest hover:bg-surface-container-low text-on-surface flex flex-col gap-space-xs cursor-pointer transition-colors"
+                  >
+                    <div class="flex items-start justify-between gap-space-xs">
+                      <div class="flex items-center gap-space-sm min-w-0">
+                        <div class="relative shrink-0">
+                          <div
+                            class="w-12 h-12 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-title-sm text-title-sm font-bold"
+                          >
+                            ND
+                          </div>
+                          <span
+                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-outline ring-2 ring-surface-container-lowest"
+                          ></span>
+                        </div>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-space-xs">
+                            <span class="font-title-sm text-title-sm truncate text-on-surface"
+                              >Neha Deshmukh</span
+                            >
+                            <span
+                              class="px-1.5 py-0.2 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm"
+                              >GV-190</span
+                            >
+                          </div>
+                          <p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                            Monthly General Access
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container shrink-0 font-medium"
+                      >
+                        Expired
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between text-on-surface-variant pt-1">
+                      <span class="font-label-sm text-label-sm text-error"
+                        >Expired 14 May 2025</span
+                      >
+                      <span class="font-label-sm text-label-sm text-error font-bold">Due ₹800</span>
+                    </div>
+                  </article>
+                  <!-- Member 5: Rahul Roy -->
+                  <article
+                    class="p-space-md rounded-xl bg-surface-container-lowest hover:bg-surface-container-low text-on-surface flex flex-col gap-space-xs cursor-pointer transition-colors"
+                  >
+                    <div class="flex items-start justify-between gap-space-xs">
+                      <div class="flex items-center gap-space-sm min-w-0">
+                        <div class="relative shrink-0">
+                          <div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container">
+                            <img
+                              class="w-full h-full object-cover"
+                              data-alt="Young Indian athlete drinking water with a shaker bottle at fitness club reception, gym branding colors in dark green and clean slate, cinematic lighting, realistic gym atmosphere."
+                              src="https://lh3.googleusercontent.com/aida-public/AB6AXuD25zRQec_ifRjtA-1m_wVMWdwHzUr8V5329nu0lqZbZ_1i94da6yjGeb5QIl3jpK6UIA69F5VknJC9YOSMSWKztHQeXb0rMz_9E6FztOzYQoIxnHZ_hms_KPZzt0DTgh9-x5eRBl9pSzLPLbJLa88tZuGEV6VZ0XcJh5l0VAUzkADG3nxyMBMEhcy3cjzOdEAZnWJep0WAlut0SpcvGCgt3m7EkyOAAZ-1NFrB4o2C"
+                            />
+                          </div>
+                          <span
+                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary ring-2 ring-surface-container-lowest"
+                          ></span>
+                        </div>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-space-xs">
+                            <span class="font-title-sm text-title-sm truncate text-on-surface"
+                              >Rahul Roy</span
+                            >
+                            <span
+                              class="px-1.5 py-0.2 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm"
+                              >GV-205</span
+                            >
+                          </div>
+                          <p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                            Annual Fitness Pro
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed shrink-0 font-medium"
+                      >
+                        Active
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between text-on-surface-variant pt-1">
+                      <span class="font-label-sm text-label-sm">Exp: 30 Dec 2025</span>
+                      <span class="font-label-sm text-label-sm text-outline">Balance ₹0</span>
+                    </div>
+                  </article>
+                </div>
+                <div
+                  class="pt-space-sm mt-space-xs flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm"
+                >
+                  <span class="flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span>
+                    Showing 5 of 248 members • Offline cached
+                  </span>
+                  <button
+                    class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container shadow-sm transition-colors"
+                    title="Quick Add"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-[20px]">add</span>
+                  </button>
+                </div>
+              </section>
+              <!-- DETAIL INSPECTOR PANE (~58%) -->
+              <section class="lg:col-span-7 flex flex-col gap-space-md">
+                <!-- Member Profile Header Card -->
+                <div
+                  class="bg-surface-container-lowest p-space-md lg:p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md"
+                >
+                  <div class="flex flex-wrap items-start justify-between gap-space-md">
+                    <div class="flex items-center gap-space-md min-w-0">
+                      <div
+                        class="w-16 h-16 rounded-2xl overflow-hidden bg-surface-container shadow-xs shrink-0"
+                      >
+                        <img
+                          class="w-full h-full object-cover"
+                          data-alt="High resolution studio portrait of Amit Sharma, athletic Indian male with short beard in charcoal gym vest, clean focus, professional fitness member card portrait style with deep teal hues."
+                          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDWTIjzoybOA0LcPO_ZC8MxQw_QH0Rqj7y4x0P1BEpvm3nFUtNk5jNf50JWoVP85Hdali8I6GYbnBlWLINOo5wuNN45X49nLqLvQp1yrtD7ubTyzbFXdyP8VzT-GOHu-OSStFkoXu9-XwP6jKLbycqR34j9QfvLP1tEFiHuStDfr_DPGV__gEFhP8CS1pKLf4r9aCE3L1STDxU2UegIkOOxlu0gOtOU4ePUhxjeGMj"
+                        />
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-space-xs flex-wrap">
+                          <h2 class="font-headline-md text-headline-md text-on-surface truncate">
+                            Amit Sharma
+                          </h2>
+                          <span
+                            class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold"
+                            >GV-082</span
+                          >
+                          <span
+                            class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1"
+                          >
+                            <span class="material-symbols-outlined text-[13px] text-tertiary"
+                              >wb_twilight</span
+                            >
+                            Morning Regular
+                          </span>
+                        </div>
+                        <div
+                          class="flex items-center gap-space-md mt-1 flex-wrap text-on-surface-variant"
+                        >
+                          <a
+                            class="font-body-md text-body-md text-primary font-medium flex items-center gap-1 hover:underline"
+                            href="tel:+919820144521"
+                          >
+                            <span class="material-symbols-outlined text-[16px]">call</span>
+                            +91 98201 44521
+                          </a>
+                          <span class="font-body-sm text-body-sm">Member since Nov 2023</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-space-xs self-start">
+                      <span
+                        class="px- space-xs px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold flex items-center gap-1"
+                      >
+                        <span class="material-symbols-outlined text-[14px]">timer_off</span>
+                        Overdue 4 Days
+                      </span>
+                    </div>
+                  </div>
+                  <!-- Urgent Ledger Alert Banner -->
+                  <div
+                    class="p-space-md rounded-lg bg-error-container/40 text-on-error-container flex flex-wrap items-center justify-between gap-space-sm"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <div
+                        class="w-9 h-9 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0"
+                      >
+                        <span class="material-symbols-outlined text-[20px]"
+                          >account_balance_wallet</span
+                        >
+                      </div>
+                      <div class="min-w-0">
+                        <div class="font-title-sm text-title-sm text-error">
+                          Pending Ledger Balance: ₹2,500
+                        </div>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">
+                          Remaining from Invoice #INV-9932 (Due date was 14 May 2025)
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      class="px-space-md py-1.5 rounded-full bg-error text-on-error font-label-md text-label-md hover:opacity-90 transition-opacity"
+                      type="button"
+                    >
+                      Settle Now
+                    </button>
+                  </div>
+                  <!-- Primary Actions Toolbar (48px hit targets) -->
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-space-xs pt-space-xs">
+                    <button
+                      class="h-12 px-space-sm rounded-lg bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center gap-1.5 shadow-xs hover:bg-primary transition-colors"
+                      type="button"
+                    >
+                      <span class="material-symbols-outlined text-[18px]">autorenew</span>
+                      <span class="">Renew Plan</span>
+                    </button>
+                    <button
+                      class="h-12 px-space-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors"
+                      type="button"
+                    >
+                      <span class="material-symbols-outlined text-[18px] text-primary"
+                        >payments</span
+                      >
+                      <span class="">Collect ₹2,500</span>
+                    </button>
+                    <button
+                      class="h-12 px-space-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors"
+                      type="button"
+                    >
+                      <span class="material-symbols-outlined text-[18px] text-[#25D366]">chat</span>
+                      <span class="">WhatsApp Ledger</span>
+                    </button>
+                    <button
+                      class="h-12 px-space-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors"
+                      type="button"
+                    >
+                      <span class="material-symbols-outlined text-[18px]">phone_in_talk</span>
+                      <span class="">Call Member</span>
+                    </button>
+                  </div>
+                </div>
+                <!-- Active Subscription & Plan Details Card -->
+                <div
+                  class="bg-surface-container-lowest p-space-md lg:p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <span
+                        class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant"
+                        >Current Plan</span
+                      >
+                      <h3 class="font-title-lg text-title-lg text-on-surface">
+                        Annual Strength &amp; Conditioning
+                      </h3>
+                    </div>
+                    <span
+                      class="px-space-sm py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold"
+                    >
+                      Gym + Cardio + Locker
+                    </span>
+                  </div>
+                  <!-- Progress Bar & Expiry Details -->
+                  <div class="flex flex-col gap-1.5 bg-surface-container-low p-space-md rounded-xl">
+                    <div class="flex items-center justify-between font-label-md text-label-md">
+                      <span class="text-on-surface font-medium">Day 347 of 365 Days</span>
+                      <span class="text-on-surface-variant font-medium">Expires: 24 Nov 2025</span>
+                    </div>
+                    <div class="w-full h-3 rounded-full bg-surface-container-high overflow-hidden">
+                      <div
+                        class="h-full bg-primary-container rounded-full"
+                        style="width: 95%"
+                      ></div>
+                    </div>
+                    <div
+                      class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm pt-0.5"
+                    >
+                      <span class="">Started: 25 Nov 2024</span>
+                      <span class="text-error font-medium">18 Days Remaining</span>
+                    </div>
+                  </div>
+                  <!-- Fee Breakdown Bento Strip -->
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
+                    <div class="p-space-md rounded-xl bg-surface-container flex flex-col">
+                      <span class="font-label-sm text-label-sm text-on-surface-variant"
+                        >Total Package Fee</span
+                      >
+                      <span class="font-headline-sm text-headline-sm text-on-surface font-bold mt-1"
+                        >₹18,000</span
+                      >
+                      <span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5"
+                        >GST 18% included</span
+                      >
+                    </div>
+                    <div class="p-space-md rounded-xl bg-surface-container flex flex-col">
+                      <span class="font-label-sm text-label-sm text-on-surface-variant"
+                        >Paid (UPI Bank Trans)</span
+                      >
+                      <span class="font-headline-sm text-headline-sm text-primary font-bold mt-1"
+                        >₹15,500</span
+                      >
+                      <span class="font-body-sm text-body-sm text-primary-container mt-0.5"
+                        >2 installments cleared</span
+                      >
+                    </div>
+                    <div class="p-space-md rounded-xl bg-error-container/30 flex flex-col">
+                      <span class="font-label-sm text-label-sm text-error">Remaining Balance</span>
+                      <span class="font-headline-sm text-headline-sm text-error font-bold mt-1"
+                        >₹2,500</span
+                      >
+                      <span class="font-body-sm text-body-sm text-on-error-container mt-0.5"
+                        >Late fee waived</span
+                      >
+                    </div>
+                  </div>
+                  <!-- Amenities & Staff Notes -->
+                  <div class="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
+                    <div
+                      class="flex items-center gap-space-sm text-on-surface-variant font-body-md text-body-md"
+                    >
+                      <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[18px] text-primary">lock</span>
+                        Locker #34
+                      </span>
+                      <span class="">•</span>
+                      <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[18px] text-primary"
+                          >health_and_safety</span
+                        >
+                        1 Body Comp/mo
+                      </span>
+                    </div>
+                    <div
+                      class="flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-surface-container-high text-on-surface font-body-sm text-body-sm"
+                    >
+                      <span class="material-symbols-outlined text-[16px] text-tertiary"
+                        >sticky_note_2</span
+                      >
+                      <span class="">Prefers morning batch 6:30 AM - 8:00 AM</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Activity & Transaction Timeline -->
+                <div
+                  class="bg-surface-container-lowest p-space-md lg:p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-space-xs">
+                      <span class="material-symbols-outlined text-[20px] text-primary"
+                        >history</span
+                      >
+                      <h3 class="font-title-md text-title-md text-on-surface">
+                        Recent Activity &amp; Ledger History
+                      </h3>
+                    </div>
+                    <button
+                      class="font-label-sm text-label-sm text-primary hover:underline"
+                      type="button"
+                    >
+                      View All Logs (14)
+                    </button>
+                  </div>
+                  <div class="flex flex-col gap-space-sm">
+                    <!-- Timeline Item 1 -->
+                    <div
+                      class="flex items-start gap-space-md p-space-sm rounded-lg hover:bg-surface-container-low transition-colors"
+                    >
+                      <div
+                        class="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center shrink-0 mt-0.5"
+                      >
+                        <span class="material-symbols-outlined text-[16px]">lock_reset</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-space-xs">
+                          <span class="font-title-sm text-title-sm text-on-surface"
+                            >Locker #34 Allocated</span
+                          ><span class="font-label-sm text-label-sm text-on-surface-variant"
+                            >Today 6:40 AM</span
+                          >
+                        </div>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">
+                          Smart keytag assigned by Desk Staff • Key #LK-034 issued
+                        </p>
+                      </div>
+                    </div>
+                    <!-- Timeline Item 2 -->
+                    <div
+                      class="flex items-start gap-space-md p-space-sm rounded-lg hover:bg-surface-container-low transition-colors"
+                    >
+                      <div
+                        class="w-8 h-8 rounded-full bg-surface-container-high text-primary flex items-center justify-center shrink-0 mt-0.5"
+                      >
+                        <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-space-xs">
+                          <span class="font-title-sm text-title-sm text-on-surface"
+                            >Payment Received ₹5,000 (UPI)</span
+                          >
+                          <span class="font-label-sm text-label-sm text-on-surface-variant"
+                            >10 Apr 2025</span
+                          >
+                        </div>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">
+                          Received by Staff Rajesh • Rec #REC-1082 (HDFC Soundbox Alert Confirmed)
+                        </p>
+                      </div>
+                    </div>
+                    <!-- Timeline Item 3 -->
+                    <div
+                      class="flex items-start gap-space-md p-space-sm rounded-lg hover:bg-surface-container-low transition-colors"
+                    >
+                      <div
+                        class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0 mt-0.5"
+                      >
+                        <span class="material-symbols-outlined text-[16px]">history_edu</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-space-xs">
+                          <span class="font-title-sm text-title-sm text-on-surface"
+                            >Plan Renewed (12 Months)</span
+                          >
+                          <span class="font-label-sm text-label-sm text-on-surface-variant"
+                            >25 Nov 2024</span
+                          >
+                        </div>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">
+                          Applied coupon GV-EARLYBIRD • Admin Shift A approved
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

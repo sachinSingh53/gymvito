@@ -1,0 +1,75 @@
+{
+  "expo": {
+    "name": "GymVito",
+    "slug": "gymvito",
+    "owner": "sachin_53",
+    "version": "0.0.1",
+    "platforms": ["android", "ios"],
+    "orientation": "default",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "com.gymvito.app",
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#071A18",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true
+    },
+    "ios": {
+      "bundleIdentifier": "com.gymvito.app",
+      "supportsTablet": true,
+      "icon": "./assets/expo.icon"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 28,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0"
+          }
+        }
+      ],
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true,
+          "enableFTS": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#071A18",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "environment": "development",
+      "developmentRuntime": "expo-go",
+      "runtimeBackend": "none",
+      "router": {},
+      "eas": {
+        "projectId": "8e0a98d9-0004-460c-9c15-cb8a3bc3c10f"
+      }
+    }
+  }
+}

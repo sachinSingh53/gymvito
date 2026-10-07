@@ -1,0 +1,704 @@
+<!doctype html>
+<html class="h-full" lang="hi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      name="viewport"
+    />
+    <meta content="mobile_tab" name="shell-type" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Devanagari:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'on-tertiary-container': '#dcd2b5',
+              outline: '#6f7976',
+              'inverse-surface': '#1e3530',
+              'primary-fixed': '#a5f1e0',
+              'primary-fixed-dim': '#89d5c4',
+              'surface-container-low': '#dff9f3',
+              'surface-dim': '#c6e0d9',
+              'inverse-on-surface': '#dcf6f0',
+              'error-container': '#ffdad6',
+              'surface-container-high': '#d4eee7',
+              'secondary-container': '#cfe4e0',
+              secondary: '#4f625f',
+              'on-primary-fixed-variant': '#005046',
+              'surface-variant': '#cee8e1',
+              'on-background': '#071f1c',
+              error: '#ba1a1a',
+              'surface-container-lowest': '#ffffff',
+              'inverse-primary': '#89d5c4',
+              'surface-tint': '#156a5d',
+              'surface-container-highest': '#cee8e1',
+              'on-tertiary': '#ffffff',
+              'on-surface-variant': '#3f4946',
+              'on-surface': '#071f1c',
+              'on-primary-container': '#95e1d0',
+              'on-secondary-fixed': '#0c1f1d',
+              'on-secondary': '#ffffff',
+              'on-secondary-fixed-variant': '#374a48',
+              'on-tertiary-fixed': '#201b09',
+              'primary-container': '#0d6659',
+              tertiary: '#49432d',
+              primary: '#004c42',
+              'tertiary-fixed': '#ede2c5',
+              background: '#e5fff8',
+              'on-error': '#ffffff',
+              'on-primary': '#ffffff',
+              'surface-container': '#d9f3ed',
+              'secondary-fixed': '#d2e7e3',
+              'on-secondary-container': '#536664',
+              'surface-bright': '#e5fff8',
+              'tertiary-container': '#615a43',
+              'on-tertiary-fixed-variant': '#4d4731',
+              'on-error-container': '#93000a',
+              surface: '#e5fff8',
+              'outline-variant': '#bec9c5',
+              'on-primary-fixed': '#00201b',
+              'secondary-fixed-dim': '#b6cbc7',
+              'tertiary-fixed-dim': '#d0c6aa',
+            },
+            borderRadius: { DEFAULT: '0.25rem', lg: '0.5rem', xl: '0.75rem', full: '9999px' },
+            spacing: {
+              'space-sm': '8px',
+              'space-xs': '4px',
+              gutter: '16px',
+              'space-xl': '32px',
+              'space-lg': '24px',
+              margin: '16px',
+              'margin-tablet': '24px',
+              'space-md': '16px',
+              'margin-desktop': '32px',
+              'gutter-tablet': '24px',
+            },
+            fontFamily: {
+              'body-lg': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'headline-lg': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'title-lg': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'label-lg': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'headline-md': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'body-md': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'label-md': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'label-sm': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'title-sm': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'headline-sm': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'body-sm': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+              'title-md': ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+            },
+            fontSize: {
+              'body-lg': ['16px', { lineHeight: '26px', fontWeight: '400' }],
+              'headline-lg': ['30px', { lineHeight: '40px', fontWeight: '700' }],
+              'title-lg': ['18px', { lineHeight: '26px', fontWeight: '600' }],
+              'label-lg': ['14px', { lineHeight: '22px', fontWeight: '600' }],
+              'headline-md': ['24px', { lineHeight: '34px', fontWeight: '600' }],
+              'body-md': ['14px', { lineHeight: '22px', fontWeight: '400' }],
+              'label-md': ['12px', { lineHeight: '18px', fontWeight: '500' }],
+              'label-sm': ['11px', { lineHeight: '16px', fontWeight: '700' }],
+              'title-sm': ['14px', { lineHeight: '22px', fontWeight: '600' }],
+              'headline-sm': ['20px', { lineHeight: '30px', fontWeight: '600' }],
+              'body-sm': ['12px', { lineHeight: '18px', fontWeight: '400' }],
+              'title-md': ['16px', { lineHeight: '24px', fontWeight: '600' }],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @layer base {
+        html,
+        body {
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+        }
+        body {
+          overscroll-behavior-y: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .pt-safe {
+          padding-top: env(safe-area-inset-top, 0px);
+        }
+        main > :first-child {
+          margin-top: 0 !important;
+        }
+        main > :last-child {
+          margin-bottom: 0 !important;
+        }
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-full flex flex-col"
+  >
+    <header
+      class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(7,31,28,0.04)]"
+    >
+      <div class="h-16 px-margin flex items-center justify-between gap-space-sm">
+        <div class="flex items-center gap-space-sm min-w-0 flex-1">
+          <img
+            alt="GymVito Brand Mark"
+            class="h-8 w-auto object-contain shrink-0"
+            src="https://lh3.googleusercontent.com/aida/AEtjO1X4mJ9ARvHnjc7wntBdUwygXzYZZ5KwWeMMM3Y0ch5Si4AudQL4kJdsE9x1KuVlU1MnAv-JvTQPtBOjmQ6c6mclJ4C28IkQnCWFdpL1qo2gFu_Z9kzvX6gEUj1ta0vyb7fjqwQhaxU-V4AZiJgBZc1KhTSWIiumwU7EOh89J8PtLUKYnCdLedNe6CJuRGLqXbIcDS72DUy1Dy5-oa-VQa3WY4ZH_yCOK4JmkdVjQxOR"
+          />
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-space-xs">
+              <span class="font-title-sm text-title-sm text-primary truncate tracking-tight"
+                >GymVito</span
+              ><span
+                class="px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm leading-none shrink-0"
+                >POS</span
+              >
+            </div>
+            <h1
+              class="font-headline-sm text-headline-sm text-on-surface truncate leading-tight mt-0.5"
+            >
+              होम डैशबोर्ड
+            </h1>
+          </div>
+        </div>
+        <div class="flex items-center gap-space-xs shrink-0">
+          <button
+            aria-label="भाषा बदलें (Language Switcher)"
+            class="min-h-[48px] px-3 py-1.5 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold shadow-sm active:scale-95 transition-all"
+          >
+            <span class="leading-none">हिन्दी / ENG</span></button
+          ><button
+            aria-label="प्रोफ़ाइल खाता"
+            class="min-h-[48px] min-w-[48px] p-1 flex items-center justify-center rounded-full hover:bg-surface-container-high"
+          >
+            <img
+              alt="प्रोफ़ाइल"
+              class="w-8 h-8 rounded-full object-cover"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7tuETCMOT12116e5e8jZytjv1nVtLz3E0xcWdKYMElkc0sTp3jCqO34UX4QjAc1ctod9q-Et3lhzmregqxWsPTdHAE3bowN8TRq-DtGJD_6VK4rewVGCtC9ldp9gjShZZbhun_rg8aK_MBr6FavjlIxdnUpeU48-UBuZI0Ba6sgplOGV6Z9CJj48tIgeZ6kNxrN8MSpyUpPtdbC2iagNNQv9YpFgcPHuoKWV-K_c2"
+            />
+          </button>
+        </div>
+      </div>
+    </header>
+    <main class="flex-1 w-full bg-surface pt-16 pb-28">
+      <div class="flex flex-col w-full pb-4 px-margin gap-space-sm">
+        <!-- Privacy & Greeting Compact Header Card -->
+        <div
+          class="w-full bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col gap-2"
+        >
+          <div class="flex items-center justify-between gap-space-xs">
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-title-lg text-title-lg text-on-surface font-bold"
+                  >नमस्ते, राजेश जी</span
+                >
+                <span aria-hidden="true" class="text-[18px] select-none">👋</span>
+              </div>
+              <p class="font-label-md text-label-md text-secondary">
+                आयरनफिट हेल्थ &amp; स्ट्रेंथ क्लब
+              </p>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <!-- Privacy Eye Toggle with Hindi Tooltip/Label -->
+              <button
+                aria-label="राशि छुपाएं या दिखाएं"
+                class="min-h-[48px] px-2.5 py-1.5 rounded-full flex items-center justify-center gap-1 text-secondary bg-surface-container hover:bg-surface-container-high transition-colors active:scale-95"
+                id="toggle-privacy-btn"
+                title="राशि छुपाएं"
+              >
+                <span class="material-symbols-outlined text-[20px]" id="privacy-icon"
+                  >visibility</span
+                >
+                <span
+                  class="font-label-sm text-label-sm text-secondary font-semibold hidden xs:inline"
+                  id="privacy-label"
+                  >राशि छुपाएं</span
+                >
+              </button>
+              <!-- App Lock Action -->
+              <button
+                aria-label="डेस्क लॉक करें"
+                class="min-h-[48px] min-w-[48px] rounded-full flex items-center justify-center text-secondary hover:bg-surface-container transition-colors active:scale-95"
+                id="quick-lock-btn"
+                title="डेस्क लॉक करें"
+              >
+                <span class="material-symbols-outlined text-[22px]">lock</span>
+              </button>
+            </div>
+          </div>
+          <!-- Offline Sync Guarantee Badge -->
+          <div
+            class="flex items-center justify-between pt-1 border-t border-surface-container flex-wrap gap-1"
+          >
+            <div
+              class="inline-flex items-center gap-1.5 text-on-surface-variant font-label-md text-label-md py-0.5"
+            >
+              <span class="material-symbols-outlined text-[16px] text-primary shrink-0"
+                >verified</span
+              >
+              <span class="text-[12px] leading-tight">डिवाइस पर सुरक्षित (लोकल DB v4.2)</span>
+            </div>
+            <span class="font-label-sm text-label-sm text-secondary font-semibold shrink-0"
+              >शिफ्ट A • काउंटर 1</span
+            >
+          </div>
+        </div>
+        <!-- Counter Quick Actions (One-handed thumb reach) -->
+        <div class="grid grid-cols-3 gap-space-xs w-full">
+          <button
+            class="min-h-[48px] px-1.5 py-2 rounded-xl bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center gap-1 shadow-sm active:scale-95 transition-all text-center"
+          >
+            <span class="material-symbols-outlined text-[18px] shrink-0">person_add</span>
+            <span class="leading-snug font-semibold">+ नया सदस्य</span>
+          </button>
+          <button
+            class="min-h-[48px] px-1.5 py-2 rounded-xl bg-surface-container-lowest text-primary font-label-md text-label-md flex items-center justify-center gap-1 shadow-sm active:bg-surface-container transition-all text-center border border-outline-variant"
+          >
+            <span class="material-symbols-outlined text-[18px] shrink-0">autorenew</span>
+            <span class="leading-snug font-semibold">प्लान रिन्यू करें</span>
+          </button>
+          <button
+            class="min-h-[48px] px-1.5 py-2 rounded-xl bg-surface-container-lowest text-primary font-label-md text-label-md flex items-center justify-center gap-1 shadow-sm active:bg-surface-container transition-all text-center border border-outline-variant"
+          >
+            <span class="material-symbols-outlined text-[18px] shrink-0">payments</span>
+            <span class="leading-snug font-semibold">भुगतान दर्ज करें</span>
+          </button>
+        </div>
+        <!-- Elevated Urgent Front-Desk Tasks Section -->
+        <div class="w-full flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-title-sm text-title-sm text-on-surface font-bold"
+                >अत्यावश्यक काउंटर कार्य</span
+              >
+              <span
+                class="px-2.5 py-0.5 rounded-full bg-error text-on-error font-label-sm text-label-sm font-bold flex items-center justify-center leading-none"
+                >8 लंबित</span
+              >
+            </div>
+            <button
+              class="font-label-md text-label-md text-primary font-semibold min-h-[48px] flex items-center active:underline"
+            >
+              खाता बही देखें
+            </button>
+          </div>
+          <!-- Task 1: Overdue Balance Amit Sharma -->
+          <div
+            class="w-full bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col gap-2"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <div
+                  class="w-10 h-10 rounded-full bg-error-container text-on-error-container font-title-sm text-title-sm flex items-center justify-center font-bold shrink-0"
+                >
+                  अश
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-title-sm text-title-sm text-on-surface font-semibold truncate"
+                      >अमित शर्मा</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold leading-tight"
+                      >5 बकाया राशियां</span
+                    >
+                  </div>
+                  <span class="font-body-sm text-body-sm text-secondary truncate"
+                    >3 दिन पहले देय • नियमित प्लान</span
+                  >
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <span class="font-title-sm text-title-sm text-error font-bold maskable-amount"
+                  >₹2,500</span
+                >
+                <span class="block font-label-sm text-label-sm text-error font-semibold"
+                  >बकाया</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center justify-end gap-space-xs pt-1">
+              <button
+                aria-label="व्हाट्सएप सूचना भेजें"
+                class="min-h-[48px] px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 hover:bg-surface-container-high transition-colors active:scale-95"
+              >
+                <span class="material-symbols-outlined text-[18px] text-primary">chat</span>
+                <span class="font-medium">व्हाट्सएप सूचना</span>
+              </button>
+              <button
+                class="min-h-[48px] px-4 py-1.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1 active:scale-95 transition-transform"
+              >
+                <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+                <span class="">वसूली करें</span>
+              </button>
+            </div>
+          </div>
+          <!-- Task 2: Priya Patel Expiring Today -->
+          <div
+            class="w-full bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col gap-2"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <div
+                  class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container font-title-sm text-title-sm flex items-center justify-center font-bold shrink-0"
+                >
+                  पिप
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-title-sm text-title-sm text-on-surface font-semibold truncate"
+                      >प्रिया पटेल</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold leading-tight"
+                      >3 आज समाप्त</span
+                    >
+                  </div>
+                  <span class="font-body-sm text-body-sm text-secondary truncate"
+                    >वार्षिक स्ट्रेंथ &amp; कार्डियो #IF-1082</span
+                  >
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <span
+                  class="font-title-sm text-title-sm text-on-surface font-semibold maskable-amount"
+                  >₹12,000</span
+                >
+                <span class="block font-label-sm text-label-sm text-secondary font-medium"
+                  >नवीनीकरण कोट</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center justify-end gap-space-xs pt-1">
+              <button
+                aria-label="सदस्य को कॉल करें"
+                class="min-h-[48px] min-w-[48px] rounded-full bg-surface-container flex items-center justify-center text-secondary hover:bg-surface-container-high transition-colors active:scale-95"
+              >
+                <span class="material-symbols-outlined text-[20px]">call</span>
+              </button>
+              <button
+                class="min-h-[48px] px-4 py-1.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1 active:scale-95 transition-transform"
+              >
+                <span class="material-symbols-outlined text-[18px]">autorenew</span>
+                <span class="">आज रिन्यू करें</span>
+              </button>
+            </div>
+          </div>
+          <!-- Task 3: Rohan Verma Expiring Today -->
+          <div
+            class="w-full bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col gap-2"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <div
+                  class="w-10 h-10 rounded-full bg-surface-variant text-on-surface-variant font-title-sm text-title-sm flex items-center justify-center font-bold shrink-0"
+                >
+                  रोव
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-title-sm text-title-sm text-on-surface font-semibold truncate"
+                      >रोहन वर्मा</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold leading-tight"
+                      >आज समाप्त हो रहा है</span
+                    >
+                  </div>
+                  <span class="font-body-sm text-body-sm text-secondary truncate"
+                    >त्रैमासिक क्रॉसफ़िट #IF-0841</span
+                  >
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <span
+                  class="font-title-sm text-title-sm text-on-surface font-semibold maskable-amount"
+                  >₹4,200</span
+                >
+                <span class="block font-label-sm text-label-sm text-secondary font-medium"
+                  >नवीनीकरण कोट</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center justify-end gap-space-xs pt-1">
+              <button
+                aria-label="व्हाट्सएप भेजें"
+                class="min-h-[48px] px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 hover:bg-surface-container-high transition-colors active:scale-95"
+              >
+                <span class="material-symbols-outlined text-[18px] text-primary">chat</span>
+                <span class="font-medium">व्हाट्सएप</span>
+              </button>
+              <button
+                class="min-h-[48px] px-4 py-1.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1 active:scale-95 transition-transform"
+              >
+                <span class="material-symbols-outlined text-[18px]">autorenew</span>
+                <span class="">रिन्यू करें</span>
+              </button>
+            </div>
+          </div>
+          <!-- Task 4: Automated Bulk Follow-up -->
+          <div
+            class="w-full bg-surface-container rounded-xl p-3 flex items-center justify-between gap-space-sm"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="material-symbols-outlined text-[22px] text-secondary shrink-0"
+                >date_range</span
+              >
+              <div class="flex flex-col min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-label-lg text-label-lg text-on-surface font-semibold"
+                    >इस हफ्ते समाप्त हो रहे प्लान</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold leading-tight"
+                    >9 इस हफ्ते</span
+                  >
+                </div>
+                <span class="font-body-sm text-body-sm text-secondary truncate"
+                  >ऑटोमेटेड व्हाट्सएप कतार तैयार</span
+                >
+              </div>
+            </div>
+            <button
+              class="min-h-[48px] px-3.5 rounded-full bg-surface-container-lowest text-primary font-label-md text-label-md font-semibold shrink-0 shadow-sm active:scale-95 transition-transform"
+            >
+              समीक्षा करें (9)
+            </button>
+          </div>
+        </div>
+        <!-- Operational Metric Tiles (Compact 2x2 Grid) -->
+        <div class="grid grid-cols-2 gap-space-xs w-full">
+          <!-- Active Members -->
+          <div
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col justify-between gap-1"
+          >
+            <div class="flex items-center justify-between">
+              <span class="font-label-md text-label-md text-secondary">सक्रिय सदस्य</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary-container" title="सक्रिय"></span>
+            </div>
+            <div class="flex items-baseline gap-1.5 flex-wrap">
+              <span class="font-headline-md text-headline-md font-bold text-on-surface">248</span>
+              <span class="font-label-sm text-label-sm text-primary font-semibold"
+                >+6 इस हफ्ते</span
+              >
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary truncate">210 वार्षिक प्लान</p>
+          </div>
+          <!-- Expiring Soon -->
+          <div
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col justify-between gap-1"
+          >
+            <div class="flex items-center justify-between">
+              <span class="font-label-md text-label-md text-secondary">जल्द समाप्त होने वाले</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-tertiary" title="ध्यान दें"></span>
+            </div>
+            <div class="flex items-baseline gap-1.5 flex-wrap">
+              <span class="font-headline-md text-headline-md font-bold text-tertiary">12</span>
+              <span class="font-label-sm text-label-sm text-tertiary font-medium">अगले 7 दिन</span>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary truncate">3 आज समाप्त</p>
+          </div>
+          <!-- Expired Access -->
+          <div
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col justify-between gap-1"
+          >
+            <div class="flex items-center justify-between">
+              <span class="font-label-md text-label-md text-secondary">समाप्त सदस्यता</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-error" title="प्रवेश प्रतिबंधित"></span>
+            </div>
+            <div class="flex items-baseline gap-1.5 flex-wrap">
+              <span class="font-headline-md text-headline-md font-bold text-error">8</span>
+              <span class="font-label-sm text-label-sm text-error font-medium">अनिस्तारित</span>
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary truncate">नवीनीकरण लंबित</p>
+          </div>
+          <!-- Outstanding Dues -->
+          <div
+            class="bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col justify-between gap-1"
+          >
+            <div class="flex items-center justify-between">
+              <span class="font-label-md text-label-md text-secondary">बकाया शुल्क</span>
+              <span
+                class="px-1.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold"
+                >5 बकायेदार</span
+              >
+            </div>
+            <div class="flex items-baseline gap-0.5">
+              <span
+                class="font-headline-md text-headline-md font-bold text-on-surface maskable-amount"
+                >₹38,500</span
+              >
+            </div>
+            <p class="font-body-sm text-body-sm text-secondary truncate">उच्चतम: ₹8,000</p>
+          </div>
+        </div>
+        <!-- Today's Recorded Collections Full Banner -->
+        <div
+          class="w-full bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col gap-1.5"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[20px] text-primary">point_of_sale</span>
+              <span class="font-label-lg text-label-lg font-semibold text-on-surface"
+                >आज का दर्ज संग्रह</span
+              >
+            </div>
+            <span
+              class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm font-bold"
+              >14 लेन-देन</span
+            >
+          </div>
+          <div class="flex items-baseline justify-between flex-wrap gap-1">
+            <div class="flex items-baseline gap-1.5">
+              <span class="font-headline-lg text-headline-lg font-bold text-primary maskable-amount"
+                >₹18,750</span
+              >
+              <span class="font-label-md text-label-md text-secondary font-medium"
+                >सुलझाया गया</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-label-sm text-label-sm text-secondary">UPI: 72%</span>
+              <span class="font-label-sm text-label-sm text-secondary">कैश: 28%</span>
+            </div>
+          </div>
+          <p class="font-body-sm text-body-sm text-secondary">
+            सभी काउंटर शिफ्टों के दौरान आज रिकॉर्ड किया गया कुल संग्रह (कैश, यूपीआई, कार्ड)।
+          </p>
+        </div>
+        <!-- Backup Overdue Warning (Consolidated compact status banner) -->
+        <div
+          class="w-full bg-tertiary-fixed text-on-tertiary-fixed rounded-xl p-3 shadow-sm flex items-center justify-between gap-space-sm"
+        >
+          <div class="flex items-center gap-2 min-w-0">
+            <div
+              class="w-8 h-8 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center shrink-0"
+            >
+              <span class="material-symbols-outlined text-[18px]">warning</span>
+            </div>
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center gap-1.5">
+                <h2 class="font-title-sm text-title-sm font-bold text-on-tertiary-fixed">
+                  बैकअप लंबित
+                </h2>
+                <span
+                  class="px-2 py-0.5 rounded-full bg-surface-container-lowest font-label-sm text-label-sm text-error font-bold leading-none"
+                  >4 दिन</span
+                >
+              </div>
+              <p class="font-body-sm text-body-sm text-on-tertiary-fixed-variant truncate">
+                एसडी कार्ड / यूएसबी सुरक्षित निर्यात लंबित (4 दिन)
+              </p>
+            </div>
+          </div>
+          <button
+            class="min-h-[48px] px-3.5 rounded-full bg-on-tertiary-fixed text-tertiary-fixed font-label-md text-label-md font-semibold flex items-center gap-1 shrink-0 shadow-sm active:scale-95 transition-transform"
+          >
+            <span class="material-symbols-outlined text-[18px]">cloud_upload</span>
+            <span class="">बैकअप लें</span>
+          </button>
+        </div>
+      </div>
+      <script>
+        (function initDashboardMicroInteractions() {
+          // Privacy Masking Logic
+          const toggleBtn = document.getElementById('toggle-privacy-btn');
+          const privacyIcon = document.getElementById('privacy-icon');
+          const privacyLabel = document.getElementById('privacy-label');
+          let isMasked = false;
+
+          if (toggleBtn && privacyIcon) {
+            toggleBtn.addEventListener('click', () => {
+              isMasked = !isMasked;
+              privacyIcon.textContent = isMasked ? 'visibility_off' : 'visibility';
+              if (privacyLabel) {
+                privacyLabel.textContent = isMasked ? 'राशि दिखाएं' : 'राशि छुपाएं';
+              }
+              const amounts = document.querySelectorAll('.maskable-amount');
+              amounts.forEach((el) => {
+                if (isMasked) {
+                  el.setAttribute('data-original-val', el.textContent.trim());
+                  el.textContent = '••••••';
+                } else {
+                  const original = el.getAttribute('data-original-val');
+                  if (original) el.textContent = original;
+                }
+              });
+            });
+          }
+
+          // App Lock Shortcut feedback
+          const lockBtn = document.getElementById('quick-lock-btn');
+          if (lockBtn) {
+            lockBtn.addEventListener('click', () => {
+              const originalIcon = lockBtn.innerHTML;
+              lockBtn.innerHTML =
+                '<span class="material-symbols-outlined text-[22px] text-primary">lock_clock</span>';
+              setTimeout(() => {
+                lockBtn.innerHTML = originalIcon;
+              }, 1200);
+            });
+          }
+        })();
+      </script>
+    </main>
+    <nav
+      class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_16px_rgba(7,26,24,0.05)]"
+      data-active-classes="text-primary font-bold"
+    >
+      <div class="flex justify-around items-center h-16 px-space-xs">
+        <a
+          aria-current="page"
+          class="flex-1 min-h-[48px] flex flex-col items-center justify-center gap-0.5 text-primary font-bold"
+          data-path="dashboard"
+          href="#"
+          ><span class="material-symbols-outlined text-[24px]">dashboard</span
+          ><span class="font-label-sm text-label-sm">होम</span></a
+        ><a
+          class="flex-1 min-h-[48px] flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface"
+          data-path="members"
+          href="#"
+          ><span class="material-symbols-outlined text-[24px]">group</span
+          ><span class="font-label-sm text-label-sm">सदस्य</span></a
+        ><a
+          class="flex-1 min-h-[48px] flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface"
+          data-path="payments"
+          href="#"
+          ><span class="material-symbols-outlined text-[24px]">currency_rupee</span
+          ><span class="font-label-sm text-label-sm">भुगतान</span></a
+        ><a
+          class="flex-1 min-h-[48px] flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface"
+          data-path="more-hub"
+          href="#"
+          ><span class="material-symbols-outlined text-[24px]">widgets</span
+          ><span class="font-label-sm text-label-sm">अधिक</span></a
+        >
+      </div>
+    </nav>
+  </body>
+</html>

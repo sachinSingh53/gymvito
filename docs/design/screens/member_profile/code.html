@@ -1,0 +1,612 @@
+<!doctype html>
+<html class="h-full" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      name="viewport"
+    />
+    <meta content="mobile_stack" name="shell-type" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'on-tertiary-container': '#dcd2b5',
+              outline: '#6f7976',
+              'inverse-surface': '#1e3530',
+              'primary-fixed': '#a5f1e0',
+              'primary-fixed-dim': '#89d5c4',
+              'surface-container-low': '#dff9f3',
+              'surface-dim': '#c6e0d9',
+              'inverse-on-surface': '#dcf6f0',
+              'error-container': '#ffdad6',
+              'surface-container-high': '#d4eee7',
+              'secondary-container': '#cfe4e0',
+              secondary: '#4f625f',
+              'on-primary-fixed-variant': '#005046',
+              'surface-variant': '#cee8e1',
+              'on-background': '#071f1c',
+              error: '#ba1a1a',
+              'surface-container-lowest': '#ffffff',
+              'inverse-primary': '#89d5c4',
+              'surface-tint': '#156a5d',
+              'surface-container-highest': '#cee8e1',
+              'on-tertiary': '#ffffff',
+              'on-surface-variant': '#3f4946',
+              'on-surface': '#071f1c',
+              'on-primary-container': '#95e1d0',
+              'on-secondary-fixed': '#0c1f1d',
+              'on-secondary': '#ffffff',
+              'on-secondary-fixed-variant': '#374a48',
+              'on-tertiary-fixed': '#201b09',
+              'primary-container': '#0d6659',
+              tertiary: '#49432d',
+              primary: '#004c42',
+              'tertiary-fixed': '#ede2c5',
+              background: '#e5fff8',
+              'on-error': '#ffffff',
+              'on-primary': '#ffffff',
+              'surface-container': '#d9f3ed',
+              'secondary-fixed': '#d2e7e3',
+              'on-secondary-container': '#536664',
+              'surface-bright': '#e5fff8',
+              'tertiary-container': '#615a43',
+              'on-tertiary-fixed-variant': '#4d4731',
+              'on-error-container': '#93000a',
+              surface: '#e5fff8',
+              'outline-variant': '#bec9c5',
+              'on-primary-fixed': '#00201b',
+              'secondary-fixed-dim': '#b6cbc7',
+              'tertiary-fixed-dim': '#d0c6aa',
+            },
+            borderRadius: { DEFAULT: '0.25rem', lg: '0.5rem', xl: '0.75rem', full: '9999px' },
+            spacing: {
+              'space-sm': '8px',
+              'space-xs': '4px',
+              gutter: '16px',
+              'space-xl': '32px',
+              'space-lg': '24px',
+              margin: '16px',
+              'margin-tablet': '24px',
+              'space-md': '16px',
+              'margin-desktop': '32px',
+              'gutter-tablet': '24px',
+            },
+            fontFamily: {
+              'body-lg': ['Inter'],
+              'headline-lg': ['Inter'],
+              'title-lg': ['Inter'],
+              'label-lg': ['Inter'],
+              'headline-md': ['Inter'],
+              'body-md': ['Inter'],
+              'label-md': ['Inter'],
+              'label-sm': ['Inter'],
+              'title-sm': ['Inter'],
+              'headline-sm': ['Inter'],
+              'body-sm': ['Inter'],
+              'title-md': ['Inter'],
+            },
+            fontSize: {
+              'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+              'headline-lg': ['30px', { lineHeight: '38px', fontWeight: '700' }],
+              'title-lg': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+              'label-lg': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+              'headline-md': ['24px', { lineHeight: '32px', fontWeight: '600' }],
+              'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+              'label-md': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+              'label-sm': ['10px', { lineHeight: '14px', fontWeight: '700' }],
+              'title-sm': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+              'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+              'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+              'title-md': ['16px', { lineHeight: '22px', fontWeight: '600' }],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @layer base {
+        html,
+        body {
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          overscroll-behavior-y: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .pt-safe {
+          padding-top: env(safe-area-inset-top, 0px);
+        }
+        main > :first-child {
+          margin-top: 0 !important;
+        }
+        main > :last-child {
+          margin-bottom: 0 !important;
+        }
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-full flex flex-col"
+  >
+    <header
+      class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(7,31,28,0.04)]"
+    >
+      <div class="h-16 px-margin flex items-center justify-between gap-space-sm">
+        <div class="flex items-center gap-space-xs min-w-0 flex-1">
+          <button
+            aria-label="Go back"
+            class="min-h-[48px] min-w-[48px] -ml-2 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-high"
+            onclick="history.back()"
+          >
+            <span class="material-symbols-outlined text-[24px]">arrow_back</span></button
+          ><img
+            alt="GymVito Brand Mark"
+            class="h-7 w-auto object-contain shrink-0"
+            src="https://lh3.googleusercontent.com/aida/AEtjO1X4mJ9ARvHnjc7wntBdUwygXzYZZ5KwWeMMM3Y0ch5Si4AudQL4kJdsE9x1KuVlU1MnAv-JvTQPtBOjmQ6c6mclJ4C28IkQnCWFdpL1qo2gFu_Z9kzvX6gEUj1ta0vyb7fjqwQhaxU-V4AZiJgBZc1KhTSWIiumwU7EOh89J8PtLUKYnCdLedNe6CJuRGLqXbIcDS72DUy1Dy5-oa-VQa3WY4ZH_yCOK4JmkdVjQxOR"
+          />
+          <h1 class="font-title-lg text-title-lg text-on-surface truncate leading-none">
+            Member Profile
+          </h1>
+        </div>
+        <div class="flex items-center gap-space-xs shrink-0">
+          <button
+            aria-label="Sync cache status"
+            class="min-h-[48px] min-w-[48px] rounded-full flex items-center justify-center text-secondary hover:bg-surface-container-high"
+          >
+            <span class="material-symbols-outlined text-[20px]">sync</span>
+          </button>
+          <div class="min-h-[48px] min-w-[48px] p-1 flex items-center justify-center">
+            <img
+              alt="Profile"
+              class="w-8 h-8 rounded-full object-cover"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7tuETCMOT12116e5e8jZytjv1nVtLz3E0xcWdKYMElkc0sTp3jCqO34UX4QjAc1ctod9q-Et3lhzmregqxWsPTdHAE3bowN8TRq-DtGJD_6VK4rewVGCtC9ldp9gjShZZbhun_rg8aK_MBr6FavjlIxdnUpeU48-UBuZI0Ba6sgplOGV6Z9CJj48tIgeZ6kNxrN8MSpyUpPtdbC2iagNNQv9YpFgcPHuoKWV-K_c2"
+            />
+          </div>
+        </div>
+      </div>
+    </header>
+    <main class="flex-1 w-full bg-surface pt-16 pb-safe">
+      <div class="flex flex-col w-full px-margin pb-space-xl">
+        <!-- Member Top Action Ribbon -->
+        <div class="flex items-center justify-between py-space-sm">
+          <div class="flex items-center gap-space-xs">
+            <span
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm"
+              ><span class="material-symbols-outlined text-[14px] text-primary">database</span>
+              SAVED ON DEVICE (LOCAL DB)</span
+            >
+            <span
+              class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm"
+            >
+              ENG / हिन्दी
+            </span>
+          </div>
+          <div class="flex items-center gap-space-xs">
+            <button
+              aria-label="Edit member profile"
+              class="w-12 h-12 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container-high active:scale-95 transition-transform"
+            >
+              <span class="material-symbols-outlined text-[20px]">edit</span>
+            </button>
+            <div class="relative">
+              <button
+                aria-label="More options"
+                class="w-12 h-12 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container-high active:scale-95 transition-transform"
+                id="menuTrigger"
+              >
+                <span class="material-symbols-outlined text-[20px]">more_vert</span>
+              </button>
+              <div
+                class="hidden absolute right-0 top-12 w-48 bg-surface-container-lowest rounded-xl shadow-xl z-20 py-2"
+                id="overflowMenu"
+              >
+                <button
+                  class="w-full text-left px-4 py-3 flex items-center gap-3 text-error font-body-md text-body-md hover:bg-error-container/30"
+                >
+                  <span class="material-symbols-outlined text-[18px]">archive</span>
+                  Archive Member
+                </button>
+                <button
+                  class="w-full text-left px-4 py-3 flex items-center gap-3 text-on-surface font-body-md text-body-md hover:bg-surface-container-low"
+                >
+                  <span class="material-symbols-outlined text-[18px]">badge</span>
+                  Reissue RFID / QR
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Member Overview Profile Card -->
+        <div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+          <div class="flex items-start gap-space-md">
+            <div class="relative shrink-0">
+              <img
+                class="w-16 h-16 rounded-full object-cover shadow-sm"
+                data-alt="Close-up portrait of Amit Sharma, a 28 year old athletic Indian man in a gym athletic t-shirt smiling confidently with warm gym ambient lighting and natural skin tones"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVhbhsD2kgCLsUn2iy51TSiUdrdTwgLk0q-hsp7PGR10PP49lLTDkqjw0e_GWlwvyD1sYC8h8SU25otfMtVoDu42ztnUHNO6g-ZgvBHB8QodX3CW7mhN_zkdKe_NznY-jMmfDUoabpL485_UZfcmuCtF3Opju742iEuOVmpC087nh1tUd67jmVuxA0CVXhSNlU0qkOSIRHguL1KMHoaJKX9T15A_X7TcAIqr_gREYB"
+              />
+              <span
+                class="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-primary-container ring-2 ring-surface-container-lowest flex items-center justify-center"
+              >
+                <span class="material-symbols-outlined text-[10px] text-on-primary"
+                  >fitness_center</span
+                >
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-space-xs flex-wrap">
+                <h2 class="font-headline-sm text-headline-sm text-on-surface truncate">
+                  Amit Sharma
+                </h2>
+                <span
+                  class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm tracking-wide"
+                >
+                  GV-082
+                </span>
+              </div>
+              <p class="font-body-sm text-body-sm text-secondary mt-0.5">
+                Member since 15 Nov 2023 • Morning Regular
+              </p>
+              <!-- Quick Contacts Bar -->
+              <div class="flex items-center gap-space-sm mt-3 flex-wrap">
+                <a
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md"
+                  href="tel:+919820144521"
+                >
+                  <span class="material-symbols-outlined text-[16px] text-primary">call</span>
+                  +91 98201 44521
+                </a>
+                <button
+                  aria-label="Send WhatsApp Fee Reminder"
+                  class="w-9 h-9 rounded-full bg-surface-container-high hover:bg-secondary-container flex items-center justify-center text-primary-container active:scale-90 transition-transform"
+                  onclick="sendWhatsAppReminder()"
+                >
+                  <span class="material-symbols-outlined text-[18px]">chat</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Alert / Highlight Banners Container -->
+          <div class="mt-space-md flex flex-col gap-2">
+            <!-- Expiry Notice Chip/Banner -->
+            <div
+              class="flex items-center justify-between p-3 rounded-lg bg-surface-container-high text-on-surface"
+            >
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="material-symbols-outlined text-[20px] text-primary-container shrink-0"
+                  >hourglass_top</span
+                >
+                <div class="min-w-0">
+                  <p class="font-title-sm text-title-sm text-on-surface truncate">
+                    Active Plan Expiring Soon
+                  </p>
+                  <p class="font-body-sm text-body-sm text-secondary">
+                    Renewal due in 18 days (24 Nov 2025)
+                  </p>
+                </div>
+              </div>
+              <span
+                class="px-2.5 py-1 rounded-full bg-surface-container-lowest text-primary font-label-sm text-label-sm shrink-0"
+              >
+                18 Days Left
+              </span>
+            </div>
+            <!-- Outstanding Due Notice -->
+            <div
+              class="flex items-center justify-between p-3 rounded-lg bg-error-container text-on-error-container"
+            >
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="material-symbols-outlined text-[20px] text-error shrink-0"
+                  >priority_high</span
+                >
+                <div class="min-w-0">
+                  <p class="font-title-sm text-title-sm text-on-error-container">
+                    Pending Ledger Balance
+                  </p>
+                  <p class="font-body-sm text-body-sm text-on-error-container/80">
+                    Invoice #INV-9932 remaining balance
+                  </p>
+                </div>
+              </div>
+              <span
+                class="font-headline-sm text-headline-sm text-error shrink-0 font-bold tracking-tight"
+              >
+                ₹2,500
+              </span>
+            </div>
+          </div>
+        </div>
+        <!-- Primary Operations Deck -->
+        <div class="mt-space-md grid grid-cols-1 gap-2.5">
+          <div class="grid grid-cols-2 gap-2.5">
+            <button
+              class="h-12 px-4 rounded-full bg-primary text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm active:opacity-90"
+            >
+              <span class="material-symbols-outlined text-[20px]">autorenew</span>
+              <span class="">Renew Plan</span>
+            </button>
+            <button
+              class="h-12 px-4 rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm active:opacity-90"
+              onclick="triggerPaymentModal()"
+            >
+              <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+              <span class="">Collect ₹2,500</span>
+            </button>
+          </div>
+          <button
+            class="h-12 w-full rounded-full bg-surface-container-lowest text-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm hover:bg-surface-container-low active:bg-surface-container"
+          >
+            <span class="material-symbols-outlined text-[20px]">share</span>
+            <span class="">Share Ledger Statement (WhatsApp/PDF)</span>
+          </button>
+        </div>
+        <!-- Tabbed Navigation Bar -->
+        <div class="mt-space-lg flex items-center gap-1 bg-surface-container-high p-1 rounded-xl">
+          <button
+            class="flex-1 py-2 text-center rounded-lg bg-surface-container-lowest text-primary font-label-md text-label-md shadow-xs transition-colors"
+          >
+            Summary
+          </button>
+          <button
+            class="flex-1 py-2 text-center rounded-lg text-secondary font-label-md text-label-md hover:text-on-surface transition-colors"
+          >
+            Plans (3)
+          </button>
+          <button
+            class="flex-1 py-2 text-center rounded-lg text-secondary font-label-md text-label-md hover:text-on-surface transition-colors"
+          >
+            Payments
+          </button>
+          <button
+            class="flex-1 py-2 text-center rounded-lg text-secondary font-label-md text-label-md hover:text-on-surface transition-colors"
+          >
+            Notes
+          </button>
+        </div>
+        <!-- Active Subscription Plan Bento Card -->
+        <div class="mt-space-md bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+          <div class="flex items-center justify-between pb-space-sm">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[20px]">verified</span>
+              <span class="font-title-sm text-title-sm text-on-surface">Current Subscription</span>
+            </div>
+            <span
+              class="px-2 py-0.5 rounded-full bg-surface-container text-secondary font-label-sm text-label-sm uppercase tracking-wider"
+            >
+              Active 12M
+            </span>
+          </div>
+          <div class="mt-1">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface">
+              Annual Strength &amp; Conditioning
+            </h3>
+            <p class="font-body-sm text-body-sm text-secondary mt-0.5">
+              Full floor access • Locker #34 included • 1 Personal Assessment/mo
+            </p>
+          </div>
+          <!-- Duration Tracker & Timeline -->
+          <div class="mt-space-md p-3 rounded-lg bg-surface-container-low">
+            <div
+              class="flex items-center justify-between font-label-sm text-label-sm text-secondary"
+            >
+              <span class="">25 Nov 2024</span>
+              <span class="text-primary font-semibold">Day 347 of 365</span>
+              <span class="">24 Nov 2025</span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full h-2 rounded-full bg-surface-variant mt-2 overflow-hidden">
+              <div class="h-full bg-primary-container rounded-full" style="width: 95%"></div>
+            </div>
+          </div>
+          <!-- Financial Breakdown Pill Grid -->
+          <div class="mt-space-md grid grid-cols-3 gap-2 text-center">
+            <div class="p-2.5 rounded-lg bg-surface-container">
+              <p class="font-label-sm text-label-sm text-secondary uppercase">Total Fee</p>
+              <p class="font-title-sm text-title-sm text-on-surface mt-1">₹18,000</p>
+            </div>
+            <div class="p-2.5 rounded-lg bg-surface-container">
+              <p class="font-label-sm text-label-sm text-secondary uppercase">Paid (UPI)</p>
+              <p class="font-title-sm text-title-sm text-primary-container mt-1">₹15,500</p>
+            </div>
+            <div class="p-2.5 rounded-lg bg-error-container">
+              <p class="font-label-sm text-label-sm text-on-error-container uppercase">Balance</p>
+              <p class="font-title-sm text-title-sm text-error mt-1 font-bold">₹2,500</p>
+            </div>
+          </div>
+        </div>
+        <!-- Operational Notes / Member Preferences -->
+        <div class="mt-space-md bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+          <div class="flex items-center justify-between pb-2">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-tertiary">sticky_note_2</span>
+              <span class="font-title-sm text-title-sm text-on-surface"
+                >Desk Operational Notes</span
+              >
+            </div>
+            <button class="text-primary font-label-sm text-label-sm flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-[16px]">add</span> Add Note
+            </button>
+          </div>
+          <div class="p-3 rounded-lg bg-surface-container-low flex items-start gap-2.5">
+            <span class="material-symbols-outlined text-[18px] text-secondary mt-0.5"
+              >schedule</span
+            >
+            <div class="flex-1 min-w-0">
+              <p class="font-body-md text-body-md text-on-surface">
+                Prefers morning batch 6:30 AM – 8:00 AM.
+              </p>
+              <p class="font-label-sm text-label-sm text-secondary mt-1">
+                Added by Front Desk on 12 Dec 2024
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- Recent Activity Feed -->
+        <div class="mt-space-md bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+          <div class="flex items-center justify-between pb-space-sm">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[20px] text-secondary">history</span>
+              <span class="font-title-sm text-title-sm text-on-surface">Recent Activity Log</span>
+            </div>
+            <span class="font-label-sm text-label-sm text-secondary">Audit Trail</span>
+          </div>
+          <div class="mt-2 flex flex-col gap-3">
+            <!-- Activity Item 1 -->
+            <div
+              class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-surface-container-low transition-colors"
+            >
+              <div
+                class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0 mt-0.5"
+              >
+                <span class="material-symbols-outlined text-[18px] text-primary">payments</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="font-title-sm text-title-sm text-on-surface truncate">
+                    Payment Received ₹5,000
+                  </p>
+                  <span class="font-label-sm text-label-sm text-secondary shrink-0"
+                    >10 Apr 2025</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-secondary mt-0.5">
+                  Collected via UPI by Staff Rajesh •
+                  <span class="font-mono text-on-surface-variant">REC-1082</span>
+                </p>
+              </div>
+            </div>
+            <!-- Activity Item 2 -->
+            <div
+              class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-surface-container-low transition-colors"
+            >
+              <div
+                class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0 mt-0.5"
+              >
+                <span class="material-symbols-outlined text-[18px] text-primary-container"
+                  >event_repeat</span
+                >
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="font-title-sm text-title-sm text-on-surface truncate">
+                    Plan Renewed (12 Months)
+                  </p>
+                  <span class="font-label-sm text-label-sm text-secondary shrink-0"
+                    >25 Nov 2024</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-secondary mt-0.5">
+                  Annual Strength &amp; Conditioning applied by Admin
+                </p>
+              </div>
+            </div>
+            <!-- Activity Item 3 -->
+            <div
+              class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-surface-container-low transition-colors"
+            >
+              <div
+                class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0 mt-0.5"
+              >
+                <span class="material-symbols-outlined text-[18px] text-secondary">lock</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="font-title-sm text-title-sm text-on-surface truncate">
+                    Locker #34 Allocated
+                  </p>
+                  <span class="font-label-sm text-label-sm text-secondary shrink-0"
+                    >Today, 6:38 AM</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-secondary mt-0.5">
+                  Key issued by Counter Staff • Locker #34
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Toast Notification Container for Quick Interactions -->
+        <div
+          class="fixed bottom-6 left-4 right-4 bg-inverse-surface text-inverse-on-surface px-4 py-3 rounded-xl shadow-xl flex items-center justify-between transition-transform duration-300 translate-y-32 z-50 pointer-events-none"
+          id="toastNotification"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-primary-fixed text-[20px]"
+              >check_circle</span
+            >
+            <span class="font-body-sm text-body-sm" id="toastMessage">Notification</span>
+          </div>
+          <span class="font-label-sm text-label-sm text-primary-fixed uppercase tracking-wider"
+            >OK</span
+          >
+        </div>
+      </div>
+      <script>
+        // Simple interactive micro-behaviors for GymVito profile screen
+        const menuTrigger = document.getElementById('menuTrigger');
+        const overflowMenu = document.getElementById('overflowMenu');
+        const toast = document.getElementById('toastNotification');
+        const toastMsg = document.getElementById('toastMessage');
+
+        if (menuTrigger && overflowMenu) {
+          menuTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            overflowMenu.classList.toggle('hidden');
+          });
+
+          document.addEventListener('click', () => {
+            overflowMenu.classList.add('hidden');
+          });
+        }
+
+        function showToast(message) {
+          if (!toast || !toastMsg) return;
+          toastMsg.textContent = message;
+          toast.classList.remove('translate-y-32');
+          setTimeout(() => {
+            toast.classList.add('translate-y-32');
+          }, 2800);
+        }
+
+        function triggerPaymentModal() {
+          showToast('Opening payment collection for ₹2,500 (Amit Sharma)');
+        }
+
+        function sendWhatsAppReminder() {
+          showToast('Prepared WhatsApp payment reminder link for +91 98201 44521');
+        }
+      </script>
+    </main>
+  </body>
+</html>

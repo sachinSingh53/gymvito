@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_dashboard" name="shell-type" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @layer base {
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          overscroll-behavior: none;
+        }
+        main > :first-child {
+          margin-top: 0 !important;
+        }
+        main > :last-child {
+          margin-bottom: 0 !important;
+        }
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              surface: '#e5fff8',
+              'on-tertiary-fixed': '#201b09',
+              'surface-variant': '#cee8e1',
+              'on-secondary-fixed-variant': '#374a48',
+              'surface-container-lowest': '#ffffff',
+              tertiary: '#49432d',
+              'secondary-fixed': '#d2e7e3',
+              background: '#e5fff8',
+              'tertiary-fixed': '#ede2c5',
+              'on-secondary-fixed': '#0c1f1d',
+              'on-surface-variant': '#3f4946',
+              'inverse-on-surface': '#dcf6f0',
+              'on-primary-fixed-variant': '#005046',
+              'tertiary-container': '#615a43',
+              'surface-container-low': '#dff9f3',
+              'on-primary': '#ffffff',
+              'on-error-container': '#93000a',
+              'primary-container': '#0d6659',
+              'on-error': '#ffffff',
+              'on-tertiary-container': '#dcd2b5',
+              'primary-fixed-dim': '#89d5c4',
+              'tertiary-fixed-dim': '#d0c6aa',
+              'outline-variant': '#bec9c5',
+              'on-secondary': '#ffffff',
+              'primary-fixed': '#a5f1e0',
+              'on-tertiary-fixed-variant': '#4d4731',
+              'surface-container-highest': '#cee8e1',
+              'secondary-container': '#cfe4e0',
+              'on-primary-fixed': '#00201b',
+              'on-primary-container': '#95e1d0',
+              'on-surface': '#071f1c',
+              error: '#ba1a1a',
+              secondary: '#4f625f',
+              'surface-container': '#d9f3ed',
+              'inverse-primary': '#89d5c4',
+              primary: '#004c42',
+              'on-secondary-container': '#536664',
+              'surface-container-high': '#d4eee7',
+              outline: '#6f7976',
+              'surface-bright': '#e5fff8',
+              'inverse-surface': '#1e3530',
+              'error-container': '#ffdad6',
+              'on-tertiary': '#ffffff',
+              'surface-dim': '#c6e0d9',
+              'surface-tint': '#156a5d',
+              'on-background': '#071f1c',
+              'secondary-fixed-dim': '#b6cbc7',
+            },
+            borderRadius: {
+              DEFAULT: '0.25rem',
+              lg: '0.5rem',
+              xl: '0.75rem',
+              full: '9999px',
+            },
+            spacing: {
+              'space-xl': '32px',
+              'space-lg': '24px',
+              'space-md': '16px',
+              'space-sm': '8px',
+              margin: '16px',
+              'space-xs': '4px',
+              'margin-desktop': '32px',
+              gutter: '16px',
+              'gutter-tablet': '24px',
+              'margin-tablet': '24px',
+            },
+            fontFamily: {
+              'body-md': ['Inter'],
+              'title-lg': ['Inter'],
+              'headline-md': ['Inter'],
+              'label-lg': ['Inter'],
+              'headline-sm': ['Inter'],
+              'label-sm': ['Inter'],
+              'headline-lg': ['Inter'],
+              'label-md': ['Inter'],
+              'title-sm': ['Inter'],
+              'body-sm': ['Inter'],
+              'title-md': ['Inter'],
+              'body-lg': ['Inter'],
+            },
+            fontSize: {
+              'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+              'title-lg': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+              'headline-md': ['24px', { lineHeight: '32px', fontWeight: '600' }],
+              'label-lg': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+              'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+              'label-sm': ['10px', { lineHeight: '14px', fontWeight: '700' }],
+              'headline-lg': ['30px', { lineHeight: '38px', fontWeight: '700' }],
+              'label-md': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+              'title-sm': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+              'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+              'title-md': ['16px', { lineHeight: '22px', fontWeight: '600' }],
+              'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-surface font-body-md text-on-surface antialiased select-none">
+    <aside
+      class="fixed left-0 top-0 h-full w-[84px] bg-on-surface z-50 flex flex-col items-center justify-between py-space-sm shadow-[0_1px_8px_rgba(0,0,0,0.04)]"
+    >
+      <div class="flex flex-col items-center w-full gap-space-sm">
+        <div
+          class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm"
+        >
+          <span class="material-symbols-outlined text-[26px]">fitness_center</span>
+        </div>
+        <div class="flex flex-col items-center leading-none">
+          <span class="font-label-sm text-label-sm uppercase tracking-widest text-primary-fixed"
+            >GymVito</span
+          ><span class="font-label-sm text-label-sm text-outline-variant scale-90">POS·v2</span>
+        </div>
+        <nav
+          class="flex flex-col items-center gap-space-xs w-full px-space-xs mt-space-sm"
+          data-active-classes="bg-primary-container text-on-primary-container font-label-md rounded-xl"
+        >
+          <a
+            class="flex flex-col items-center justify-center w-full h-[60px] rounded-xl text-outline-variant hover:bg-inverse-surface hover:text-surface-bright transition-colors group"
+            data-path="counter-overview"
+            href="#"
+            ><span class="material-symbols-outlined text-[22px]">home</span
+            ><span class="font-label-sm text-label-sm mt-0.5 leading-tight">होम</span
+            ><span class="font-label-sm text-label-sm opacity-60 scale-75 -mt-0.5">Home</span></a
+          ><a
+            class="flex flex-col items-center justify-center w-full h-[60px] rounded-xl text-outline-variant hover:bg-inverse-surface hover:text-surface-bright transition-colors group"
+            data-path="members-ledger"
+            href="#"
+            ><span class="material-symbols-outlined text-[22px]">group</span
+            ><span class="font-label-sm text-label-sm mt-0.5 leading-tight">सदस्य</span
+            ><span class="font-label-sm text-label-sm opacity-60 scale-75 -mt-0.5">Members</span></a
+          ><a
+            aria-current="page"
+            class="flex flex-col items-center justify-center w-full h-[60px] transition-colors group bg-primary-container text-on-primary-container font-label-md rounded-xl"
+            data-path="payments-cashflow"
+            href="#"
+            ><span class="material-symbols-outlined text-[22px]">payments</span
+            ><span class="font-label-sm text-label-sm mt-0.5 leading-tight">भुगतान</span
+            ><span class="font-label-sm text-label-sm opacity-60 scale-75 -mt-0.5"
+              >Payments</span
+            ></a
+          ><a
+            class="flex flex-col items-center justify-center w-full h-[60px] rounded-xl text-outline-variant hover:bg-inverse-surface hover:text-surface-bright transition-colors group"
+            data-path="quick-actions-menu"
+            href="#"
+            ><span class="material-symbols-outlined text-[22px]">widgets</span
+            ><span class="font-label-sm text-label-sm mt-0.5 leading-tight">अधिक</span
+            ><span class="font-label-sm text-label-sm opacity-60 scale-75 -mt-0.5">More</span></a
+          >
+        </nav>
+      </div>
+      <div class="flex flex-col items-center w-full gap-space-sm px-space-xs pb-space-xs">
+        <button
+          class="w-full py-1 px-1 rounded-lg bg-inverse-surface text-primary-fixed flex flex-col items-center justify-center gap-0.5 border-0 hover:bg-secondary transition-colors"
+          title="Offline Cache Ready"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-[16px]">database</span
+          ><span class="font-label-sm text-label-sm scale-90">Local DB</span></button
+        ><button
+          class="w-10 h-10 rounded-full bg-inverse-surface text-outline-variant flex items-center justify-center hover:bg-surface-variant hover:text-on-surface transition-colors"
+          title="Quick Screen Lock"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-[18px]">lock</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+        </div>
+      </div>
+    </aside>
+    <div class="pl-[84px]">
+      <header
+        class="fixed top-0 left-[84px] right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 px-gutter-tablet flex items-center justify-between"
+      >
+        <div class="flex items-center gap-space-md">
+          <div
+            class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1 rounded-full"
+          >
+            <span class="material-symbols-outlined text-[18px] text-primary">meeting_room</span
+            ><span class="font-label-md text-label-md text-on-surface"
+              >Counter: Shift A (सवेरा)</span
+            >
+          </div>
+          <div
+            class="hidden sm:flex items-center gap-space-xs bg-surface-container px-space-sm py-1 rounded-full"
+          >
+            <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span
+            ><span class="font-label-sm text-label-sm text-on-surface-variant"
+              >Local Cache: Active (स्थानीय)</span
+            >
+          </div>
+        </div>
+        <div class="flex items-center gap-space-md">
+          <button
+            class="flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors"
+            title="Toggle Financial Privacy"
+            type="button"
+          >
+            <span class="material-symbols-outlined text-[18px]">visibility</span
+            ><span class="font-label-sm text-label-sm hidden md:inline">₹ Display</span>
+          </button>
+          <div class="flex items-center bg-surface-container-high rounded-full p-0.5">
+            <button
+              class="px-space-sm py-0.5 rounded-full font-label-sm text-label-sm bg-primary text-on-primary shadow-xs"
+              type="button"
+            >
+              EN</button
+            ><button
+              class="px-space-sm py-0.5 rounded-full font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface"
+              type="button"
+            >
+              हिन्दी
+            </button>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+          </div>
+        </div>
+      </header>
+      <main class="w-full pt-16 bg-surface min-h-screen">
+        <div class="flex flex-col w-full p-gutter-tablet max-w-[1280px] mx-auto gap-space-lg">
+          <div
+            class="flex items-center justify-between bg-surface-container-low px-space-md py-space-sm rounded-xl"
+          >
+            <div class="flex items-center gap-space-sm">
+              <button
+                class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors"
+                title="Back to ledger"
+                type="button"
+              >
+                <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+              </button>
+              <div class="flex flex-col">
+                <div class="flex items-center gap-space-xs">
+                  <span class="font-headline-sm text-headline-sm text-on-surface"
+                    >Member Dossier &amp; Fee Inspector</span
+                  >
+                  <span
+                    class="font-label-sm text-label-sm bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full"
+                    >GV-082</span
+                  >
+                </div>
+                <span class="font-body-sm text-body-sm text-on-surface-variant"
+                  >Front-desk POS • Shift A Counter • Bandra West Unit</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-space-sm">
+              <div class="flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-primary-container"></span>
+                <span class="font-label-sm text-label-sm text-on-surface"
+                  >Local Storage: Saved on Device</span
+                >
+              </div>
+              <button
+                class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-highest text-on-surface hover:bg-surface-variant text-label-md font-label-md transition-colors"
+                type="button"
+              >
+                <span class="material-symbols-outlined text-[16px]">qr_code_scanner</span>
+                <span class="">Re-scan Band</span>
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+            <section class="lg:col-span-5 flex flex-col gap-space-md">
+              <div
+                class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md relative overflow-hidden"
+              >
+                <div class="flex items-start justify-between gap-space-sm">
+                  <div class="flex items-center gap-space-md">
+                    <div
+                      class="relative w-16 h-16 rounded-xl overflow-hidden bg-surface-container flex-shrink-0"
+                    >
+                      <img
+                        class="w-full h-full object-cover"
+                        data-alt="Portrait of Amit Sharma, an Indian fitness enthusiast in his late twenties, clean athletic posture, studio lighting with faint evergreen and warm ambient glow, highly realistic front desk member identification photo."
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDabraccIw1f8NSjm23UcXfAslt1_fvTohLW_RDjayLvHaah0OnEKiaNqYyqPW4HiDoirsS-LmqjH8oRvr9ofSdbYuYY5cA4sPD-wceXQQ2iL1q23Bg7T6XCp0_1QPLJUBb5XJRaCy39ForMPT2tTxK18EK4zZvnRMrUe1ywAAyyHNWYtxpF_Fxq9pnixjilh8SSFbEzr81M37CqElNXtqlvWCYJG54x3Teze6D1XnG"
+                      />
+                      <span
+                        class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"
+                      ></span>
+                    </div>
+                    <div class="flex flex-col">
+                      <div class="flex items-center gap-1.5">
+                        <h2 class="font-title-lg text-title-lg text-on-surface">Amit Sharma</h2>
+                        <span
+                          class="font-label-sm text-label-sm text-primary bg-primary-fixed px-1.5 py-0.5 rounded"
+                          >Active</span
+                        >
+                      </div>
+                      <span class="font-body-sm text-body-sm text-on-surface-variant"
+                        >Joined 15 Nov 2023 • 1 Year 4 Mos</span
+                      >
+                      <div class="flex items-center gap-1 text-on-surface-variant mt-0.5">
+                        <span class="material-symbols-outlined text-[14px]">call</span>
+                        <span class="font-label-md text-label-md">+91 98201 44521</span>
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    class="flex items-center justify-center w-10 h-10 rounded-full bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#128C7E] transition-colors"
+                    href="https://wa.me/919820144521"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    title="Message on WhatsApp"
+                  >
+                    <span class="material-symbols-outlined text-[20px]">chat</span>
+                  </a>
+                </div>
+                <div
+                  class="bg-error-container text-on-error-container rounded-lg p-space-sm flex items-center justify-between"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[20px] text-error"
+                      >priority_high</span
+                    >
+                    <div class="flex flex-col">
+                      <span class="font-label-sm text-label-sm uppercase tracking-wider text-error"
+                        >Outstanding Balance</span
+                      >
+                      <span class="font-headline-sm text-headline-sm text-error">₹2,500</span>
+                    </div>
+                  </div>
+                  <span
+                    class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-error text-on-error font-medium"
+                    >Overdue 4 Days</span
+                  >
+                </div>
+                <div class="flex bg-surface-container rounded-lg p-1 gap-1">
+                  <button
+                    class="flex-1 py-1 text-center font-label-md text-label-md rounded bg-surface-container-lowest text-on-surface shadow-xs"
+                    type="button"
+                  >
+                    Plans (3)
+                  </button>
+                  <button
+                    class="flex-1 py-1 text-center font-label-md text-label-md rounded text-on-surface-variant hover:text-on-surface"
+                    type="button"
+                  >
+                    Summary
+                  </button>
+                  <button
+                    class="flex-1 py-1 text-center font-label-md text-label-md rounded text-on-surface-variant hover:text-on-surface"
+                    type="button"
+                  >
+                    Ledger
+                  </button>
+                  <button
+                    class="flex-1 py-1 text-center font-label-md text-label-md rounded text-on-surface-variant hover:text-on-surface"
+                    type="button"
+                  >
+                    Notes
+                  </button>
+                </div>
+                <div class="flex flex-col gap-space-sm">
+                  <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider"
+                    >Subscription Timelines</span
+                  >
+                  <div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[16px] text-primary"
+                          >verified</span
+                        >
+                        <span class="font-title-sm text-title-sm text-on-surface"
+                          >Annual Strength &amp; Conditioning</span
+                        >
+                      </div>
+                      <span
+                        class="font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed px-1.5 py-0.5 rounded"
+                        >Current</span
+                      >
+                    </div>
+                    <div
+                      class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant"
+                    >
+                      <span class="">25 Nov 2024 — 24 Nov 2025</span>
+                      <span class="font-label-md text-label-md text-on-surface font-semibold"
+                        >₹18,000</span
+                      >
+                    </div>
+                    <div
+                      class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden mt-1"
+                    >
+                      <div
+                        class="bg-primary-container h-full rounded-full"
+                        style="width: 28%"
+                      ></div>
+                    </div>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant text-right"
+                      >312 Days Remaining</span
+                    >
+                  </div>
+                  <div
+                    class="bg-surface-container-lowest rounded-lg p-space-sm flex flex-col gap-1 opacity-75"
+                  >
+                    <div class="flex items-center justify-between">
+                      <span class="font-title-sm text-title-sm text-on-surface"
+                        >6-Month Heavy Lifter</span
+                      >
+                      <span
+                        class="font-label-sm text-label-sm bg-surface-container-highest text-on-surface-variant px-1.5 py-0.5 rounded"
+                        >Completed</span
+                      >
+                    </div>
+                    <div
+                      class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant"
+                    >
+                      <span class="">25 May 2024 — 24 Nov 2024</span>
+                      <span class="">₹10,500</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-space-xs pt-space-xs">
+                  <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider"
+                    >Operational Identity</span
+                  >
+                  <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-surface-container-low rounded-lg p-2 flex flex-col">
+                      <span class="font-label-sm text-label-sm text-on-surface-variant"
+                        >Blood Group</span
+                      >
+                      <span class="font-title-sm text-title-sm text-on-surface">B+</span>
+                    </div>
+                    <div class="bg-surface-container-low rounded-lg p-2 flex flex-col">
+                      <span class="font-label-sm text-label-sm text-on-surface-variant"
+                        >Assigned Locker</span
+                      >
+                      <span class="font-title-sm text-title-sm text-primary">#34 (L-Zone)</span>
+                    </div>
+                    <div class="bg-surface-container-low rounded-lg p-2 flex flex-col">
+                      <span class="font-label-sm text-label-sm text-on-surface-variant"
+                        >Emergency Phone</span
+                      >
+                      <span class="font-title-sm text-title-sm text-on-surface truncate"
+                        >+91 98200...</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-space-sm pt-space-xs">
+                  <button
+                    class="flex-1 py-2.5 px-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-label-md flex items-center justify-center gap-1.5"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-[16px]">edit</span>
+                    <span class="">Edit Profile</span>
+                  </button>
+                  <button
+                    class="py-2.5 px-space-md rounded-lg bg-surface-container-low text-error hover:bg-error-container transition-colors font-label-md text-label-md flex items-center justify-center gap-1"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-[16px]">archive</span>
+                    <span class="">Archive</span>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex items-center gap-space-md"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container flex-shrink-0"
+                >
+                  <span class="material-symbols-outlined text-[20px]">description</span>
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-label-md text-label-md text-on-surface truncate"
+                    >Member Notes: Prefers morning strength slot</span
+                  ><span class="font-body-sm text-body-sm text-on-surface-variant"
+                    >Physical ID card issued #GV-082</span
+                  >
+                </div>
+              </div>
+            </section>
+            <section class="lg:col-span-7 flex flex-col gap-space-md">
+              <div
+                class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md"
+              >
+                <div
+                  class="flex items-center justify-between pb-space-xs bg-surface-container-low -mx-space-md -mt-space-md p-space-md rounded-t-xl"
+                >
+                  <div class="flex flex-col">
+                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-primary"
+                      >Terminal Collections</span
+                    >
+                    <span class="font-title-lg text-title-lg text-on-surface"
+                      >Record Counter Settlement</span
+                    >
+                  </div>
+                  <div class="text-right">
+                    <span class="font-label-md text-label-md text-on-surface font-semibold"
+                      >Invoice #INV-9932</span
+                    >
+                    <div class="font-body-sm text-body-sm text-error">Unpaid Dues: ₹2,500</div>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-space-sm">
+                  <label class="font-label-md text-label-md text-on-surface"
+                    >Payment Amount (भुगतान राशि)</label
+                  >
+                  <div class="relative flex items-center">
+                    <span
+                      class="absolute left-4 font-headline-md text-headline-md text-primary font-bold"
+                      >₹</span
+                    >
+                    <input
+                      class="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-container-low font-headline-md text-headline-md text-on-surface focus:outline-none focus:bg-surface-container"
+                      id="payment-amount"
+                      type="number"
+                      value="2500"
+                    />
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      class="px-3 py-1.5 rounded-full bg-primary-container text-on-primary-container font-label-md text-label-md shadow-xs"
+                      onclick="document.getElementById('payment-amount').value = '2500'"
+                      type="button"
+                    >
+                      Full Due (₹2,500)
+                    </button>
+                    <button
+                      class="px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high font-label-md text-label-md"
+                      onclick="document.getElementById('payment-amount').value = '2000'"
+                      type="button"
+                    >
+                      ₹2,000
+                    </button>
+                    <button
+                      class="px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high font-label-md text-label-md"
+                      onclick="document.getElementById('payment-amount').value = '1500'"
+                      type="button"
+                    >
+                      ₹1,500
+                    </button>
+                    <button
+                      class="px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high font-label-md text-label-md"
+                      onclick="document.getElementById('payment-amount').focus()"
+                      type="button"
+                    >
+                      Custom
+                    </button>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-space-sm">
+                  <span class="font-label-md text-label-md text-on-surface"
+                    >Settlement Instrument (माध्यम)</span
+                  >
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <label class="cursor-pointer">
+                      <input checked="" class="peer sr-only" name="pay_mode" type="radio" />
+                      <div
+                        class="h-16 flex items-center gap-2.5 px-3 rounded-xl bg-surface-container text-on-surface-variant peer-checked:bg-primary-container peer-checked:text-on-primary-container transition-all"
+                      >
+                        <span class="material-symbols-outlined text-[24px]">qr_code_2</span>
+                        <div class="flex flex-col leading-tight">
+                          <span class="font-label-md text-label-md">UPI</span
+                          ><span class="font-label-sm text-label-sm opacity-80"
+                            >Counter QR Scan</span
+                          >
+                        </div>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input class="peer sr-only" name="pay_mode" type="radio" />
+                      <div
+                        class="h-16 flex items-center gap-2.5 px-3 rounded-xl bg-surface-container text-on-surface-variant peer-checked:bg-primary-container peer-checked:text-on-primary-container transition-all"
+                      >
+                        <span class="material-symbols-outlined text-[24px]">payments</span>
+                        <div class="flex flex-col leading-tight">
+                          <span class="font-label-md text-label-md">Cash</span>
+                          <span class="font-label-sm text-label-sm opacity-80">Drawer Sync</span>
+                        </div>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input class="peer sr-only" name="pay_mode" type="radio" />
+                      <div
+                        class="h-16 flex items-center gap-2.5 px-3 rounded-xl bg-surface-container text-on-surface-variant peer-checked:bg-primary-container peer-checked:text-on-primary-container transition-all"
+                      >
+                        <span class="material-symbols-outlined text-[24px]">credit_card</span>
+                        <div class="flex flex-col leading-tight">
+                          <span class="font-label-md text-label-md">Card</span
+                          ><span class="font-label-sm text-label-sm opacity-80"
+                            >Physical POS Terminal</span
+                          >
+                        </div>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input class="peer sr-only" name="pay_mode" type="radio" />
+                      <div
+                        class="h-16 flex items-center gap-2.5 px-3 rounded-xl bg-surface-container text-on-surface-variant peer-checked:bg-primary-container peer-checked:text-on-primary-container transition-all"
+                      >
+                        <span class="material-symbols-outlined text-[24px]">account_balance</span>
+                        <div class="flex flex-col leading-tight">
+                          <span class="font-label-md text-label-md">IMPS / NEFT</span>
+                          <span class="font-label-sm text-label-sm opacity-80">Bank Transfer</span>
+                        </div>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input class="peer sr-only" name="pay_mode" type="radio" />
+                      <div
+                        class="h-16 flex items-center gap-2.5 px-3 rounded-xl bg-surface-container text-on-surface-variant peer-checked:bg-primary-container peer-checked:text-on-primary-container transition-all"
+                      >
+                        <span class="material-symbols-outlined text-[24px]">receipt_long</span>
+                        <div class="flex flex-col leading-tight">
+                          <span class="font-label-md text-label-md">Cheque</span>
+                          <span class="font-label-sm text-label-sm opacity-80">Clearing hold</span>
+                        </div>
+                      </div>
+                    </label>
+                    <div
+                      class="h-16 flex items-center justify-center p-2 rounded-xl bg-surface-container-low text-on-surface-variant"
+                    >
+                      <span class="font-label-sm text-label-sm text-center"
+                        >Auto-generates GST tax entry</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                  <label class="font-label-md text-label-md text-on-surface"
+                    >UPI UTR / Gateway Reference ID</label
+                  >
+                  <div class="relative flex items-center">
+                    <input
+                      class="w-full px-4 py-2.5 rounded-lg bg-surface-container font-body-md text-body-md text-on-surface placeholder:text-outline-variant focus:outline-none focus:bg-surface-container-high"
+                      placeholder="e.g. 419208392100 or Terminal RRN"
+                      type="text"
+                    />
+                    <button
+                      class="absolute right-2 px-2 py-1 text-label-sm font-label-sm bg-surface-container-highest text-on-surface rounded hover:bg-surface-variant"
+                      type="button"
+                    >
+                      Paste
+                    </button>
+                  </div>
+                </div>
+                <div
+                  class="bg-surface-container-low rounded-xl p-space-md flex items-center justify-between"
+                >
+                  <div class="flex items-center gap-space-sm">
+                    <span class="material-symbols-outlined text-[22px] text-primary"
+                      >check_circle</span
+                    >
+                    <div class="flex flex-col">
+                      <span class="font-title-sm text-title-sm text-on-surface"
+                        >Balance After Payment: ₹0</span
+                      >
+                      <span class="font-body-sm text-body-sm text-on-surface-variant"
+                        >Full ledger reconciliation • No pending balance</span
+                      >
+                    </div>
+                  </div>
+                  <span
+                    class="font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed px-2.5 py-1 rounded-full font-bold"
+                    >100% Cleared</span
+                  >
+                </div>
+                <div
+                  class="flex items-center gap-space-sm bg-surface-container p-space-sm rounded-lg"
+                >
+                  <input
+                    checked=""
+                    class="w-5 h-5 accent-primary rounded cursor-pointer"
+                    id="wa-receipt"
+                    type="checkbox"
+                  />
+                  <label
+                    class="flex items-center gap-2 cursor-pointer text-on-surface font-body-sm text-body-sm select-none"
+                    for="wa-receipt"
+                  >
+                    <span class="material-symbols-outlined text-[18px] text-[#128C7E]">send</span>
+                    <span class=""
+                      >Send automated tax invoice &amp; receipt to member's WhatsApp (+91 98201
+                      44521)</span
+                    >
+                  </label>
+                </div>
+                <div class="flex flex-col gap-2 pt-space-xs">
+                  <button
+                    class="w-full h-14 rounded-full bg-primary text-on-primary font-title-md text-title-md flex items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-sm"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-[22px]">print</span>
+                    <span class="">Record Payment &amp; Issue Receipt (₹2,500)</span>
+                  </button>
+                </div>
+                <div
+                  class="bg-surface-container rounded-lg p-space-sm flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px] text-primary"
+                      >verified_user</span
+                    >
+                    <span class="">Operator: Rajesh Sharma (Shift A • Counter 1)</span>
+                  </div>
+                  <span class="font-label-sm text-label-sm text-outline"
+                    >Local DB v4.2 • Device POS-09</span
+                  >
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

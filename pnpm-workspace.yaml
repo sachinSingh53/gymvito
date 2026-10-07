@@ -1,0 +1,2 @@
+patchedDependencies:
+  react-native-argon2@4.0.0: patches/react-native-argon2@4.0.0.patch

@@ -1,10 +1,11 @@
 import { router, type Href, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAppSession } from '@/features/session/app-session-context';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
+import { formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
 import { AppButton } from '@/ui/components/core-controls';
 import {
   LocalDataBadge,
@@ -15,7 +16,8 @@ import {
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
 
 export default function HomeRoute() {
-  const { state, getPhase2Repository, getPhase3Repository, lock } = useAppSession();
+  const { state, getPhase2Repository, getPhase3Repository, getPhase4Repository, lock } =
+    useAppSession();
   const { t } = useTranslation();
   const today = useLocalBusinessDate(
     state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC',
@@ -29,6 +31,13 @@ export default function HomeRoute() {
     expiringSoon: 0,
   });
   const [planCount, setPlanCount] = useState<number | null>(null);
+  const [finance, setFinance] = useState({
+    invoicedMinor: 0,
+    recordedPaidMinor: 0,
+    outstandingMinor: 0,
+    overdueMinor: 0,
+    todayRecordedMinor: 0,
+  });
   const [showSensitive, setShowSensitive] = useState(true);
   useFocusEffect(
     useCallback(() => {
@@ -37,19 +46,25 @@ export default function HomeRoute() {
       void Promise.all([
         getPhase3Repository().dashboardCounts(today),
         repository.listPlans(false),
-      ]).then(([membershipCounts, plans]) => {
+        getPhase4Repository().getFinancialDashboard(today),
+      ]).then(([membershipCounts, plans, financialCounts]) => {
         if (active) {
           setCounts(membershipCounts);
           setPlanCount(plans.length);
+          setFinance(financialCounts);
         }
       });
       return () => {
         active = false;
       };
-    }, [getPhase2Repository, getPhase3Repository, today]),
+    }, [getPhase2Repository, getPhase3Repository, getPhase4Repository, today]),
   );
   if (state.status !== 'unlocked') return null;
   const gym = state.snapshot.gym;
+  const moneySettings = {
+    language: state.snapshot.settings?.language ?? 'en',
+    currencyCode: state.snapshot.settings?.currencyCode ?? 'INR',
+  };
 
   return (
     <OperationalShell active="home" title={t('dashboard')} subtitle={gym?.name ?? t('appName')}>
@@ -102,7 +117,7 @@ export default function HomeRoute() {
         <CounterAction
           icon="payments"
           label={t('recordPay')}
-          onPress={() => Alert.alert(t('payments'), t('availablePhase4'))}
+          onPress={() => router.push('/payments' as Href)}
         />
       </View>
       {planCount === 0 ? (
@@ -142,10 +157,26 @@ export default function HomeRoute() {
           tone="neutral"
           value={String(counts.noMembership)}
         />
+        <MetricCard
+          detail={t('recordedPaymentsOnly')}
+          label={t('todayRecordedCollections')}
+          tone="active"
+          value={
+            showSensitive ? formatMoneyMinor(finance.todayRecordedMinor, moneySettings) : '••••'
+          }
+        />
+        <MetricCard
+          detail={t('overdueAmountValue', {
+            amount: showSensitive ? formatMoneyMinor(finance.overdueMinor, moneySettings) : '••••',
+          })}
+          label={t('outstandingDues')}
+          tone="danger"
+          value={showSensitive ? formatMoneyMinor(finance.outstandingMinor, moneySettings) : '••••'}
+        />
       </View>
       <SurfaceCard style={styles.nextPhaseCard}>
-        <Text style={styles.nextPhaseTitle}>{t('phase3ComingTitle')}</Text>
-        <Text style={styles.nextPhaseText}>{t('phase3ComingMessage')}</Text>
+        <Text style={styles.nextPhaseTitle}>{t('phase4ReadyTitle')}</Text>
+        <Text style={styles.nextPhaseText}>{t('phase4ReadyMessage')}</Text>
       </SurfaceCard>
     </OperationalShell>
   );

@@ -9,6 +9,7 @@ import type {
   MembershipEventRecord,
   MembershipRecord,
 } from '@/data/repositories/phase3-repository';
+import type { InvoiceRecord, MemberFinanceSummary } from '@/data/repositories/phase4-repository';
 import { memberInitials } from '@/domain/members/member';
 import { membershipProgress } from '@/domain/memberships/membership';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
@@ -44,12 +45,14 @@ export function MemberProfilePanel({
   compact?: boolean;
 }) {
   const { t } = useTranslation();
-  const { state, getPhase2Repository, getPhase3Repository } = useAppSession();
+  const { state, getPhase2Repository, getPhase3Repository, getPhase4Repository } = useAppSession();
   const timeZone = state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC';
   const today = useLocalBusinessDate(timeZone);
   const [memberships, setMemberships] = useState<readonly MembershipRecord[]>([]);
   const [events, setEvents] = useState<readonly MembershipEventRecord[]>([]);
   const [summary, setSummary] = useState<MemberMembershipSummary | null>(null);
+  const [finance, setFinance] = useState<MemberFinanceSummary | null>(null);
+  const [invoices, setInvoices] = useState<readonly InvoiceRecord[]>([]);
   useEffect(() => {
     let active = true;
     const repository = getPhase3Repository();
@@ -57,23 +60,29 @@ export function MemberProfilePanel({
       repository.listMemberships(member.id, today),
       repository.listMembershipEvents(member.id),
       repository.getMemberSummary(member.id, today),
+      getPhase4Repository().getMemberFinanceSummary(member.id, today),
+      getPhase4Repository().listMemberInvoices(member.id, today),
     ])
-      .then(([nextMemberships, nextEvents, nextSummary]) => {
+      .then(([nextMemberships, nextEvents, nextSummary, nextFinance, nextInvoices]) => {
         if (!active) return;
         setMemberships(nextMemberships);
         setEvents(nextEvents);
         setSummary(nextSummary);
+        setFinance(nextFinance);
+        setInvoices(nextInvoices);
       })
       .catch(() => {
         if (!active) return;
         setMemberships([]);
         setEvents([]);
         setSummary(null);
+        setFinance(null);
+        setInvoices([]);
       });
     return () => {
       active = false;
     };
-  }, [getPhase3Repository, member.id, today]);
+  }, [getPhase3Repository, getPhase4Repository, member.id, today]);
   if (state.status !== 'unlocked') return null;
 
   const settings = {
@@ -190,6 +199,19 @@ export function MemberProfilePanel({
             <Text style={styles.emptyMembershipText}>{t('membershipPhase3Message')}</Text>
           </View>
         )}
+        {finance && finance.balanceMinor > 0 ? (
+          <View style={styles.ledgerBanner}>
+            <View style={styles.membershipBannerCopy}>
+              <Text style={styles.ledgerTitle}>{t('pendingLedgerBalance')}</Text>
+              <Text style={styles.ledgerMeta}>
+                {t('invoiceCount', { count: finance.invoiceCount })}
+              </Text>
+            </View>
+            <Text style={styles.ledgerValue}>
+              {formatMoneyMinor(finance.balanceMinor, settings)}
+            </Text>
+          </View>
+        ) : null}
       </SurfaceCard>
       <View style={styles.actions}>
         {!member.isArchived ? (
@@ -203,6 +225,17 @@ export function MemberProfilePanel({
             }
           >
             {featured ? t('renewMembership') : t('enrollMembership')}
+          </AppButton>
+        ) : null}
+        {finance?.latestOutstandingInvoiceId ? (
+          <AppButton
+            onPress={() =>
+              router.push(
+                `/member/${member.id}/payment?invoiceId=${finance.latestOutstandingInvoiceId}` as Href,
+              )
+            }
+          >
+            {t('collectAmount', { amount: formatMoneyMinor(finance.balanceMinor, settings) })}
           </AppButton>
         ) : null}
         <AppButton
@@ -267,20 +300,59 @@ export function MemberProfilePanel({
               label={t('projectedTotal')}
               value={formatMoneyMinor(featured.totalMinor, settings)}
             />
-            <TermMetric label={t('paymentNotRecorded')} value="—" muted />
             <TermMetric
-              label={
-                featured.status === 'scheduled' ? t('membershipStatusScheduled') : t('validity')
-              }
-              value={
-                featured.status === 'scheduled'
-                  ? formatDateOnly(featured.startDate, settings)
-                  : t('daysRemaining', { count: progress.remainingDays })
-              }
+              label={t('recordedPaid')}
+              value={formatMoneyMinor(finance?.paidMinor ?? 0, settings)}
+            />
+            <TermMetric
+              label={t('balanceDue')}
+              value={formatMoneyMinor(finance?.balanceMinor ?? featured.totalMinor, settings)}
+              muted={!finance?.balanceMinor}
             />
           </View>
         </SurfaceCard>
       ) : null}
+      <SurfaceCard style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{t('financialLedger')}</Text>
+          <Text style={styles.sectionMeta}>{invoices.length}</Text>
+        </View>
+        {!invoices.length ? (
+          <Text style={styles.emptyText}>{t('noInvoices')}</Text>
+        ) : (
+          invoices.map((invoice) => (
+            <View key={invoice.id} style={styles.historyItem}>
+              <View style={styles.historyTop}>
+                <Text style={styles.historyName}>
+                  {invoice.invoiceNumber} • {invoice.planName}
+                </Text>
+                <StatusChip
+                  label={t(`invoiceStatus_${invoice.status}`)}
+                  tone={
+                    invoice.status === 'paid'
+                      ? 'active'
+                      : invoice.dueStatus === 'overdue'
+                        ? 'danger'
+                        : 'warning'
+                  }
+                />
+              </View>
+              <Text style={styles.historyMeta}>
+                {t('recordedPaidAndBalance', {
+                  paid: formatMoneyMinor(invoice.paidMinor + invoice.adjustmentMinor, settings),
+                  balance: formatMoneyMinor(invoice.balanceMinor, settings),
+                })}
+              </Text>
+              <AppButton
+                onPress={() => router.push(`/invoice/${invoice.id}` as Href)}
+                variant="secondary"
+              >
+                {t('viewInvoice')}
+              </AppButton>
+            </View>
+          ))
+        )}
+      </SurfaceCard>
       <SurfaceCard style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('membershipHistory')}</Text>
@@ -477,6 +549,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceHigh,
   },
   membershipBannerDanger: { backgroundColor: colors.dangerSurface },
+  ledgerBanner: {
+    minHeight: 72,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    padding: 12,
+    borderRadius: radii.sm,
+    backgroundColor: colors.dangerSurface,
+  },
+  ledgerTitle: { color: colors.dangerText, fontFamily: fonts.semibold, fontSize: 15 },
+  ledgerMeta: { color: colors.dangerText, fontFamily: fonts.regular, fontSize: 12 },
+  ledgerValue: {
+    color: colors.danger,
+    fontFamily: fonts.bold,
+    fontSize: 23,
+    fontVariant: ['tabular-nums'],
+  },
   membershipBannerCopy: { minWidth: 0, flex: 1, gap: spacing.xs },
   emptyMembershipTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15 },
   emptyMembershipText: {

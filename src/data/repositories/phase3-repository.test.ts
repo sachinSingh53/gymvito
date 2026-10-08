@@ -205,6 +205,13 @@ describe('Phase3Repository', () => {
     ).rejects.toThrow('MEMBERSHIP_OPERATION_CONFLICT');
     await expect(
       repository.finalizeMembership(
+        { ...firstInput, overrideReason: 'Changed after commit' },
+        'owner',
+        '2026-01-01',
+      ),
+    ).rejects.toThrow('MEMBERSHIP_OPERATION_CONFLICT');
+    await expect(
+      repository.finalizeMembership(
         { ...firstInput, operationId: 'renew-1', priorMembershipId: first.id },
         'owner',
         '2026-01-01',

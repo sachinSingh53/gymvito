@@ -129,6 +129,7 @@ type MembershipRow = {
   renewal_behavior: RenewalBehavior;
   override_reason: string;
   overlap_acknowledged: 0 | 1;
+  created_by_staff_id: string;
   created_at_utc: string;
   finalized_at_utc: string | null;
 };
@@ -200,42 +201,80 @@ export class Phase3Repository {
   ): Promise<MembershipRecord> {
     let result: MembershipRecord | null = null;
     await this.database.withExclusiveTransactionAsync(async (transaction) => {
-      const existing = await transaction.getFirstAsync<MembershipRow>(
-        'SELECT * FROM membership WHERE operation_id = ?',
-        input.operationId,
-      );
-      if (existing) {
-        if (
-          existing.member_id !== input.memberId ||
-          existing.source_plan_id !== input.planId ||
-          existing.start_date !== input.startDate ||
-          existing.prior_membership_id !== (input.priorMembershipId ?? null) ||
-          (input.priceMinor !== undefined && existing.price_minor !== input.priceMinor) ||
-          (input.discountMinor !== undefined && existing.discount_minor !== input.discountMinor) ||
-          (input.overrideEndDate !== undefined && existing.end_date !== input.overrideEndDate)
-        ) {
-          throw new Error('MEMBERSHIP_OPERATION_CONFLICT');
-        }
-        result = mapMembership(existing, today);
-        return;
+      result = await this.finalizeMembershipInTransaction(transaction, input, actorStaffId, today);
+    });
+    if (!result) throw new Error('MEMBERSHIP_FINALIZE_FAILED');
+    return result;
+  }
+
+  async finalizeMembershipInTransaction(
+    transaction: SQLiteDatabase,
+    input: MembershipDraftInput,
+    actorStaffId: string,
+    today: DateOnly,
+  ): Promise<MembershipRecord> {
+    const existing = await transaction.getFirstAsync<MembershipRow>(
+      'SELECT * FROM membership WHERE operation_id = ?',
+      input.operationId,
+    );
+    if (existing) {
+      let expectedEndDate: DateOnly;
+      let expectedCharges: ChargeBreakdown;
+      try {
+        expectedEndDate = calculateMembershipEndDate(
+          input.startDate,
+          existing.duration_value,
+          existing.duration_unit,
+          input.overrideEndDate,
+        );
+        expectedCharges = calculateChargeBreakdown(
+          {
+            priceMinor: existing.plan_price_minor,
+            admissionFeeMinor: existing.admission_fee_minor,
+            discountType: existing.plan_discount_type,
+            discountValue: existing.plan_discount_value,
+            taxRateBasisPoints: existing.tax_rate_basis_points,
+          },
+          { priceMinor: input.priceMinor, discountMinor: input.discountMinor },
+        );
+      } catch {
+        throw new Error('MEMBERSHIP_OPERATION_CONFLICT');
       }
-      const preview = await this.buildPreview(transaction, input, today);
-      if (preview.overlaps.length && !input.acknowledgeOverlap) {
-        throw new Error('MEMBERSHIP_OVERLAP_ACK_REQUIRED');
+      if (
+        existing.member_id !== input.memberId ||
+        existing.source_plan_id !== input.planId ||
+        existing.start_date !== input.startDate ||
+        existing.prior_membership_id !== (input.priorMembershipId ?? null) ||
+        existing.end_date !== expectedEndDate ||
+        existing.price_minor !== expectedCharges.priceMinor ||
+        existing.discount_minor !== expectedCharges.discountMinor ||
+        existing.tax_minor !== expectedCharges.taxMinor ||
+        existing.total_minor !== expectedCharges.totalMinor ||
+        existing.override_reason !== input.overrideReason.trim() ||
+        existing.overlap_acknowledged !== (input.acknowledgeOverlap ? 1 : 0) ||
+        existing.created_by_staff_id !== actorStaffId
+      ) {
+        throw new Error('MEMBERSHIP_OPERATION_CONFLICT');
       }
-      const actor = await transaction.getFirstAsync<{ is_owner: 0 | 1 }>(
-        'SELECT is_owner FROM staff_profile WHERE id = ? AND is_active = 1',
-        actorStaffId,
-      );
-      if (!actor) throw new Error('MEMBERSHIP_ACTOR_NOT_AUTHORIZED');
-      if (preview.hasOverrides && actor.is_owner !== 1) {
-        throw new Error('MEMBERSHIP_OVERRIDE_NOT_AUTHORIZED');
-      }
-      const id = randomUUID();
-      const timestamp = new Date().toISOString();
-      const plan = preview.plan;
-      await transaction.runAsync(
-        `INSERT INTO membership(
+      return mapMembership(existing, today);
+    }
+    const preview = await this.buildPreview(transaction, input, today);
+    if (preview.overlaps.length && !input.acknowledgeOverlap) {
+      throw new Error('MEMBERSHIP_OVERLAP_ACK_REQUIRED');
+    }
+    const actor = await transaction.getFirstAsync<{ is_owner: 0 | 1 }>(
+      'SELECT is_owner FROM staff_profile WHERE id = ? AND is_active = 1',
+      actorStaffId,
+    );
+    if (!actor) throw new Error('MEMBERSHIP_ACTOR_NOT_AUTHORIZED');
+    if (preview.hasOverrides && actor.is_owner !== 1) {
+      throw new Error('MEMBERSHIP_OVERRIDE_NOT_AUTHORIZED');
+    }
+    const id = randomUUID();
+    const timestamp = new Date().toISOString();
+    const plan = preview.plan;
+    await transaction.runAsync(
+      `INSERT INTO membership(
            id, operation_id, member_id, source_plan_id, prior_membership_id, lifecycle_state,
            plan_name, plan_description, plan_color_hex, duration_value, duration_unit,
            start_date, end_date, currency_code, plan_price_minor, price_minor,
@@ -244,82 +283,78 @@ export class Phase3Repository {
            max_freeze_days, freeze_extends_end_date, renewal_behavior, override_reason,
            overlap_acknowledged, created_by_staff_id, created_at_utc, finalized_at_utc
          ) VALUES (?, ?, ?, ?, ?, 'finalized', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        id,
-        input.operationId,
-        input.memberId,
-        input.planId,
-        input.priorMembershipId ?? null,
-        plan.name,
-        plan.description,
-        plan.colorHex,
-        plan.durationValue,
-        plan.durationUnit,
-        preview.startDate,
-        preview.endDate,
-        plan.currencyCode,
-        plan.priceMinor,
-        preview.charges.priceMinor,
-        preview.charges.admissionFeeMinor,
-        plan.discountType,
-        plan.discountValue,
-        preview.charges.discountMinor,
-        plan.taxLabel,
-        plan.taxRateBasisPoints,
-        preview.charges.taxMinor,
-        preview.charges.totalMinor,
-        plan.freezeAllowed ? 1 : 0,
-        plan.maxFreezeDays,
-        plan.freezeExtendsEndDate ? 1 : 0,
-        plan.renewalBehavior,
-        input.overrideReason.trim(),
-        input.acknowledgeOverlap ? 1 : 0,
-        actorStaffId,
-        timestamp,
-        timestamp,
-      );
-      const eventType = input.priorMembershipId ? 'renewed' : 'enrolled';
-      await transaction.runAsync(
-        `INSERT INTO membership_event(
+      id,
+      input.operationId,
+      input.memberId,
+      input.planId,
+      input.priorMembershipId ?? null,
+      plan.name,
+      plan.description,
+      plan.colorHex,
+      plan.durationValue,
+      plan.durationUnit,
+      preview.startDate,
+      preview.endDate,
+      plan.currencyCode,
+      plan.priceMinor,
+      preview.charges.priceMinor,
+      preview.charges.admissionFeeMinor,
+      plan.discountType,
+      plan.discountValue,
+      preview.charges.discountMinor,
+      plan.taxLabel,
+      plan.taxRateBasisPoints,
+      preview.charges.taxMinor,
+      preview.charges.totalMinor,
+      plan.freezeAllowed ? 1 : 0,
+      plan.maxFreezeDays,
+      plan.freezeExtendsEndDate ? 1 : 0,
+      plan.renewalBehavior,
+      input.overrideReason.trim(),
+      input.acknowledgeOverlap ? 1 : 0,
+      actorStaffId,
+      timestamp,
+      timestamp,
+    );
+    const eventType = input.priorMembershipId ? 'renewed' : 'enrolled';
+    await transaction.runAsync(
+      `INSERT INTO membership_event(
            id, membership_id, event_type, effective_date, prior_values_json,
            new_values_json, reason, actor_staff_id, created_at_utc
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        randomUUID(),
-        id,
-        eventType,
-        preview.startDate,
-        input.priorMembershipId ? JSON.stringify({ membershipId: input.priorMembershipId }) : null,
-        JSON.stringify({
-          planId: plan.id,
-          planName: plan.name,
-          startDate: preview.startDate,
-          endDate: preview.endDate,
-          totalMinor: preview.charges.totalMinor,
-        }),
-        input.overrideReason.trim(),
-        actorStaffId,
-        timestamp,
-      );
-      await transaction.runAsync(
-        `INSERT INTO audit_event(
+      randomUUID(),
+      id,
+      eventType,
+      preview.startDate,
+      input.priorMembershipId ? JSON.stringify({ membershipId: input.priorMembershipId }) : null,
+      JSON.stringify({
+        planId: plan.id,
+        planName: plan.name,
+        startDate: preview.startDate,
+        endDate: preview.endDate,
+        totalMinor: preview.charges.totalMinor,
+      }),
+      input.overrideReason.trim(),
+      actorStaffId,
+      timestamp,
+    );
+    await transaction.runAsync(
+      `INSERT INTO audit_event(
            id, occurred_at_utc, actor_staff_id, action, entity_type, entity_id, summary_code
          ) VALUES (?, ?, ?, ?, 'membership', ?, ?)`,
-        randomUUID(),
-        timestamp,
-        actorStaffId,
-        eventType === 'renewed' ? 'renew' : 'create',
-        id,
-        eventType === 'renewed' ? 'membership_renewed' : 'membership_enrolled',
-      );
-      result = mapMembership(
-        (await transaction.getFirstAsync<MembershipRow>(
-          'SELECT * FROM membership WHERE id = ?',
-          id,
-        ))!,
-        today,
-      );
-    });
-    if (!result) throw new Error('MEMBERSHIP_FINALIZE_FAILED');
-    return result;
+      randomUUID(),
+      timestamp,
+      actorStaffId,
+      eventType === 'renewed' ? 'renew' : 'create',
+      id,
+      eventType === 'renewed' ? 'membership_renewed' : 'membership_enrolled',
+    );
+    const saved = await transaction.getFirstAsync<MembershipRow>(
+      'SELECT * FROM membership WHERE id = ?',
+      id,
+    );
+    if (!saved) throw new Error('MEMBERSHIP_FINALIZE_FAILED');
+    return mapMembership(saved, today);
   }
 
   async listMemberships(memberId: string, today: DateOnly): Promise<readonly MembershipRecord[]> {

@@ -20,6 +20,9 @@ export default function MoreRoute() {
         <AppButton onPress={() => router.push('/settings' as Href)} variant="secondary">
           {t('settings')}
         </AppButton>
+        <AppButton onPress={() => router.push('/billing-settings' as Href)} variant="secondary">
+          {t('billingSettings')}
+        </AppButton>
       </SurfaceCard>
       <SurfaceCard style={styles.section}>
         <Text style={styles.sectionTitle}>{t('dataTools')}</Text>

@@ -1,14 +1,6 @@
 import { router, type Href, usePathname } from 'expo-router';
 import type { PropsWithChildren, ReactNode } from 'react';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -59,6 +51,7 @@ const NAV_ITEMS: readonly {
     tabletIcon: 'payments',
     hindiLabel: 'भुगतान',
     labelKey: 'navPayments',
+    route: '/payments',
   },
   {
     key: 'more',
@@ -179,12 +172,20 @@ export function OperationalShell({
 
 function activeNavigationKey(pathname: string): NavKey | null {
   if (pathname === '/home') return 'home';
+  if (
+    pathname === '/payments' ||
+    pathname.startsWith('/invoice/') ||
+    pathname.endsWith('/payment')
+  ) {
+    return 'payments';
+  }
   if (pathname === '/members' || pathname.startsWith('/member/')) return 'members';
   if (
     pathname === '/more' ||
     pathname === '/plans' ||
     pathname.startsWith('/plan/') ||
     pathname === '/settings' ||
+    pathname === '/billing-settings' ||
     pathname === '/gym-settings'
   ) {
     return 'more';
@@ -204,10 +205,7 @@ export function BusinessNavigation() {
   const language = state.snapshot.settings?.language ?? 'en';
 
   const navigate = (item: (typeof NAV_ITEMS)[number]) => {
-    if (!item.route) {
-      Alert.alert(t('payments'), t('availablePhase4'));
-      return;
-    }
+    if (!item.route) return;
     if (item.key === active) return;
     router.navigate(item.route as Href);
   };

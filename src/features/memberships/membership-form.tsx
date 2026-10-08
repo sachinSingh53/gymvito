@@ -1,10 +1,12 @@
 import { randomUUID } from 'expo-crypto';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { MembershipPreview, MembershipRecord } from '@/data/repositories/phase3-repository';
+import type { BillingSettings } from '@/data/repositories/phase4-repository';
+import type { PaymentMethod } from '@/domain/billing/money';
 import { parseDateOnly, renewalStartAfterExpiry, type DateOnly } from '@/domain/dates/date-rules';
 import { validateMembershipOverride } from '@/domain/memberships/membership';
 import { formatMoneyInput, parseMoneyInput } from '@/domain/plans/plan';
@@ -37,7 +39,7 @@ export function MembershipForm({
   memberId: string;
   priorMembershipId?: string;
 }) {
-  const { state, getPhase2Repository, getPhase3Repository } = useAppSession();
+  const { state, getPhase2Repository, getPhase3Repository, getPhase4Repository } = useAppSession();
   const { t } = useTranslation();
   const [operationId] = useState(randomUUID);
   const timeZone = state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC';
@@ -52,6 +54,13 @@ export function MembershipForm({
   const [customPrice, setCustomPrice] = useState('');
   const [customDiscount, setCustomDiscount] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [dueDate, setDueDate] = useState<DateOnly>(today);
+  const [paymentMethods, setPaymentMethods] = useState<BillingSettings['paymentMethods']>([]);
+  const [recordInitialPayment, setRecordInitialPayment] = useState(false);
+  const [initialPaymentAmount, setInitialPaymentAmount] = useState('');
+  const [initialPaymentMethod, setInitialPaymentMethod] = useState<PaymentMethod>('upi');
+  const [initialPaymentReference, setInitialPaymentReference] = useState('');
+  const [initialPaymentNote, setInitialPaymentNote] = useState('');
   const [overrideReason, setOverrideReason] = useState('');
   const [acknowledgeOverlap, setAcknowledgeOverlap] = useState(false);
   const [preview, setPreview] = useState<MembershipPreview | null>(null);
@@ -64,13 +73,19 @@ export function MembershipForm({
     let active = true;
     const load = async () => {
       try {
-        const activePlans = await getPhase2Repository().listPlans(false);
-        const memberships = priorMembershipId
-          ? await getPhase3Repository().listMemberships(memberId, today)
-          : [];
+        const [activePlans, memberships, billingSettings] = await Promise.all([
+          getPhase2Repository().listPlans(false),
+          priorMembershipId
+            ? getPhase3Repository().listMemberships(memberId, today)
+            : Promise.resolve([]),
+          getPhase4Repository().getBillingSettings(),
+        ]);
         if (!active) return;
         const renewalSource = memberships.find((item) => item.id === priorMembershipId) ?? null;
         setPlans(activePlans);
+        setPaymentMethods(billingSettings.paymentMethods);
+        const firstActiveMethod = billingSettings.paymentMethods.find((method) => method.isActive);
+        if (firstActiveMethod) setInitialPaymentMethod(firstActiveMethod.code);
         setPrior(renewalSource);
         const initialPlan =
           activePlans.find((item) => item.id === renewalSource?.sourcePlanId) ?? activePlans[0];
@@ -86,7 +101,14 @@ export function MembershipForm({
     return () => {
       active = false;
     };
-  }, [getPhase2Repository, getPhase3Repository, memberId, priorMembershipId, today]);
+  }, [
+    getPhase2Repository,
+    getPhase3Repository,
+    getPhase4Repository,
+    memberId,
+    priorMembershipId,
+    today,
+  ]);
 
   useEffect(() => {
     if (!planId || loading) {
@@ -165,6 +187,7 @@ export function MembershipForm({
     currencyCode: state.snapshot.settings?.currencyCode ?? 'INR',
     dateFormat: state.snapshot.settings?.dateFormat ?? ('day-month-year' as const),
   };
+  const activePaymentMethods = paymentMethods.filter((method) => method.isActive);
 
   const choosePlan = (nextPlanId: string) => {
     setPlanId(nextPlanId);
@@ -182,6 +205,17 @@ export function MembershipForm({
     setStartDate(timing === 'immediate' || !prior ? today : renewalStartAfterExpiry(prior.endDate));
   };
 
+  const toggleInitialPayment = (enabled: boolean) => {
+    setRecordInitialPayment(enabled);
+    setErrors((current) => {
+      const { initialPayment: _initialPayment, ...rest } = current;
+      return rest;
+    });
+    if (enabled && preview && !initialPaymentAmount) {
+      setInitialPaymentAmount(formatMoneyInput(preview.charges.totalMinor));
+    }
+  };
+
   const finalize = async () => {
     if (savingRef.current || !preview) return;
     const priceMinor = customPrice ? parseMoneyInput(customPrice) : undefined;
@@ -194,13 +228,31 @@ export function MembershipForm({
     });
     if (priceMinor === null) validation.priceMinor = 'invalid';
     if (discountMinor === null) validation.discountMinor = 'invalid';
+    try {
+      parseDateOnly(dueDate);
+    } catch {
+      validation.dueDate = 'invalid';
+    }
     if (preview.overlaps.length && !acknowledgeOverlap) validation.overlap = 'required';
+    const initialPaymentMinor = recordInitialPayment
+      ? parseMoneyInput(initialPaymentAmount)
+      : undefined;
+    const selectedMethod = activePaymentMethods.find(
+      (method) => method.code === initialPaymentMethod,
+    );
+    if (recordInitialPayment) {
+      if (!initialPaymentMinor || !selectedMethod) {
+        validation.initialPayment = 'invalid';
+      } else if (initialPaymentMinor > preview.charges.totalMinor) {
+        validation.initialPayment = 'overpayment';
+      }
+    }
     setErrors(validation);
     if (Object.keys(validation).length) return;
     savingRef.current = true;
     setBusy(true);
     try {
-      await getPhase3Repository().finalizeMembership(
+      const result = await getPhase4Repository().finalizeMembershipWithBilling(
         {
           operationId,
           memberId,
@@ -215,8 +267,25 @@ export function MembershipForm({
         },
         state.ownerId,
         today,
+        dueDate,
+        recordInitialPayment && initialPaymentMinor && selectedMethod
+          ? {
+              operationId: `payment:${operationId}`,
+              amountMinor: initialPaymentMinor,
+              methodCode: selectedMethod.code,
+              methodLabel: selectedMethod.label,
+              transactionReference: initialPaymentReference,
+              note: initialPaymentNote,
+              receivedAtUtc: new Date().toISOString(),
+              receivedLocalDate: today,
+            }
+          : undefined,
       );
-      router.replace(`/member/${memberId}`);
+      router.replace(
+        result.payment
+          ? (`/invoice/${result.invoice.id}?receipt=${result.payment.id}&issued=1` as Href)
+          : (`/member/${memberId}` as Href),
+      );
     } catch {
       setErrors({ form: 'save' });
     } finally {
@@ -284,6 +353,13 @@ export function MembershipForm({
                 setAcknowledgeOverlap(false);
               }}
               value={startDate}
+            />
+            <AppField
+              error={errors.dueDate ? t('fieldInvalid') : undefined}
+              hint={t('invoiceDueDateHint')}
+              label={t('invoiceDueDate')}
+              onChangeText={(value) => setDueDate(value as DateOnly)}
+              value={dueDate}
             />
           </SurfaceCard>
           <SurfaceCard style={styles.section}>
@@ -359,7 +435,78 @@ export function MembershipForm({
                   {formatMoneyMinor(preview.charges.totalMinor, settings)}
                 </Text>
               </View>
-              <Notice>{t('paymentPhase4Notice')}</Notice>
+              <Notice>{t('invoiceCreatedWithMembershipNotice')}</Notice>
+            </SurfaceCard>
+          ) : null}
+          {preview ? (
+            <SurfaceCard style={styles.section}>
+              <View style={styles.switchRow}>
+                <View style={styles.switchCopy}>
+                  <Text style={styles.sectionTitle}>{t('recordPaymentNow')}</Text>
+                  <Text style={styles.switchHint}>{t('recordPaymentNowHint')}</Text>
+                </View>
+                <Switch
+                  accessibilityLabel={t('recordPaymentNow')}
+                  onValueChange={toggleInitialPayment}
+                  trackColor={{ true: colors.primary }}
+                  value={recordInitialPayment}
+                />
+              </View>
+              {recordInitialPayment ? (
+                <>
+                  <AppField
+                    error={
+                      errors.initialPayment === 'overpayment'
+                        ? t('paymentExceedsOutstanding')
+                        : errors.initialPayment
+                          ? t('paymentAmountRequired')
+                          : undefined
+                    }
+                    keyboardType="decimal-pad"
+                    label={t('initialPaymentAmount')}
+                    onChangeText={setInitialPaymentAmount}
+                    value={initialPaymentAmount}
+                  />
+                  <Text style={styles.label}>{t('paymentMethod')}</Text>
+                  <View accessibilityRole="radiogroup" style={styles.methodGrid}>
+                    {activePaymentMethods.map((method) => (
+                      <View key={method.code} style={styles.methodChoice}>
+                        <AppChoice
+                          label={method.label}
+                          onPress={() => setInitialPaymentMethod(method.code)}
+                          selected={initialPaymentMethod === method.code}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                  <AppField
+                    label={t('transactionReferenceOptional')}
+                    onChangeText={setInitialPaymentReference}
+                    value={initialPaymentReference}
+                  />
+                  <AppField
+                    label={t('paymentNoteOptional')}
+                    multiline
+                    onChangeText={setInitialPaymentNote}
+                    value={initialPaymentNote}
+                  />
+                  <View style={styles.paymentBalance}>
+                    <Text style={styles.paymentBalanceLabel}>
+                      {t('balanceAfterPayment', {
+                        amount: formatMoneyMinor(
+                          Math.max(
+                            0,
+                            preview.charges.totalMinor -
+                              (parseMoneyInput(initialPaymentAmount) ?? 0),
+                          ),
+                          settings,
+                        ),
+                      })}
+                    </Text>
+                    <Text style={styles.paymentBalanceHint}>{t('recordedPaymentNotice')}</Text>
+                  </View>
+                </>
+              ) : null}
             </SurfaceCard>
           ) : null}
           {preview?.overlaps.length ? (
@@ -505,6 +652,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.md,
   },
+  switchCopy: { minWidth: 0, flex: 1, gap: 3 },
+  switchHint: {
+    color: colors.textMuted,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 19,
+  },
   switchLabel: { flex: 1, color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
+  methodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  methodChoice: { minWidth: 220, flexBasis: '48%', flexGrow: 1 },
+  paymentBalance: {
+    gap: spacing.xs,
+    padding: spacing.md,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surfaceHigh,
+  },
+  paymentBalanceLabel: {
+    color: colors.primaryDark,
+    fontFamily: fonts.bold,
+    fontSize: 16,
+  },
+  paymentBalanceHint: {
+    color: colors.textMuted,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    lineHeight: 18,
+  },
   actions: { gap: spacing.sm },
 });

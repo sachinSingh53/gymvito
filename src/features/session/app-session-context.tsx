@@ -1,4 +1,5 @@
 import { AppState, type AppStateStatus } from 'react-native';
+import type { File } from 'expo-file-system';
 import {
   createContext,
   useCallback,
@@ -10,13 +11,18 @@ import {
   type PropsWithChildren,
 } from 'react';
 
-import { openGymVitoDatabase, type OpenedDatabase } from '@/data/database/open-database';
+import {
+  deleteGymVitoDatabaseFiles,
+  openGymVitoDatabase,
+  type OpenedDatabase,
+} from '@/data/database/open-database';
 import { AppStateRepository, type StartupSnapshot } from '@/data/repositories/app-state-repository';
 import { Phase2Repository } from '@/data/repositories/phase2-repository';
 import { Phase3Repository } from '@/data/repositories/phase3-repository';
 import { Phase4Repository } from '@/data/repositories/phase4-repository';
 import type { AppLanguage, GymSetupInput, OnboardingStep } from '@/domain/onboarding/onboarding';
 import { SecurityService, type UnlockResult } from '@/features/security/security-service';
+import { BackupService, type SavedBackup } from '@/features/backup-restore/backup-service';
 import i18n, { setAppLanguage } from '@/i18n';
 import { logLocalDiagnostic } from '@/platform/diagnostics/local-diagnostic-logger';
 import {
@@ -27,6 +33,13 @@ import {
 import { getRuntimeCapabilities } from '@/platform/runtime/runtime-capabilities';
 import { authenticateWithBiometrics, canUseBiometrics } from '@/platform/security/biometrics';
 import { createPinVerifier } from '@/platform/security/pin-kdf';
+import type { BackupManifest } from '@/platform/backup/backup-manifest';
+import { recoverEncryptedBackup, verifyEncryptedBackup } from '@/platform/backup/sqlcipher-backup';
+import {
+  deleteDatabaseKey,
+  getOrCreateRecoveryDatabaseKey,
+} from '@/platform/secure-storage/database-key';
+import { Phase5Repository } from '@/data/repositories/phase5-repository';
 
 type ReadyBase = Readonly<{
   schemaVersion: number;
@@ -60,6 +73,13 @@ type AppSessionContextValue = Readonly<{
   getPhase2Repository(): Phase2Repository;
   getPhase3Repository(): Phase3Repository;
   getPhase4Repository(): Phase4Repository;
+  getBackupService(): BackupService;
+  createBackup(passphrase: string, ownerPin: string): Promise<SavedBackup>;
+  previewBackup(file: File, passphrase: string): Promise<BackupManifest>;
+  restoreBackup(file: File, passphrase: string, ownerPin: string): Promise<BackupManifest>;
+  deleteAllLocalData(ownerPin: string): Promise<boolean>;
+  previewRecoveryBackup(file: File, passphrase: string): Promise<BackupManifest>;
+  recoverFromBackup(file: File, passphrase: string): Promise<BackupManifest>;
 }>;
 
 const AppSessionContext = createContext<AppSessionContextValue | null>(null);
@@ -333,6 +353,123 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
     return new Phase4Repository(opened.database);
   }, []);
 
+  const getBackupService = useCallback((): BackupService => {
+    const opened = openedRef.current;
+    const current = stateRef.current;
+    if (!opened || current.status !== 'unlocked') throw new Error('SESSION_NOT_UNLOCKED');
+    return new BackupService(opened.database, opened.schemaVersion, current.ownerId, opened.key);
+  }, []);
+
+  const createBackup = useCallback(
+    async (passphrase: string, ownerPin: string): Promise<SavedBackup> => {
+      if (!(await reauthenticateOwner(ownerPin)))
+        throw new Error('OWNER_REAUTHENTICATION_REQUIRED');
+      return getBackupService().create(passphrase);
+    },
+    [getBackupService, reauthenticateOwner],
+  );
+
+  const previewBackup = useCallback(
+    (file: File, passphrase: string): Promise<BackupManifest> =>
+      getBackupService().preview(file, passphrase),
+    [getBackupService],
+  );
+
+  const restoreBackup = useCallback(
+    async (file: File, passphrase: string, ownerPin: string): Promise<BackupManifest> => {
+      if (!(await reauthenticateOwner(ownerPin)))
+        throw new Error('OWNER_REAUTHENTICATION_REQUIRED');
+      let liveHandleClosed = false;
+      try {
+        const manifest = await getBackupService().restore(file, passphrase, {
+          beforeLiveReplacement: async () => {
+            liveHandleClosed = true;
+            openedRef.current = null;
+            repositoryRef.current = null;
+          },
+        });
+        setState({ status: 'migrating' });
+        setStartupAttempt((attempt) => attempt + 1);
+        return manifest;
+      } catch (error) {
+        if (liveHandleClosed) {
+          setState({ status: 'migrating' });
+          setStartupAttempt((attempt) => attempt + 1);
+        }
+        throw error;
+      }
+    },
+    [getBackupService, reauthenticateOwner],
+  );
+
+  const deleteAllLocalData = useCallback(
+    async (ownerPin: string): Promise<boolean> => {
+      if (!(await reauthenticateOwner(ownerPin))) return false;
+      const opened = openedRef.current;
+      openedRef.current = null;
+      repositoryRef.current = null;
+      await opened?.database.closeAsync();
+      try {
+        deleteGymVitoDatabaseFiles();
+        await deleteDatabaseKey();
+        return true;
+      } finally {
+        setState({ status: 'migrating' });
+        setStartupAttempt((attempt) => attempt + 1);
+      }
+    },
+    [reauthenticateOwner],
+  );
+
+  const previewRecoveryBackup = useCallback(
+    (file: File, passphrase: string): Promise<BackupManifest> => {
+      if (!getRuntimeCapabilities().nativeSecurityProofs) {
+        throw new Error('NATIVE_SECURITY_BUILD_REQUIRED');
+      }
+      return verifyEncryptedBackup(file, passphrase);
+    },
+    [],
+  );
+
+  const recoverFromBackup = useCallback(
+    async (file: File, passphrase: string): Promise<BackupManifest> => {
+      const current = stateRef.current;
+      if (current.status === 'unlocked' || current.status === 'locked') {
+        throw new Error('RECOVERY_REQUIRES_LOCKED_OUT_OR_NEW_INSTALL');
+      }
+      if (!getRuntimeCapabilities().nativeSecurityProofs) {
+        throw new Error('NATIVE_SECURITY_BUILD_REQUIRED');
+      }
+      const opened = openedRef.current;
+      openedRef.current = null;
+      repositoryRef.current = null;
+      await opened?.database.closeAsync();
+      try {
+        const deviceKey = await getOrCreateRecoveryDatabaseKey();
+        const manifest = await recoverEncryptedBackup(file, passphrase, deviceKey, {
+          afterReplacementVerified: async (replacement, sourceManifest) => {
+            const repository = new Phase5Repository(replacement);
+            await repository.recordSuccessfulRestore({
+              targetDescriptor: file.name,
+              formatVersion: sourceManifest.formatVersion,
+              schemaVersion: sourceManifest.schemaVersion,
+              sourceAppVersion: sourceManifest.sourceAppVersion,
+              fileSizeBytes: file.size,
+              recordCounts: sourceManifest.recordCounts,
+            });
+          },
+        });
+        setState({ status: 'migrating' });
+        setStartupAttempt((attempt) => attempt + 1);
+        return manifest;
+      } catch (error) {
+        setState({ status: 'recovery-error', messageCode: diagnosticCode(error) });
+        throw error;
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     return observeDeviceLocale((deviceLocale) => {
       const current = stateRef.current;
@@ -397,6 +534,13 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       getPhase2Repository,
       getPhase3Repository,
       getPhase4Repository,
+      getBackupService,
+      createBackup,
+      previewBackup,
+      restoreBackup,
+      deleteAllLocalData,
+      previewRecoveryBackup,
+      recoverFromBackup,
     }),
     [
       changeInactivityTimeout,
@@ -406,6 +550,13 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       getPhase2Repository,
       getPhase3Repository,
       getPhase4Repository,
+      getBackupService,
+      createBackup,
+      previewBackup,
+      restoreBackup,
+      deleteAllLocalData,
+      previewRecoveryBackup,
+      recoverFromBackup,
       lock,
       reauthenticateOwner,
       recordActivity,

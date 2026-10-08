@@ -1,4 +1,4 @@
-import { Redirect, type Href } from 'expo-router';
+import { Redirect, router, type Href } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,6 +33,9 @@ export default function IndexRoute() {
           </Text>
           <Text style={styles.errorCode}>{state.messageCode}</Text>
           <AppButton onPress={retryStartup}>{t('retry')}</AppButton>
+          <AppButton onPress={() => router.push('/recovery' as Href)} variant="secondary">
+            {t('restoreFromBackup')}
+          </AppButton>
         </View>
       </SafeAreaView>
     );

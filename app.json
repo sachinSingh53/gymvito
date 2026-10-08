@@ -2,6 +2,7 @@
   "expo": {
     "name": "GymVito",
     "slug": "gymvito",
+    "scheme": "gymvito",
     "owner": "sachin_53",
     "version": "0.0.1",
     "platforms": ["android", "ios"],

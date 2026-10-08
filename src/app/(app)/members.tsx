@@ -14,18 +14,38 @@ import { useTranslation } from 'react-i18next';
 
 import type { MemberRecord } from '@/data/repositories/phase2-repository';
 import type { MembershipDirectoryItem } from '@/data/repositories/phase3-repository';
+import type { MemberFinanceSummary } from '@/data/repositories/phase4-repository';
+import { addDays } from '@/domain/dates/date-rules';
 import { MemberCard } from '@/features/members/member-card';
 import { MemberProfilePanel } from '@/features/members/member-profile-panel';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppButton, LoadingState, Notice } from '@/ui/components/core-controls';
-import { LocalDataBadge, OperationalShell, SurfaceCard } from '@/ui/components/operational-shell';
+import { MaterialSymbol, OperationalShell, SurfaceCard } from '@/ui/components/operational-shell';
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
 
-type Filter = 'all' | 'active' | 'upcoming' | 'expired' | 'no-membership' | 'archived';
+type Filter =
+  'all' | 'active' | 'expiring' | 'overdue' | 'expired' | 'upcoming' | 'no-membership' | 'archived';
+const FILTERS: readonly Filter[] = [
+  'all',
+  'active',
+  'expiring',
+  'overdue',
+  'expired',
+  'upcoming',
+  'no-membership',
+  'archived',
+];
+const FILTER_ICONS: Partial<Record<Filter, { name: string; color: string }>> = {
+  expiring: { name: 'history_toggle_off', color: colors.warningText },
+  overdue: { name: 'priority_high', color: colors.danger },
+};
+const EXPIRING_WINDOW_DAYS = 30;
 const FILTER_LABELS = {
   all: 'memberFilterAll',
   active: 'memberFilterActive',
+  expiring: 'memberFilterExpiring',
+  overdue: 'memberFilterOverdue',
   upcoming: 'memberFilterUpcoming',
   expired: 'memberFilterExpired',
   'no-membership': 'memberFilterNoMembership',
@@ -35,7 +55,7 @@ const FILTER_LABELS = {
 export default function MembersRoute() {
   const { width } = useWindowDimensions();
   const splitView = width >= 960;
-  const { state, getPhase2Repository, getPhase3Repository } = useAppSession();
+  const { state, getPhase2Repository, getPhase3Repository, getPhase4Repository } = useAppSession();
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -43,9 +63,14 @@ export default function MembersRoute() {
     state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC',
   );
   const [members, setMembers] = useState<readonly MembershipDirectoryItem[]>([]);
+  const [financeByMember, setFinanceByMember] = useState<ReadonlyMap<string, MemberFinanceSummary>>(
+    new Map(),
+  );
   const [counts, setCounts] = useState({
     all: 0,
     active: 0,
+    expiring: 0,
+    overdue: 0,
     upcoming: 0,
     expired: 0,
     'no-membership': 0,
@@ -68,17 +93,41 @@ export default function MembersRoute() {
       getPhase3Repository().listMembers(today, query, archiveFilter),
       repository.memberCounts(),
       getPhase3Repository().dashboardCounts(today),
+      getPhase4Repository().listOutstandingInvoices(today),
     ])
-      .then(([rows, memberCounts, statusCounts]) => {
+      .then(async ([rows, memberCounts, statusCounts, outstanding]) => {
+        const finance = await getPhase4Repository().listMemberFinanceSummaries(
+          rows.map((member) => member.id),
+          today,
+        );
         if (!active) return;
+        const overdueMembers = new Set(
+          outstanding
+            .filter((invoice) => invoice.dueStatus === 'overdue')
+            .map((invoice) => invoice.memberId),
+        );
+        const expiryEnd = addDays(today, EXPIRING_WINDOW_DAYS);
         const filteredRows =
           filter === 'all' || filter === 'archived'
             ? rows
-            : rows.filter((member) => member.status === filter);
+            : filter === 'overdue'
+              ? rows.filter((member) => overdueMembers.has(member.id))
+              : filter === 'expiring'
+                ? rows.filter(
+                    (member) =>
+                      member.status === 'active' &&
+                      !!member.current &&
+                      member.current.endDate >= today &&
+                      member.current.endDate <= expiryEnd,
+                  )
+                : rows.filter((member) => member.status === filter);
         setMembers(filteredRows);
+        setFinanceByMember(finance);
         setCounts({
           all: memberCounts.total,
           active: statusCounts.active,
+          expiring: statusCounts.expiringSoon,
+          overdue: overdueMembers.size,
           upcoming: statusCounts.upcoming,
           expired: statusCounts.expired,
           'no-membership': statusCounts.noMembership,
@@ -98,6 +147,7 @@ export default function MembersRoute() {
     filter,
     getPhase2Repository,
     getPhase3Repository,
+    getPhase4Repository,
     query,
     refreshKey,
     selectedId,
@@ -124,6 +174,11 @@ export default function MembersRoute() {
   }, [getPhase2Repository, refreshKey, selectedId, splitView]);
 
   if (state.status !== 'unlocked') return null;
+  const regionalSettings = {
+    language: state.snapshot.settings?.language ?? 'en',
+    currencyCode: state.snapshot.settings?.currencyCode ?? 'INR',
+    dateFormat: state.snapshot.settings?.dateFormat ?? ('day-month-year' as const),
+  };
   const openMember = (member: MembershipDirectoryItem) => {
     if (splitView) setSelectedId(member.id);
     else router.push(`/member/${member.id}` as Href);
@@ -133,7 +188,7 @@ export default function MembersRoute() {
     <View style={styles.directoryPane}>
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
-          <Text style={styles.searchIcon}>⌕</Text>
+          <MaterialSymbol color={colors.outline} name="search" size={22} />
           <TextInput
             accessibilityLabel={t('searchMembers')}
             onChangeText={setQuery}
@@ -156,35 +211,54 @@ export default function MembersRoute() {
       <ScrollView
         contentContainerStyle={styles.filterRow}
         horizontal
+        style={styles.filterScroll}
         showsHorizontalScrollIndicator={false}
       >
-        {(['all', 'active', 'upcoming', 'expired', 'no-membership', 'archived'] as const).map(
-          (value) => (
+        {FILTERS.map((value) => {
+          const icon = FILTER_ICONS[value];
+          const isSelected = filter === value;
+          return (
             <Pressable
               accessibilityRole="radio"
-              accessibilityState={{ selected: filter === value }}
+              accessibilityState={{ selected: isSelected }}
               key={value}
               onPress={() => setFilter(value)}
-              style={[styles.filterChip, filter === value && styles.filterChipSelected]}
+              style={[styles.filterChip, isSelected && styles.filterChipSelected]}
             >
-              <Text style={[styles.filterText, filter === value && styles.filterTextSelected]}>
+              {icon ? (
+                <MaterialSymbol
+                  color={isSelected ? '#ffffff' : icon.color}
+                  name={icon.name}
+                  size={16}
+                />
+              ) : null}
+              <Text style={[styles.filterText, isSelected && styles.filterTextSelected]}>
                 {t(FILTER_LABELS[value])}
               </Text>
-              <Text style={[styles.filterCount, filter === value && styles.filterTextSelected]}>
+              <Text style={[styles.filterCount, isSelected && styles.filterCountSelected]}>
                 {counts[value]}
               </Text>
             </Pressable>
-          ),
-        )}
+          );
+        })}
       </ScrollView>
       <View style={styles.directoryMeta}>
-        <Text style={styles.resultCount}>
-          {t('showingMembers', {
-            shown: members.length,
-            total: counts[filter],
-          })}
-        </Text>
-        <LocalDataBadge />
+        <View style={styles.rosterState}>
+          <Text numberOfLines={1} style={styles.resultCount}>
+            {t('showingMembers', {
+              shown: members.length,
+              total: counts[filter],
+            })}
+          </Text>
+          <View style={styles.localDot} />
+          <Text numberOfLines={1} style={styles.localStateText}>
+            {t('offlineCached')}
+          </Text>
+        </View>
+        <View accessibilityLabel={t('sortedByRecent')} style={styles.sortState}>
+          <MaterialSymbol color={colors.primaryDark} name="swap_vert" size={18} />
+          <Text style={styles.sortText}>{t('recent')}</Text>
+        </View>
       </View>
       {error ? <Notice danger>{t('membersLoadFailed')}</Notice> : null}
       <FlatList
@@ -214,9 +288,12 @@ export default function MembersRoute() {
         }
         renderItem={({ item }) => (
           <MemberCard
+            finance={financeByMember.get(item.id)}
             member={item}
             onPress={() => openMember(item)}
+            regionalSettings={regionalSettings}
             selected={splitView && selectedId === item.id}
+            today={today}
           />
         )}
       />
@@ -226,7 +303,8 @@ export default function MembersRoute() {
         onPress={() => router.push('/member/new' as Href)}
         style={styles.floatingAdd}
       >
-        <Text style={styles.floatingAddText}>＋ {t('member')}</Text>
+        <MaterialSymbol color="#ffffff" name="person_add" size={22} />
+        <Text style={styles.floatingAddText}>+ {t('member')}</Text>
       </Pressable>
     </View>
   );
@@ -235,6 +313,11 @@ export default function MembersRoute() {
     <OperationalShell
       active="members"
       contentStyle={styles.shellContent}
+      headerAction={
+        <View accessibilityLabel={t('offlineCached')} style={styles.headerLocalState}>
+          <MaterialSymbol color={colors.primary} name="cloud_done" size={22} />
+        </View>
+      }
       scroll={false}
       title={t('members')}
       subtitle={t('memberLedger')}
@@ -271,7 +354,7 @@ export default function MembersRoute() {
 }
 
 const styles = StyleSheet.create({
-  shellContent: { paddingBottom: spacing.sm },
+  shellContent: { paddingTop: spacing.sm, paddingBottom: spacing.sm },
   splitPane: { flex: 1, flexDirection: 'row', gap: spacing.md },
   directoryPane: { minWidth: 0, flex: 1, gap: spacing.sm },
   detailPane: { minWidth: 0, flex: 1.45 },
@@ -283,24 +366,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: 14,
     backgroundColor: colors.surface,
+    shadowColor: colors.brandHeader,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
-  searchIcon: { color: colors.outline, fontSize: 24 },
   searchInput: {
     minWidth: 0,
     flex: 1,
     color: colors.text,
     fontFamily: fonts.regular,
-    fontSize: 14,
+    fontSize: 15,
   },
   clear: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   clearText: { color: colors.outline, fontSize: 22 },
-  filterRow: { flexDirection: 'row', gap: spacing.sm, paddingRight: spacing.md },
+  filterScroll: { flexGrow: 0, flexShrink: 0 },
+  filterRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+    paddingVertical: 2,
+    paddingRight: spacing.md,
+  },
   filterChip: {
-    minHeight: 48,
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -309,24 +401,60 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   filterChipSelected: { backgroundColor: colors.primaryDark },
-  filterText: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 12 },
+  filterText: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 14 },
   filterTextSelected: { color: '#ffffff' },
-  filterCount: { color: colors.text, fontFamily: fonts.bold, fontSize: 12 },
+  filterCount: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radii.pill,
+    color: colors.text,
+    backgroundColor: colors.surfaceHigh,
+    fontFamily: fonts.bold,
+    fontSize: 12,
+  },
+  filterCountSelected: {
+    color: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+  },
   directoryMeta: {
-    minHeight: 42,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  resultCount: {
+  rosterState: {
     minWidth: 0,
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  resultCount: {
+    minWidth: 0,
+    flexShrink: 1,
     color: colors.textMuted,
     fontFamily: fonts.semibold,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 16,
   },
+  localDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary },
+  localStateText: {
+    minWidth: 0,
+    flexShrink: 1,
+    color: colors.outline,
+    fontFamily: fonts.bold,
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  sortState: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xs,
+  },
+  sortText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
   list: { gap: 12, paddingBottom: 86 },
   empty: {
     alignItems: 'center',
@@ -344,9 +472,11 @@ const styles = StyleSheet.create({
   },
   floatingAdd: {
     position: 'absolute',
-    right: spacing.md,
+    right: 0,
     bottom: spacing.md,
     minHeight: 56,
+    flexDirection: 'row',
+    gap: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
@@ -359,5 +489,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   floatingAddText: { color: '#fff', fontFamily: fonts.bold, fontSize: 15 },
+  headerLocalState: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   detailEmpty: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, minHeight: 300 },
 });

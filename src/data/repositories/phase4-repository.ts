@@ -101,6 +101,18 @@ export type MemberFinanceSummary = Readonly<{
   latestOutstandingInvoiceId: string | null;
 }>;
 
+function emptyMemberFinanceSummary(): MemberFinanceSummary {
+  return {
+    invoicedMinor: 0,
+    paidMinor: 0,
+    balanceMinor: 0,
+    overdueMinor: 0,
+    invoiceCount: 0,
+    paymentCount: 0,
+    latestOutstandingInvoiceId: null,
+  };
+}
+
 export type FinancialDashboard = Readonly<{
   invoicedMinor: number;
   recordedPaidMinor: number;
@@ -414,29 +426,62 @@ export class Phase4Repository {
   }
 
   async getMemberFinanceSummary(memberId: string, today: DateOnly): Promise<MemberFinanceSummary> {
-    const [invoices, payments] = await Promise.all([
-      this.listMemberInvoices(memberId, today),
-      this.database.getFirstAsync<{ count: number }>(
-        `SELECT COUNT(*) AS count FROM payment p
-         JOIN invoice i ON i.id = p.invoice_id WHERE i.member_id = ?`,
-        memberId,
+    return (
+      (await this.listMemberFinanceSummaries([memberId], today)).get(memberId) ??
+      emptyMemberFinanceSummary()
+    );
+  }
+
+  async listMemberFinanceSummaries(
+    memberIds: readonly string[],
+    today: DateOnly,
+  ): Promise<ReadonlyMap<string, MemberFinanceSummary>> {
+    const uniqueMemberIds = [...new Set(memberIds)];
+    if (!uniqueMemberIds.length) return new Map();
+    const placeholders = uniqueMemberIds.map(() => '?').join(', ');
+    const [invoiceRows, paymentRows] = await Promise.all([
+      this.database.getAllAsync<InvoiceRow>(
+        `${INVOICE_SELECT} WHERE i.member_id IN (${placeholders})
+         ORDER BY i.member_id, i.created_at_utc DESC, i.id DESC`,
+        ...uniqueMemberIds,
+      ),
+      this.database.getAllAsync<{ member_id: string; count: number }>(
+        `SELECT i.member_id, COUNT(*) AS count FROM payment p
+         JOIN invoice i ON i.id = p.invoice_id
+         WHERE i.member_id IN (${placeholders}) GROUP BY i.member_id`,
+        ...uniqueMemberIds,
       ),
     ]);
-    const outstanding = invoices.filter((invoice) => invoice.balanceMinor > 0);
-    return {
-      invoicedMinor: invoices.reduce((sum, invoice) => sum + invoice.totalMinor, 0),
-      paidMinor: invoices.reduce(
-        (sum, invoice) => sum + invoice.paidMinor + invoice.adjustmentMinor,
-        0,
-      ),
-      balanceMinor: invoices.reduce((sum, invoice) => sum + invoice.balanceMinor, 0),
-      overdueMinor: invoices
-        .filter((invoice) => invoice.dueStatus === 'overdue')
-        .reduce((sum, invoice) => sum + invoice.balanceMinor, 0),
-      invoiceCount: invoices.length,
-      paymentCount: payments?.count ?? 0,
-      latestOutstandingInvoiceId: outstanding[0]?.id ?? null,
-    };
+    const paymentCounts = new Map(paymentRows.map((row) => [row.member_id, row.count]));
+    const invoicesByMember = new Map<string, InvoiceRecord[]>();
+    for (const row of invoiceRows) {
+      const invoices = invoicesByMember.get(row.member_id) ?? [];
+      invoices.push(mapInvoice(row, today));
+      invoicesByMember.set(row.member_id, invoices);
+    }
+    return new Map(
+      uniqueMemberIds.map((memberId) => {
+        const invoices = invoicesByMember.get(memberId) ?? [];
+        const outstanding = invoices.filter((invoice) => invoice.balanceMinor > 0);
+        return [
+          memberId,
+          {
+            invoicedMinor: invoices.reduce((sum, invoice) => sum + invoice.totalMinor, 0),
+            paidMinor: invoices.reduce(
+              (sum, invoice) => sum + invoice.paidMinor + invoice.adjustmentMinor,
+              0,
+            ),
+            balanceMinor: invoices.reduce((sum, invoice) => sum + invoice.balanceMinor, 0),
+            overdueMinor: invoices
+              .filter((invoice) => invoice.dueStatus === 'overdue')
+              .reduce((sum, invoice) => sum + invoice.balanceMinor, 0),
+            invoiceCount: invoices.length,
+            paymentCount: paymentCounts.get(memberId) ?? 0,
+            latestOutstandingInvoiceId: outstanding[0]?.id ?? null,
+          },
+        ] as const;
+      }),
+    );
   }
 
   async getFinancialDashboard(today: DateOnly): Promise<FinancialDashboard> {

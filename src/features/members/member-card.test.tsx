@@ -99,7 +99,72 @@ describe('MemberCard', () => {
 
     expect(screen.getAllByText('Active')).toHaveLength(1);
     expect(screen.getByText('Annual Strength')).toBeTruthy();
-    expect(screen.getByText('Valid through 2026-12-31')).toBeTruthy();
+    expect(screen.getByText('Exp: 2026-12-31')).toBeTruthy();
     expect(screen.getByText('Renew plan')).toBeTruthy();
+  });
+
+  it('uses local billing data and regional formatting in the approved directory treatment', () => {
+    const screen = render(
+      <MemberCard
+        finance={{
+          invoicedMinor: 120_000,
+          paidMinor: 120_000,
+          balanceMinor: 0,
+          overdueMinor: 0,
+          invoiceCount: 1,
+          paymentCount: 1,
+          latestOutstandingInvoiceId: null,
+        }}
+        member={{
+          ...MEMBER,
+          status: 'active',
+          current: MEMBERSHIP,
+          latest: MEMBERSHIP,
+          historyCount: 1,
+        }}
+        onPress={jest.fn()}
+        regionalSettings={{
+          language: 'en',
+          currencyCode: 'INR',
+          dateFormat: 'day-month-year',
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Paid in full')).toBeTruthy();
+    expect(screen.getByText('Exp: 31 Dec 2026')).toBeTruthy();
+    expect(screen.queryByText('Renew plan')).toBeNull();
+  });
+
+  it('promotes overdue local balances ahead of the membership status', () => {
+    const screen = render(
+      <MemberCard
+        finance={{
+          invoicedMinor: 120_000,
+          paidMinor: 95_000,
+          balanceMinor: 25_000,
+          overdueMinor: 25_000,
+          invoiceCount: 1,
+          paymentCount: 1,
+          latestOutstandingInvoiceId: 'invoice-1',
+        }}
+        member={{
+          ...MEMBER,
+          status: 'active',
+          current: MEMBERSHIP,
+          latest: MEMBERSHIP,
+          historyCount: 1,
+        }}
+        onPress={jest.fn()}
+        regionalSettings={{
+          language: 'en',
+          currencyCode: 'INR',
+          dateFormat: 'day-month-year',
+        }}
+      />,
+    );
+
+    expect(screen.getByText(/₹250\.00 Due/)).toBeTruthy();
+    expect(screen.getByText('Overdue')).toBeTruthy();
   });
 });

@@ -39,10 +39,27 @@ export async function getOrCreateDatabaseKey(databaseExists: boolean): Promise<s
   return generated;
 }
 
+export async function getOrCreateRecoveryDatabaseKey(): Promise<string> {
+  const existing = await readDatabaseKey();
+  if (existing) return existing;
+  const generated = bytesToHex(await getRandomBytesAsync(32));
+  await SecureStore.setItemAsync(DATABASE_KEY_NAME, generated, {
+    keychainService: DATABASE_KEY_SERVICE,
+    requireAuthentication: false,
+  });
+  return generated;
+}
+
 export async function readDatabaseKey(): Promise<string | null> {
   const key = await SecureStore.getItemAsync(DATABASE_KEY_NAME, {
     keychainService: DATABASE_KEY_SERVICE,
   });
   if (key) assertDatabaseKey(key);
   return key;
+}
+
+export async function deleteDatabaseKey(): Promise<void> {
+  await SecureStore.deleteItemAsync(DATABASE_KEY_NAME, {
+    keychainService: DATABASE_KEY_SERVICE,
+  });
 }

@@ -23,6 +23,9 @@ export default function MoreRoute() {
         <AppButton onPress={() => router.push('/billing-settings' as Href)} variant="secondary">
           {t('billingSettings')}
         </AppButton>
+        <AppButton onPress={() => router.push('/backup-restore' as Href)} variant="secondary">
+          {t('backupCenterTitle')}
+        </AppButton>
       </SurfaceCard>
       <SurfaceCard style={styles.section}>
         <Text style={styles.sectionTitle}>{t('dataTools')}</Text>

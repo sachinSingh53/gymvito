@@ -28,8 +28,6 @@ export default function RootLayout() {
     MaterialSymbols_400Regular,
     NotoSansDevanagari_400Regular,
   });
-  ScreenCapture.usePreventScreenCapture('gymvito-sensitive-routes');
-
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 

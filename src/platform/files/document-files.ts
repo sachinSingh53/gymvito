@@ -8,7 +8,11 @@ export async function pickGymVitoBackup(): Promise<File | null> {
     multiple: false,
   });
   if (result.canceled) return null;
-  return new File(result.assets[0].uri);
+  const file = new File(result.assets[0].uri);
+  if (!file.name.toLowerCase().endsWith('.gymvito')) {
+    throw new Error('SELECTED_FILE_IS_NOT_GYMVITO_BACKUP');
+  }
+  return file;
 }
 
 export function createTemporaryProbe(contents: string): File {

@@ -14,6 +14,11 @@ const valid: BackupManifest = {
   moneyTotalMinor: 125050,
   mediaSha256: 'a'.repeat(64),
   integrityResult: 'ok',
+  recordCounts: { member: 1 },
+  financialTotals: { invoicedMinor: 100, recordedPaymentsMinor: 50 },
+  membershipStatusCounts: { finalized: 1 },
+  sequenceState: { member_code: 2 },
+  logicalChecksum: 'b'.repeat(64),
 };
 
 describe('backup manifest validation', () => {
@@ -28,6 +33,9 @@ describe('backup manifest validation', () => {
     [{ recordCount: -1 }, 'record count'],
     [{ moneyTotalMinor: 1.2 }, 'money total'],
     [{ mediaSha256: 'bad' }, 'media hash'],
+    [{ logicalChecksum: 'bad' }, 'logical checksum'],
+    [{ recordCounts: { member: -1 } }, 'reconciliation metadata'],
+    [{ financialTotals: { invoicedMinor: 1.5 } }, 'financial metadata'],
     [{ integrityResult: 'failed' }, 'integrity metadata'],
     [{ createdAtUtc: 'bad-date' }, 'integrity metadata'],
     [{ currency: 'rupees' }, 'identity metadata'],

@@ -1,7 +1,9 @@
-import { File } from 'expo-file-system';
+import { Directory, File } from 'expo-file-system';
 import { defaultDatabaseDirectory, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 
 import { UnsupportedDatabaseError } from '@/domain/errors/foundation-errors';
+import { logLocalDiagnostic } from '@/platform/diagnostics/local-diagnostic-logger';
+import { toFileSystemUri } from '@/platform/files/file-system-uri';
 import {
   getRuntimeCapabilities,
   type DatabaseSecurityMode,
@@ -30,7 +32,28 @@ export type OpenedDatabase = Readonly<{
 }>;
 
 export function databaseFile(): File {
-  return new File(defaultDatabaseDirectory, DATABASE_NAME);
+  return new File(toFileSystemUri(defaultDatabaseDirectory), DATABASE_NAME);
+}
+
+export function deleteGymVitoDatabaseFiles(): void {
+  for (const name of [DATABASE_NAME, `${DATABASE_NAME}-wal`, `${DATABASE_NAME}-shm`]) {
+    const file = new File(toFileSystemUri(defaultDatabaseDirectory), name);
+    if (file.exists) file.delete();
+  }
+}
+
+function cleanupVerifiedStartupTemporaryFiles(): void {
+  const directory = new Directory(toFileSystemUri(defaultDatabaseDirectory));
+  if (!directory.exists) return;
+  for (const entry of directory.list()) {
+    if (
+      entry instanceof File &&
+      (/^gymvito-(restore|safety|recovery|recovery-safety)-/.test(entry.name) ||
+        /^gymvito-\d{4}-\d{2}-\d{2}-\d+\.gymvito$/.test(entry.name))
+    ) {
+      entry.delete();
+    }
+  }
 }
 
 export async function openGymVitoDatabase(): Promise<OpenedDatabase> {
@@ -64,6 +87,12 @@ export async function openGymVitoDatabase(): Promise<OpenedDatabase> {
     const integrity = await database.getFirstAsync<IntegrityResult>('PRAGMA quick_check(1)');
     if (integrity?.quick_check !== 'ok') {
       throw new UnsupportedDatabaseError('Database integrity check failed.');
+    }
+    try {
+      cleanupVerifiedStartupTemporaryFiles();
+    } catch {
+      // Removing stale temporary backups is housekeeping, never a startup gate.
+      logLocalDiagnostic('warning', 'STARTUP.TEMP_FILE_CLEANUP_FAILED');
     }
 
     const versionAfter = await database.getFirstAsync<PragmaNumber>('PRAGMA user_version');

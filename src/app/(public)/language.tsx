@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +34,9 @@ export default function LanguageRoute() {
       <Notice>{t('languageRecordsNotice')}</Notice>
       <AppButton disabled={saving} onPress={() => void continueSetup()}>
         {saving ? t('saving') : t('continue')}
+      </AppButton>
+      <AppButton onPress={() => router.push('/recovery' as Href)} variant="secondary">
+        {t('restoreExistingGym')}
       </AppButton>
     </AppScreen>
   );

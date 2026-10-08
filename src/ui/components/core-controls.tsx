@@ -92,6 +92,26 @@ export function AppChoice({ label, selected, onPress }: ChoiceProps) {
   );
 }
 
+export function AppCheckbox({ label, selected, onPress }: ChoiceProps) {
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: selected }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.choice,
+        selected && styles.choiceSelected,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>
+        {selected ? '✓ ' : ''}
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function Notice({ children, danger = false }: PropsWithChildren<{ danger?: boolean }>) {
   return (
     <View accessibilityRole="summary" style={[styles.notice, danger && styles.dangerNotice]}>

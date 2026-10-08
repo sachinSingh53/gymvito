@@ -146,7 +146,6 @@ export function OperationalShell({
             </View>
           </View>
           <View style={styles.headerActions}>
-            {headerAction}
             <Pressable
               accessibilityLabel={t('languageLabel')}
               accessibilityRole="button"
@@ -157,6 +156,7 @@ export function OperationalShell({
                 {language === 'en' ? 'EN|हिं' : 'हिन्दी|EN'}
               </Text>
             </Pressable>
+            {headerAction}
             <View style={styles.ownerAvatar}>
               <Text style={styles.ownerAvatarText}>
                 {state.ownerName.trim().charAt(0).toUpperCase()}
@@ -186,7 +186,8 @@ function activeNavigationKey(pathname: string): NavKey | null {
     pathname.startsWith('/plan/') ||
     pathname === '/settings' ||
     pathname === '/billing-settings' ||
-    pathname === '/gym-settings'
+    pathname === '/gym-settings' ||
+    pathname === '/backup-restore'
   ) {
     return 'more';
   }
@@ -260,7 +261,6 @@ export function BusinessNavigation() {
                 pressed && styles.pressed,
               ]}
             >
-              {!tablet && selected ? <View style={styles.bottomActiveIndicator} /> : null}
               <MaterialSymbol
                 color={
                   selected
@@ -500,15 +500,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   bottomNavItem: { flex: 1, marginHorizontal: 2, marginVertical: 4 },
-  bottomNavItemSelected: { backgroundColor: colors.surfaceContainer },
-  bottomActiveIndicator: {
-    position: 'absolute',
-    top: 0,
-    width: 30,
-    height: 3,
-    borderRadius: radii.pill,
-    backgroundColor: colors.primaryDark,
-  },
+  bottomNavItemSelected: { backgroundColor: 'transparent' },
   sideNavItem: { width: '100%' },
   sideNavItemSelected: { backgroundColor: colors.primary },
   navLabel: {

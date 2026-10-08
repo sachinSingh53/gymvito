@@ -15,6 +15,7 @@ import {
   type SeedSummary,
 } from '@/data/repositories/phase0-proof-repository';
 import { readDeviceLocale } from '@/platform/localization/device-locale';
+import { toFileSystemUri } from '@/platform/files/file-system-uri';
 import { getRuntimeCapabilities } from '@/platform/runtime/runtime-capabilities';
 import {
   createEncryptedBackup,
@@ -77,7 +78,10 @@ async function wrongKeyIsRejected(): Promise<boolean> {
 }
 
 async function createCorruptCopy(source: File): Promise<File> {
-  const corrupt = new File(defaultDatabaseDirectory, `gymvito-corrupt-${Date.now()}.gymvito`);
+  const corrupt = new File(
+    toFileSystemUri(defaultDatabaseDirectory),
+    `gymvito-corrupt-${Date.now()}.gymvito`,
+  );
   await source.copy(corrupt);
   const bytes = await corrupt.bytes();
   const index = Math.floor(bytes.length / 2);

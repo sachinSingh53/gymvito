@@ -342,6 +342,28 @@ describe('Phase4Repository', () => {
       status: 'partially-paid',
       dueStatus: 'overdue',
     });
+    const summaries = await repository.listMemberFinanceSummaries(
+      [memberId, 'member-without-ledger'],
+      '2026-10-08',
+    );
+    expect(summaries.get(memberId)).toMatchObject({
+      invoicedMinor: 224_200,
+      paidMinor: 100_000,
+      balanceMinor: 124_200,
+      overdueMinor: 124_200,
+      invoiceCount: 1,
+      paymentCount: 1,
+      latestOutstandingInvoiceId: invoice.id,
+    });
+    expect(summaries.get('member-without-ledger')).toEqual({
+      invoicedMinor: 0,
+      paidMinor: 0,
+      balanceMinor: 0,
+      overdueMinor: 0,
+      invoiceCount: 0,
+      paymentCount: 0,
+      latestOutstandingInvoiceId: null,
+    });
     await expect(
       repository.recordPayment(
         {

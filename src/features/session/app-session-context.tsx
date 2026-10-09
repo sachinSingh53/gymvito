@@ -20,6 +20,7 @@ import { AppStateRepository, type StartupSnapshot } from '@/data/repositories/ap
 import { Phase2Repository } from '@/data/repositories/phase2-repository';
 import { Phase3Repository } from '@/data/repositories/phase3-repository';
 import { Phase4Repository } from '@/data/repositories/phase4-repository';
+import { Phase6Repository } from '@/data/repositories/phase6-repository';
 import type { AppLanguage, GymSetupInput, OnboardingStep } from '@/domain/onboarding/onboarding';
 import { SecurityService, type UnlockResult } from '@/features/security/security-service';
 import { BackupService, type SavedBackup } from '@/features/backup-restore/backup-service';
@@ -73,6 +74,7 @@ type AppSessionContextValue = Readonly<{
   getPhase2Repository(): Phase2Repository;
   getPhase3Repository(): Phase3Repository;
   getPhase4Repository(): Phase4Repository;
+  getPhase6Repository(): Phase6Repository;
   getBackupService(): BackupService;
   createBackup(passphrase: string, ownerPin: string): Promise<SavedBackup>;
   previewBackup(file: File, passphrase: string): Promise<BackupManifest>;
@@ -353,6 +355,12 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
     return new Phase4Repository(opened.database);
   }, []);
 
+  const getPhase6Repository = useCallback((): Phase6Repository => {
+    const opened = openedRef.current;
+    if (!opened || stateRef.current.status !== 'unlocked') throw new Error('SESSION_NOT_UNLOCKED');
+    return new Phase6Repository(opened.database);
+  }, []);
+
   const getBackupService = useCallback((): BackupService => {
     const opened = openedRef.current;
     const current = stateRef.current;
@@ -534,6 +542,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       getPhase2Repository,
       getPhase3Repository,
       getPhase4Repository,
+      getPhase6Repository,
       getBackupService,
       createBackup,
       previewBackup,
@@ -550,6 +559,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       getPhase2Repository,
       getPhase3Repository,
       getPhase4Repository,
+      getPhase6Repository,
       getBackupService,
       createBackup,
       previewBackup,

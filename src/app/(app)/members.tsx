@@ -1,4 +1,4 @@
-import { router, type Href, useFocusEffect } from 'expo-router';
+import { router, type Href, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
@@ -53,12 +53,16 @@ const FILTER_LABELS = {
 } as const;
 
 export default function MembersRoute() {
+  const params = useLocalSearchParams<{ filter?: string }>();
   const { width } = useWindowDimensions();
   const splitView = width >= 960;
   const { state, getPhase2Repository, getPhase3Repository, getPhase4Repository } = useAppSession();
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
+  const requestedFilter = FILTERS.includes(params.filter as Filter)
+    ? (params.filter as Filter)
+    : 'all';
+  const [filter, setFilter] = useState<Filter>(requestedFilter);
   const today = useLocalBusinessDate(
     state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC',
   );

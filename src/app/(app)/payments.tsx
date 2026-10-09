@@ -1,4 +1,4 @@
-import { router, type Href, useFocusEffect } from 'expo-router';
+import { router, type Href, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -18,12 +18,15 @@ import {
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
 
 export default function PaymentsRoute() {
+  const params = useLocalSearchParams<{ filter?: string }>();
   const { t } = useTranslation();
   const { state, getPhase4Repository } = useAppSession();
   const today = useLocalBusinessDate(
     state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC',
   );
-  const [tab, setTab] = useState<'dues' | 'payments'>('dues');
+  const [tab, setTab] = useState<'dues' | 'payments'>(
+    params.filter === 'payments' || params.filter === 'today' ? 'payments' : 'dues',
+  );
   const [invoices, setInvoices] = useState<readonly InvoiceRecord[]>([]);
   const [payments, setPayments] = useState<readonly PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,10 @@ export default function PaymentsRoute() {
   };
   const outstandingTotal = invoices.reduce((sum, invoice) => sum + invoice.balanceMinor, 0);
   const overdueCount = invoices.filter((invoice) => invoice.dueStatus === 'overdue').length;
+  const visiblePayments =
+    params.filter === 'today'
+      ? payments.filter((payment) => payment.receivedLocalDate === today)
+      : payments;
 
   return (
     <OperationalShell active="payments" title={t('payments')} subtitle={t('localFinancialLedger')}>
@@ -78,7 +85,7 @@ export default function PaymentsRoute() {
         </SurfaceCard>
         <SurfaceCard style={styles.metric}>
           <Text style={styles.metricLabel}>{t('recordedPayments')}</Text>
-          <Text style={styles.metricValue}>{payments.length}</Text>
+          <Text style={styles.metricValue}>{visiblePayments.length}</Text>
         </SurfaceCard>
       </View>
       <View style={styles.tabs}>
@@ -88,7 +95,7 @@ export default function PaymentsRoute() {
           selected={tab === 'dues'}
         />
         <Tab
-          label={`${t('paymentHistory')} (${payments.length})`}
+          label={`${t('paymentHistory')} (${visiblePayments.length})`}
           onPress={() => setTab('payments')}
           selected={tab === 'payments'}
         />
@@ -139,10 +146,10 @@ export default function PaymentsRoute() {
       ) : null}
       {!loading && !failed && tab === 'payments' ? (
         <View style={styles.list}>
-          {!payments.length ? (
+          {!visiblePayments.length ? (
             <Notice>{t('noPaymentsRecorded')}</Notice>
           ) : (
-            payments.map((payment) => (
+            visiblePayments.map((payment) => (
               <Pressable
                 accessibilityRole="button"
                 key={payment.id}

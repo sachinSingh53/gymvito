@@ -187,7 +187,9 @@ function activeNavigationKey(pathname: string): NavKey | null {
     pathname === '/settings' ||
     pathname === '/billing-settings' ||
     pathname === '/gym-settings' ||
-    pathname === '/backup-restore'
+    pathname === '/backup-restore' ||
+    pathname === '/reports' ||
+    pathname === '/data-export'
   ) {
     return 'more';
   }

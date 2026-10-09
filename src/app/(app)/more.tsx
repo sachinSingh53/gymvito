@@ -26,16 +26,19 @@ export default function MoreRoute() {
         <AppButton onPress={() => router.push('/backup-restore' as Href)} variant="secondary">
           {t('backupCenterTitle')}
         </AppButton>
+        <AppButton onPress={() => router.push('/reports' as Href)} variant="secondary">
+          {t('reports')}
+        </AppButton>
       </SurfaceCard>
       <SurfaceCard style={styles.section}>
         <Text style={styles.sectionTitle}>{t('dataTools')}</Text>
         <AppButton disabled onPress={() => undefined} variant="secondary">
           {t('importMembersPhase7')}
         </AppButton>
-        <AppButton disabled onPress={() => undefined} variant="secondary">
-          {t('exportMembersPhase6')}
+        <AppButton onPress={() => router.push('/data-export' as Href)} variant="secondary">
+          {t('dataExport')}
         </AppButton>
-        <Notice>{t('unavailableActionsNotice')}</Notice>
+        <Notice>{t('exportPrivacyWarning')}</Notice>
       </SurfaceCard>
       <View style={styles.lock}>
         <AppButton onPress={() => void lock('manual')} variant="danger">

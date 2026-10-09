@@ -250,7 +250,7 @@ export default function HomeRoute() {
         {counts.expiringSoon > shownMembers.length ? (
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.push('/members' as Href)}
+            onPress={() => router.push('/members?filter=expiring' as Href)}
             style={({ pressed }) => [styles.reviewRow, pressed && styles.actionPressed]}
           >
             <MaterialSymbol color={colors.textMuted} name="date_range" size={22} />
@@ -273,18 +273,21 @@ export default function HomeRoute() {
       <MetricCard
         detail={t('expiringSoonCount', { count: counts.expiringSoon })}
         label={t('activeMembers')}
+        onPress={() => router.push('/members?filter=active' as Href)}
         tone="active"
         value={String(counts.active)}
       />
       <MetricCard
         detail={t('nextThirtyDays')}
         label={t('expiringSoon')}
+        onPress={() => router.push('/members?filter=expiring' as Href)}
         tone="warning"
         value={String(counts.expiringSoon)}
       />
       <MetricCard
         detail={t('historyPreserved')}
         label={t('expiredMembers')}
+        onPress={() => router.push('/members?filter=expired' as Href)}
         tone="danger"
         value={String(counts.expired)}
       />
@@ -293,6 +296,7 @@ export default function HomeRoute() {
           amount: showSensitive ? formatMoneyMinor(finance.overdueMinor, regionalSettings) : '••••',
         })}
         label={t('outstandingDues')}
+        onPress={() => router.push('/payments?filter=outstanding' as Href)}
         tone="danger"
         value={
           showSensitive ? formatMoneyMinor(finance.outstandingMinor, regionalSettings) : '••••'
@@ -302,21 +306,27 @@ export default function HomeRoute() {
   );
 
   const collections = (
-    <SurfaceCard style={[styles.dashboardCard, styles.collectionCard]}>
-      <View style={styles.collectionHeading}>
-        <MaterialSymbol color={colors.primaryDark} name="point_of_sale" size={20} />
-        <Text style={styles.collectionTitle}>{t('todayRecordedCollections')}</Text>
-      </View>
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={0.72}
-        numberOfLines={1}
-        style={styles.collectionValue}
-      >
-        {showSensitive ? formatMoneyMinor(finance.todayRecordedMinor, regionalSettings) : '••••'}
-      </Text>
-      <Text style={styles.collectionDetail}>{t('recordedPaymentsOnly')}</Text>
-    </SurfaceCard>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push('/payments?filter=today' as Href)}
+      style={({ pressed }) => pressed && styles.actionPressed}
+    >
+      <SurfaceCard style={[styles.dashboardCard, styles.collectionCard]}>
+        <View style={styles.collectionHeading}>
+          <MaterialSymbol color={colors.primaryDark} name="point_of_sale" size={20} />
+          <Text style={styles.collectionTitle}>{t('todayRecordedCollections')}</Text>
+        </View>
+        <Text
+          adjustsFontSizeToFit
+          minimumFontScale={0.72}
+          numberOfLines={1}
+          style={styles.collectionValue}
+        >
+          {showSensitive ? formatMoneyMinor(finance.todayRecordedMinor, regionalSettings) : '••••'}
+        </Text>
+        <Text style={styles.collectionDetail}>{t('recordedPaymentsOnly')}</Text>
+      </SurfaceCard>
+    </Pressable>
   );
 
   const backup = (
@@ -509,39 +519,47 @@ function MetricCard({
   value,
   detail,
   tone,
+  onPress,
 }: {
   label: string;
   value: string;
   detail: string;
   tone: 'active' | 'danger' | 'warning';
+  onPress(): void;
 }) {
   return (
-    <SurfaceCard style={[styles.dashboardCard, styles.metricCard]}>
-      <View style={styles.metricLabelRow}>
-        <Text numberOfLines={2} style={styles.metricLabel}>
-          {label}
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.metricPressable, pressed && styles.actionPressed]}
+    >
+      <SurfaceCard style={[styles.dashboardCard, styles.metricCard]}>
+        <View style={styles.metricLabelRow}>
+          <Text numberOfLines={2} style={styles.metricLabel}>
+            {label}
+          </Text>
+          <View
+            style={[
+              styles.metricDot,
+              tone === 'active' && styles.metricDotActive,
+              tone === 'warning' && styles.metricDotWarning,
+              tone === 'danger' && styles.metricDotDanger,
+            ]}
+          />
+        </View>
+        <Text
+          adjustsFontSizeToFit
+          minimumFontScale={0.68}
+          numberOfLines={1}
+          style={[styles.metricValue, tone === 'danger' && styles.metricValueDanger]}
+        >
+          {value}
         </Text>
-        <View
-          style={[
-            styles.metricDot,
-            tone === 'active' && styles.metricDotActive,
-            tone === 'warning' && styles.metricDotWarning,
-            tone === 'danger' && styles.metricDotDanger,
-          ]}
-        />
-      </View>
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={0.68}
-        numberOfLines={1}
-        style={[styles.metricValue, tone === 'danger' && styles.metricValueDanger]}
-      >
-        {value}
-      </Text>
-      <Text numberOfLines={2} style={styles.metricDetail}>
-        {detail}
-      </Text>
-    </SurfaceCard>
+        <Text numberOfLines={2} style={styles.metricDetail}>
+          {detail}
+        </Text>
+      </SurfaceCard>
+    </Pressable>
   );
 }
 
@@ -787,6 +805,7 @@ const styles = StyleSheet.create({
   },
   reviewButtonText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
   metricGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  metricPressable: { minWidth: 136, flex: 1 },
   metricCard: { minWidth: 136, minHeight: 102, flex: 1, gap: spacing.xs, padding: 12 },
   metricLabelRow: {
     minWidth: 0,

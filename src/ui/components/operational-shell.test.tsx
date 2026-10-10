@@ -8,6 +8,8 @@ import { BusinessNavigation, OperationalShell } from './operational-shell';
 
 jest.mock('expo-router', () => ({
   router: {
+    back: jest.fn(),
+    canGoBack: jest.fn(() => true),
     navigate: jest.fn(),
     replace: jest.fn(),
   },
@@ -32,12 +34,16 @@ jest.mock('@/features/session/app-session-context', () => ({
 
 const mockNavigate = router.navigate as jest.Mock;
 const mockReplace = router.replace as jest.Mock;
+const mockBack = router.back as jest.Mock;
+const mockCanGoBack = router.canGoBack as jest.Mock;
 const mockUsePathname = usePathname as jest.Mock;
 
 describe('OperationalShell navigation', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
     mockReplace.mockClear();
+    mockBack.mockClear();
+    mockCanGoBack.mockReset().mockReturnValue(true);
     mockUsePathname.mockReturnValue('/home');
   });
 
@@ -62,5 +68,31 @@ describe('OperationalShell navigation', () => {
 
     expect(screen.queryAllByRole('tab')).toHaveLength(0);
     expect(screen.getByText('Dashboard content')).toBeTruthy();
+  });
+
+  it('offers an accessible back action for detail screens', () => {
+    const screen = render(
+      <OperationalShell active="payments" canGoBack title="Invoice detail">
+        <Text>Invoice content</Text>
+      </OperationalShell>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+
+    expect(mockBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the section route when a detail screen has no navigation history', () => {
+    mockCanGoBack.mockReturnValue(false);
+    const screen = render(
+      <OperationalShell active="more" backHref="/plans" canGoBack title="New plan">
+        <Text>Plan form</Text>
+      </OperationalShell>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith('/plans');
   });
 });

@@ -195,6 +195,8 @@ export default function BackupRestoreRoute() {
   return (
     <OperationalShell
       active="more"
+      backHref="/more"
+      canGoBack
       subtitle={t('backupCenterSubtitle')}
       title={t('backupCenterTitle')}
     >

@@ -1,7 +1,7 @@
 import { randomUUID } from 'expo-crypto';
 import { router, type Href, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { InvoiceDetail, PaymentRecord } from '@/data/repositories/phase4-repository';
@@ -15,12 +15,15 @@ import {
 import {
   createPaymentReceiptPdf,
   deletePaymentReceipt,
+  paymentReceiptShareFailureCode,
   printPaymentReceipt,
   sharePaymentReceipt,
 } from '@/platform/printing/payment-receipt';
+import { logLocalDiagnostic } from '@/platform/diagnostics/local-diagnostic-logger';
 import { AppButton, AppField, LoadingState, Notice } from '@/ui/components/core-controls';
 import {
   LocalDataBadge,
+  MaterialSymbol,
   OperationalShell,
   StatusChip,
   SurfaceCard,
@@ -34,6 +37,8 @@ export default function InvoiceDetailRoute() {
     issued?: string;
   }>();
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
+  const phone = width < 600;
   const { state, getPhase4Repository } = useAppSession();
   const today = useLocalBusinessDate(
     state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC',
@@ -42,6 +47,7 @@ export default function InvoiceDetailRoute() {
   const [loading, setLoading] = useState(true);
   const [receiptBusy, setReceiptBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageDanger, setMessageDanger] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [correctionPaymentId, setCorrectionPaymentId] = useState('');
   const [correctionReason, setCorrectionReason] = useState('');
@@ -66,53 +72,78 @@ export default function InvoiceDetailRoute() {
     timeFormat: state.snapshot.settings?.timeFormat ?? ('12-hour' as const),
   };
   const invoice = detail?.invoice;
-  const selectedPayment =
-    detail?.payments.find((payment) => payment.id === receipt) ?? detail?.payments[0] ?? null;
+  const selectedPayment = receipt
+    ? (detail?.payments.find((payment) => payment.id === receipt) ?? null)
+    : null;
 
   const receiptAction = async (payment: PaymentRecord, action: 'print' | 'share') => {
     if (!invoice || !state.snapshot.gym || receiptBusy) return;
     setReceiptBusy(true);
     setMessage('');
+    setMessageDanger(false);
+    const pdf = await createPaymentReceiptPdf({
+      language: settings.language,
+      currencyCode: invoice.currencyCode,
+      gymName: state.snapshot.gym.name,
+      gymAddress: state.snapshot.gym.address,
+      gymPhone: state.snapshot.gym.phone,
+      receiptFooter: state.snapshot.gym.receiptFooter,
+      receiptNumber: payment.receiptNumber,
+      invoiceNumber: invoice.invoiceNumber,
+      memberName: invoice.memberName,
+      memberCode: invoice.memberCode,
+      planName: invoice.planName,
+      amountMinor: payment.amountMinor,
+      methodLabel: payment.methodLabel,
+      transactionReference: payment.transactionReference,
+      receivedAtLabel: formatInstant(
+        new Date(payment.receivedAtUtc),
+        settings,
+        state.deviceLocale.timeZone,
+      ),
+      invoiceTotalMinor: invoice.totalMinor,
+      paidTotalMinor: invoice.paidMinor + invoice.adjustmentMinor,
+      balanceMinor: invoice.balanceMinor,
+      duplicate: issued !== '1' || payment.id !== receipt,
+    }).catch(() => {
+      logLocalDiagnostic('error', 'RECEIPT.PDF_CREATE_FAILED');
+      setMessage(t('receiptPdfCreationFailed'));
+      setMessageDanger(true);
+      return null;
+    });
+    if (!pdf) {
+      setReceiptBusy(false);
+      return;
+    }
     try {
-      const pdf = await createPaymentReceiptPdf({
-        language: settings.language,
-        currencyCode: invoice.currencyCode,
-        gymName: state.snapshot.gym.name,
-        gymAddress: state.snapshot.gym.address,
-        gymPhone: state.snapshot.gym.phone,
-        receiptFooter: state.snapshot.gym.receiptFooter,
-        receiptNumber: payment.receiptNumber,
-        invoiceNumber: invoice.invoiceNumber,
-        memberName: invoice.memberName,
-        memberCode: invoice.memberCode,
-        planName: invoice.planName,
-        amountMinor: payment.amountMinor,
-        methodLabel: payment.methodLabel,
-        transactionReference: payment.transactionReference,
-        receivedAtLabel: formatInstant(
-          new Date(payment.receivedAtUtc),
-          settings,
-          state.deviceLocale.timeZone,
-        ),
-        invoiceTotalMinor: invoice.totalMinor,
-        paidTotalMinor: invoice.paidMinor + invoice.adjustmentMinor,
-        balanceMinor: invoice.balanceMinor,
-        duplicate: issued !== '1' || payment.id !== receipt,
-      });
-      try {
-        if (action === 'print') {
-          await printPaymentReceipt(pdf);
-          setMessage(t('printDialogOpened'));
-        } else {
-          const shared = await sharePaymentReceipt(pdf, t('shareReceipt'));
-          setMessage(shared ? t('shareDialogOpened') : t('sharingUnavailable'));
-        }
-      } finally {
-        deletePaymentReceipt(pdf);
+      if (action === 'print') {
+        await printPaymentReceipt(pdf);
+        setMessage(t('printDialogOpened'));
+      } else {
+        const shared = await sharePaymentReceipt(pdf, t('shareReceipt'), payment.receiptNumber);
+        setMessage(
+          shared === 'shared'
+            ? t('shareDialogOpened')
+            : shared === 'opened'
+              ? t('receiptOpenedForSharing')
+              : shared === 'saved'
+                ? t('receiptSavedForSharing')
+                : t('sharingUnavailable'),
+        );
       }
-    } catch {
-      setMessage(t('receiptActionFailed'));
+    } catch (error) {
+      logLocalDiagnostic(
+        'error',
+        action === 'share' ? 'RECEIPT.SHARE_FAILED' : 'RECEIPT.PRINT_FAILED',
+      );
+      setMessage(
+        action === 'share'
+          ? t('receiptShareFailedWithCode', { code: paymentReceiptShareFailureCode(error) })
+          : t('receiptPrintFailed'),
+      );
+      setMessageDanger(true);
     } finally {
+      deletePaymentReceipt(pdf);
       setReceiptBusy(false);
     }
   };
@@ -121,6 +152,7 @@ export default function InvoiceDetailRoute() {
     if (!correctionReason.trim() || receiptBusy) return;
     setReceiptBusy(true);
     setMessage('');
+    setMessageDanger(false);
     try {
       await getPhase4Repository().correctPayment(
         randomUUID(),
@@ -134,13 +166,14 @@ export default function InvoiceDetailRoute() {
       setRefreshKey((value) => value + 1);
     } catch {
       setMessage(t('paymentCorrectionFailed'));
+      setMessageDanger(true);
     } finally {
       setReceiptBusy(false);
     }
   };
 
   return (
-    <OperationalShell active="payments" title={t('invoiceDetail')}>
+    <OperationalShell active="payments" backHref="/payments" canGoBack title={t('invoiceDetail')}>
       {loading ? <LoadingState label={t('loading')} /> : null}
       {!loading && !detail ? <Notice danger>{t('invoiceLoadFailed')}</Notice> : null}
       {detail && invoice ? (
@@ -159,7 +192,7 @@ export default function InvoiceDetailRoute() {
             />
           </View>
           <SurfaceCard style={styles.summary}>
-            <View style={styles.heading}>
+            <View style={[styles.heading, phone && styles.phoneHeading]}>
               <View>
                 <Text style={styles.eyebrow}>{invoice.invoiceNumber}</Text>
                 <Text style={styles.title}>{invoice.memberName}</Text>
@@ -167,7 +200,7 @@ export default function InvoiceDetailRoute() {
                   {invoice.memberCode} • {invoice.planName}
                 </Text>
               </View>
-              <View style={styles.totalBlock}>
+              <View style={[styles.totalBlock, phone && styles.phoneTotalBlock]}>
                 <Text style={styles.totalLabel}>{t('invoiceTotal')}</Text>
                 <Text style={styles.total}>{formatMoneyMinor(invoice.totalMinor, settings)}</Text>
               </View>
@@ -205,7 +238,7 @@ export default function InvoiceDetailRoute() {
             ) : null}
           </SurfaceCard>
           <View style={styles.columns}>
-            <SurfaceCard style={styles.column}>
+            <SurfaceCard style={[styles.column, phone && styles.phoneColumn]}>
               <Text style={styles.sectionTitle}>{t('chargeBreakdown')}</Text>
               {detail.lines.map((line) => (
                 <Line
@@ -220,7 +253,7 @@ export default function InvoiceDetailRoute() {
                 value={formatMoneyMinor(invoice.totalMinor, settings)}
               />
             </SurfaceCard>
-            <SurfaceCard style={styles.column}>
+            <SurfaceCard style={[styles.column, phone && styles.phoneColumn]}>
               <Text style={styles.sectionTitle}>{t('paymentHistory')}</Text>
               {!detail.payments.length ? (
                 <Text style={styles.empty}>{t('noPaymentsRecorded')}</Text>
@@ -255,31 +288,42 @@ export default function InvoiceDetailRoute() {
                       )}
                     </Text>
                     <View style={styles.actions}>
-                      <AppButton
-                        disabled={receiptBusy}
-                        onPress={() => void receiptAction(payment, 'print')}
-                        variant="secondary"
-                      >
-                        {t('printReceipt')}
-                      </AppButton>
-                      <AppButton
-                        disabled={receiptBusy}
-                        onPress={() => void receiptAction(payment, 'share')}
-                        variant="secondary"
-                      >
-                        {t('saveOrSharePdf')}
-                      </AppButton>
+                      <View style={styles.receiptActions}>
+                        <AppButton
+                          accessibilityLabel={t('printReceipt')}
+                          disabled={receiptBusy}
+                          icon={<MaterialSymbol color={colors.primary} name="print" size={22} />}
+                          iconOnly
+                          onPress={() => void receiptAction(payment, 'print')}
+                          variant="secondary"
+                        />
+                        <AppButton
+                          accessibilityLabel={t('saveOrSharePdf')}
+                          disabled={receiptBusy}
+                          icon={
+                            <MaterialSymbol
+                              color={colors.primary}
+                              name="picture_as_pdf"
+                              size={22}
+                            />
+                          }
+                          iconOnly
+                          onPress={() => void receiptAction(payment, 'share')}
+                          variant="secondary"
+                        />
+                      </View>
                       {payment.state === 'recorded' ? (
                         <AppButton
+                          accessibilityLabel={t('correctPayment')}
                           disabled={receiptBusy}
+                          icon={<MaterialSymbol color={colors.onDark} name="edit_note" size={19} />}
+                          iconOnly
                           onPress={() => {
                             setCorrectionPaymentId(payment.id);
                             setCorrectionReason('');
                           }}
                           variant="danger"
-                        >
-                          {t('correctPayment')}
-                        </AppButton>
+                        />
                       ) : null}
                     </View>
                     {correctionPaymentId === payment.id ? (
@@ -291,15 +335,20 @@ export default function InvoiceDetailRoute() {
                           onChangeText={setCorrectionReason}
                           value={correctionReason}
                         />
-                        <View style={styles.actions}>
+                        <View style={[styles.actions, phone && styles.phoneActions]}>
                           <AppButton
                             disabled={!correctionReason.trim() || receiptBusy}
                             onPress={() => void correctPayment(payment.id)}
+                            style={phone ? styles.phoneAction : undefined}
                             variant="danger"
                           >
                             {t('confirmCorrection')}
                           </AppButton>
-                          <AppButton onPress={() => setCorrectionPaymentId('')} variant="secondary">
+                          <AppButton
+                            onPress={() => setCorrectionPaymentId('')}
+                            style={phone ? styles.phoneAction : undefined}
+                            variant="secondary"
+                          >
                             {t('cancel')}
                           </AppButton>
                         </View>
@@ -308,7 +357,7 @@ export default function InvoiceDetailRoute() {
                   </View>
                 ))
               )}
-              {message ? <Notice>{message}</Notice> : null}
+              {message ? <Notice danger={messageDanger}>{message}</Notice> : null}
             </SurfaceCard>
           </View>
           <Notice>{t('financialHistoryImmutable')}</Notice>
@@ -366,10 +415,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.md,
   },
+  phoneHeading: { flexDirection: 'column' },
   eyebrow: { color: colors.primaryDark, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1 },
   title: { color: colors.text, fontFamily: fonts.bold, fontSize: 24 },
   meta: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 12, lineHeight: 18 },
   totalBlock: { alignItems: 'flex-end' },
+  phoneTotalBlock: { alignItems: 'flex-start' },
   totalLabel: {
     color: colors.textMuted,
     fontFamily: fonts.bold,
@@ -408,7 +459,8 @@ const styles = StyleSheet.create({
   },
   metricValueDanger: { color: colors.danger },
   columns: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: spacing.md },
-  column: { minWidth: 300, flex: 1, gap: spacing.sm },
+  column: { minWidth: 0, flexGrow: 1, flexBasis: 420, gap: spacing.sm },
+  phoneColumn: { width: '100%', flexBasis: 'auto', flexGrow: 0 },
   sectionTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 17 },
   line: {
     flexDirection: 'row',
@@ -433,7 +485,14 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   lineStrong: { color: colors.primaryDark, fontFamily: fonts.bold, fontSize: 15 },
-  payment: { gap: spacing.sm, padding: 12, borderRadius: radii.sm, backgroundColor: colors.canvas },
+  payment: {
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.sm,
+    backgroundColor: colors.canvas,
+  },
   paymentSelected: {
     borderWidth: 1,
     borderColor: colors.primary,
@@ -451,7 +510,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontVariant: ['tabular-nums'],
   },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingTop: spacing.xs },
+  receiptActions: { flexDirection: 'row', gap: spacing.sm },
+  phoneActions: { flexDirection: 'column', flexWrap: 'nowrap' },
+  phoneAction: { width: '100%' },
   correction: {
     gap: spacing.sm,
     paddingTop: spacing.sm,

@@ -47,7 +47,7 @@ export default function SettingsRoute() {
   };
 
   return (
-    <AppScreen title={t('settings')} subtitle={t('settingsSubtitle')}>
+    <AppScreen backHref="/more" canGoBack title={t('settings')} subtitle={t('settingsSubtitle')}>
       <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>
         {t('languageLabel')}
       </Text>

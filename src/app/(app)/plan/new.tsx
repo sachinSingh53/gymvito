@@ -6,7 +6,7 @@ import { OperationalShell } from '@/ui/components/operational-shell';
 export default function NewPlanRoute() {
   const { t } = useTranslation();
   return (
-    <OperationalShell active="more" title={t('newPlan')}>
+    <OperationalShell active="more" backHref="/plans" canGoBack title={t('newPlan')}>
       <PlanForm />
     </OperationalShell>
   );

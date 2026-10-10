@@ -804,9 +804,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   reviewButtonText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
-  metricGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  metricPressable: { minWidth: 136, flex: 1 },
-  metricCard: { minWidth: 136, minHeight: 102, flex: 1, gap: spacing.xs, padding: 12 },
+  metricGrid: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  metricPressable: { minWidth: 136, flexBasis: '48%', flexGrow: 1, flexShrink: 1 },
+  metricCard: { width: '100%', minWidth: 136, minHeight: 102, gap: spacing.xs, padding: 12 },
   metricLabelRow: {
     minWidth: 0,
     flexDirection: 'row',

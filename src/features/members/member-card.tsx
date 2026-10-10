@@ -1,11 +1,14 @@
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import type { MemberPhotoInput } from '@/data/repositories/phase2-repository';
 import type { MembershipDirectoryItem } from '@/data/repositories/phase3-repository';
 import type { MemberFinanceSummary } from '@/data/repositories/phase4-repository';
 import { daysBetweenDateOnly, type DateOnly } from '@/domain/dates/date-rules';
 import { memberInitials } from '@/domain/members/member';
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
+import { memberPhotoDataUri } from '@/platform/images/member-photo';
 import { MaterialSymbol } from '@/ui/components/operational-shell';
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
 
@@ -28,6 +31,7 @@ function whatsappUrl(phone: string) {
 export function MemberCard({
   member,
   finance,
+  photo,
   regionalSettings,
   today,
   selected = false,
@@ -35,12 +39,14 @@ export function MemberCard({
 }: {
   member: MembershipDirectoryItem;
   finance?: MemberFinanceSummary;
+  photo?: MemberPhotoInput;
   regionalSettings?: RegionalSettings;
   today?: DateOnly;
   selected?: boolean;
   onPress(): void;
 }) {
   const { t } = useTranslation();
+  const photoUri = useMemo(() => (photo ? memberPhotoDataUri(photo) : null), [photo]);
   const featured = member.current ?? member.upcoming ?? member.latest;
   const balanceMinor = finance?.balanceMinor ?? 0;
   const overdueMinor = finance?.overdueMinor ?? 0;
@@ -133,9 +139,17 @@ export function MemberCard({
       ]}
     >
       <View style={styles.topRow}>
-        <View style={[styles.avatar, avatarTone]}>
-          <Text style={[styles.initials, avatarTextTone]}>{memberInitials(member.name)}</Text>
-        </View>
+        {photoUri ? (
+          <Image
+            accessibilityLabel={t('memberPhoto', { name: member.name })}
+            source={{ uri: photoUri }}
+            style={styles.avatarPhoto}
+          />
+        ) : (
+          <View style={[styles.avatar, avatarTone]}>
+            <Text style={[styles.initials, avatarTextTone]}>{memberInitials(member.name)}</Text>
+          </View>
+        )}
         <View style={styles.identity}>
           <View style={styles.nameRow}>
             <Text numberOfLines={1} style={styles.name}>
@@ -282,6 +296,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: colors.surfaceHigh,
   },
+  avatarPhoto: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.surfaceHigh },
   avatarWarning: { backgroundColor: '#f2e3c6' },
   avatarMuted: { backgroundColor: colors.surfaceContainer },
   initials: { color: colors.primary, fontFamily: fonts.bold, fontSize: 18 },

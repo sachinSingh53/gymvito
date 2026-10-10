@@ -285,6 +285,36 @@ export class Phase2Repository {
     return rows.map(mapMemberList);
   }
 
+  async listMemberPhotos(
+    memberIds: readonly string[],
+  ): Promise<ReadonlyMap<string, MemberPhotoInput>> {
+    if (!memberIds.length) return new Map();
+    const placeholders = memberIds.map(() => '?').join(', ');
+    const rows = await this.database.getAllAsync<{
+      member_id: string;
+      mime_type: 'image/jpeg';
+      content: Uint8Array;
+      width: number;
+      height: number;
+    }>(
+      `SELECT member_id, mime_type, content, width, height
+       FROM member_media
+       WHERE media_type = 'profile_photo' AND member_id IN (${placeholders})`,
+      ...memberIds,
+    );
+    return new Map(
+      rows.map((row) => [
+        row.member_id,
+        {
+          bytes: row.content,
+          mimeType: row.mime_type,
+          width: row.width,
+          height: row.height,
+        },
+      ]),
+    );
+  }
+
   async memberCounts(): Promise<{ active: number; archived: number; total: number }> {
     const row = await this.database.getFirstAsync<{
       active: number;

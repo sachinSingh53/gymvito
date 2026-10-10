@@ -26,6 +26,10 @@ describe('backup manifest validation', () => {
     expect(() => validateBackupManifest(valid, 1)).not.toThrow();
   });
 
+  test.each([1, 2, 3, 4, 5, 6])('accepts supported schema %i for migration', (schemaVersion) => {
+    expect(() => validateBackupManifest({ ...valid, schemaVersion }, 6)).not.toThrow();
+  });
+
   test.each([
     [{ formatVersion: 2 }, 'Unsupported backup format.'],
     [{ schemaVersion: 2 }, 'newer GymVito'],

@@ -28,3 +28,5 @@ jobs:
       - run: pnpm test:ci
       - run: pnpm expo:doctor
       - run: pnpm expo export --platform android --output-dir dist
+        env:
+          GYMVITO_ENV: production

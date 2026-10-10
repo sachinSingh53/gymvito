@@ -8,7 +8,12 @@ export default function MemberPaymentRoute() {
   const { memberId, invoiceId } = useLocalSearchParams<{ memberId: string; invoiceId?: string }>();
   const { t } = useTranslation();
   return (
-    <OperationalShell active="payments" title={t('recordPayment')}>
+    <OperationalShell
+      active="payments"
+      backHref={`/member/${memberId}`}
+      canGoBack
+      title={t('recordPayment')}
+    >
       <PaymentForm invoiceId={invoiceId} memberId={memberId} />
     </OperationalShell>
   );

@@ -4,10 +4,10 @@
     "slug": "gymvito",
     "scheme": "gymvito",
     "owner": "sachin_53",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "platforms": ["android", "ios"],
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/gymvito-app-icon.png",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.gymvito.app",
@@ -18,8 +18,8 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#071A18",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/gymvito-mark.png",
+        "monochromeImage": "./assets/images/gymvito-mark.png"
       },
       "predictiveBackGestureEnabled": true
     },
@@ -54,8 +54,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#071A18",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "image": "./assets/images/gymvito-mark.png",
+          "imageWidth": 156
         }
       ]
     ],

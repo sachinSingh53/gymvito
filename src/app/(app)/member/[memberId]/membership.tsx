@@ -13,6 +13,8 @@ export default function MembershipRoute() {
   return (
     <OperationalShell
       active="members"
+      backHref={`/member/${memberId}`}
+      canGoBack
       title={t(renewFrom ? 'renewMembership' : 'enrollMembership')}
     >
       <MembershipForm memberId={memberId} priorMembershipId={renewFrom} />

@@ -35,7 +35,7 @@ export default function MemberProfileRoute() {
     }, [getPhase2Repository, memberId, refreshKey]),
   );
   return (
-    <OperationalShell active="members" title={t('memberProfile')}>
+    <OperationalShell active="members" backHref="/members" canGoBack title={t('memberProfile')}>
       {loading ? <LoadingState label={t('loading')} /> : null}
       {error ? <Notice danger>{t('memberLoadFailed')}</Notice> : null}
       {!loading && member ? (

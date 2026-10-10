@@ -16,6 +16,8 @@ type Props = PropsWithChildren<{
   title: string;
   subtitle?: string;
   active: NavKey;
+  canGoBack?: boolean;
+  backHref?: Href;
   headerAction?: ReactNode;
   scroll?: boolean;
   contentStyle?: object;
@@ -66,6 +68,9 @@ const NAV_ITEMS: readonly {
 export function OperationalShell({
   title,
   subtitle,
+  active,
+  canGoBack = false,
+  backHref,
   headerAction,
   scroll = true,
   contentStyle,
@@ -82,6 +87,11 @@ export function OperationalShell({
   const responsiveContentStyle = {
     paddingLeft: contentPadding + (tablet ? 0 : insets.left),
     paddingRight: contentPadding + insets.right,
+  };
+  const fallbackHref = backHref ?? (`/${active}` as Href);
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace(fallbackHref);
   };
 
   const body = scroll ? (
@@ -125,7 +135,16 @@ export function OperationalShell({
           ]}
         >
           <View style={styles.headerIdentity}>
-            {!tablet ? (
+            {canGoBack ? (
+              <Pressable
+                accessibilityLabel={t('back')}
+                accessibilityRole="button"
+                onPress={goBack}
+                style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+              >
+                <MaterialSymbol color={colors.primaryDark} name="arrow_back" size={24} />
+              </Pressable>
+            ) : !tablet ? (
               <View style={styles.brandMark}>
                 <MaterialSymbol color="#fff" name="fitness_center" size={24} />
               </View>
@@ -189,7 +208,8 @@ function activeNavigationKey(pathname: string): NavKey | null {
     pathname === '/gym-settings' ||
     pathname === '/backup-restore' ||
     pathname === '/reports' ||
-    pathname === '/data-export'
+    pathname === '/data-export' ||
+    pathname === '/help-privacy'
   ) {
     return 'more';
   }
@@ -411,6 +431,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
     backgroundColor: colors.primary,
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -8,
+    borderRadius: 24,
   },
   headerTitles: { minWidth: 0, flex: 1 },
   brandLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },

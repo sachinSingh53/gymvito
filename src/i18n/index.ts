@@ -13,6 +13,7 @@ const i18n = createInstance();
 
 void i18n.use(initReactI18next).init({
   compatibilityJSON: 'v4',
+  showSupportNotice: false,
   lng: 'en',
   fallbackLng: 'en',
   resources: { en: { translation: en }, hi: { translation: hi } },

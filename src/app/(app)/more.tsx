@@ -29,12 +29,12 @@ export default function MoreRoute() {
         <AppButton onPress={() => router.push('/reports' as Href)} variant="secondary">
           {t('reports')}
         </AppButton>
+        <AppButton onPress={() => router.push('/help-privacy' as Href)} variant="secondary">
+          {t('helpAndPrivacy')}
+        </AppButton>
       </SurfaceCard>
       <SurfaceCard style={styles.section}>
         <Text style={styles.sectionTitle}>{t('dataTools')}</Text>
-        <AppButton disabled onPress={() => undefined} variant="secondary">
-          {t('importMembersPhase7')}
-        </AppButton>
         <AppButton onPress={() => router.push('/data-export' as Href)} variant="secondary">
           {t('dataExport')}
         </AppButton>

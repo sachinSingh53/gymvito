@@ -227,7 +227,13 @@ export default function ReportsRoute() {
   };
 
   return (
-    <OperationalShell active="more" subtitle={t('reportsSubtitle')} title={t('reports')}>
+    <OperationalShell
+      active="more"
+      backHref="/more"
+      canGoBack
+      subtitle={t('reportsSubtitle')}
+      title={t('reports')}
+    >
       <View style={styles.tabs}>
         <Tab
           label={t('memberReports')}

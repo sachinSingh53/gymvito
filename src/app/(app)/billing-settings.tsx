@@ -46,7 +46,7 @@ export default function BillingSettingsRoute() {
   };
 
   return (
-    <OperationalShell active="more" title={t('billingSettings')}>
+    <OperationalShell active="more" backHref="/more" canGoBack title={t('billingSettings')}>
       {!settings ? (
         <View style={styles.page}>
           <LocalDataBadge />

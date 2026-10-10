@@ -48,7 +48,12 @@ export default function GymSettingsRoute() {
   };
 
   return (
-    <AppScreen title={t('editGymSettings')} subtitle={t('gymSettingsSubtitle')}>
+    <AppScreen
+      backHref="/settings"
+      canGoBack
+      title={t('editGymSettings')}
+      subtitle={t('gymSettingsSubtitle')}
+    >
       <AppField
         error={errorFor('gymName')}
         label={t('gymName')}

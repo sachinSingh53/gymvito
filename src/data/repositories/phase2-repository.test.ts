@@ -172,6 +172,20 @@ describe('Phase2Repository', () => {
       native.prepare('SELECT COUNT(*) AS count FROM member WHERE id = ?').get(created.id),
     ).toMatchObject({ count: 1 });
     expect((await repository.listMembers('', 'archived'))[0]).not.toHaveProperty('photo');
+    expect(await repository.listMemberPhotos([created.id, 'missing-member'])).toEqual(
+      new Map([
+        [
+          created.id,
+          {
+            bytes: new Uint8Array([9, 8]),
+            mimeType: 'image/jpeg',
+            width: 256,
+            height: 256,
+          },
+        ],
+      ]),
+    );
+    await expect(repository.listMemberPhotos([])).resolves.toEqual(new Map());
 
     await expect(
       repository.updateMember('missing-member', { ...MEMBER, note: 'must roll back' }, 'owner'),

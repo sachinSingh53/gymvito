@@ -70,6 +70,29 @@ describe('MemberCard', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the locally stored profile photo instead of initials when available', () => {
+    const screen = render(
+      <MemberCard
+        member={{ ...MEMBER, hasPhoto: true }}
+        onPress={jest.fn()}
+        photo={{
+          bytes: new Uint8Array([1, 2, 3]),
+          mimeType: 'image/jpeg',
+          width: 256,
+          height: 256,
+        }}
+      />,
+    );
+
+    expect(
+      screen.UNSAFE_getByProps({ accessibilityLabel: 'Profile photo for अमित Sharma' }).props
+        .source,
+    ).toEqual({
+      uri: 'data:image/jpeg;base64,AQID',
+    });
+    expect(screen.queryByText('अS')).toBeNull();
+  });
+
   it('shows preserved archived state without erasing membership history', () => {
     const screen = render(
       <MemberCard

@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { MemberRecord } from '@/data/repositories/phase2-repository';
@@ -17,7 +17,12 @@ import { useAppSession } from '@/features/session/app-session-context';
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
 import { memberPhotoDataUri } from '@/platform/images/member-photo';
 import { AppButton, Notice } from '@/ui/components/core-controls';
-import { LocalDataBadge, StatusChip, SurfaceCard } from '@/ui/components/operational-shell';
+import {
+  LocalDataBadge,
+  MaterialSymbol,
+  StatusChip,
+  SurfaceCard,
+} from '@/ui/components/operational-shell';
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
 
 const AUDIT_LABELS: Record<string, string> = {
@@ -34,6 +39,8 @@ const STATUS_LABELS = {
   expired: 'membershipStatusExpired',
   cancelled: 'membershipStatusCancelled',
 } as const;
+
+type ProfileTab = 'summary' | 'plans' | 'payments' | 'notes';
 
 export function MemberProfilePanel({
   member,
@@ -53,6 +60,7 @@ export function MemberProfilePanel({
   const [summary, setSummary] = useState<MemberMembershipSummary | null>(null);
   const [finance, setFinance] = useState<MemberFinanceSummary | null>(null);
   const [invoices, setInvoices] = useState<readonly InvoiceRecord[]>([]);
+  const [activeTab, setActiveTab] = useState<ProfileTab>('summary');
   useEffect(() => {
     let active = true;
     const repository = getPhase3Repository();
@@ -214,49 +222,92 @@ export function MemberProfilePanel({
         ) : null}
       </SurfaceCard>
       <View style={styles.actions}>
-        {!member.isArchived ? (
-          <AppButton
-            onPress={() =>
-              router.push(
-                (featured
-                  ? `/member/${member.id}/membership?renewFrom=${featured.id}`
-                  : `/member/${member.id}/membership`) as Href,
-              )
-            }
-          >
-            {featured ? t('renewMembership') : t('enrollMembership')}
-          </AppButton>
+        {!member.isArchived || finance?.latestOutstandingInvoiceId ? (
+          <View style={styles.primaryActions}>
+            {!member.isArchived ? (
+              <AppButton
+                accessibilityLabel={featured ? t('renewMembership') : t('enrollMembership')}
+                icon={<MaterialSymbol color={colors.onDark} name="autorenew" size={19} />}
+                onPress={() =>
+                  router.push(
+                    (featured
+                      ? `/member/${member.id}/membership?renewFrom=${featured.id}`
+                      : `/member/${member.id}/membership`) as Href,
+                  )
+                }
+                style={styles.actionButton}
+              >
+                {featured ? t('renewMembership') : t('enrollMembership')}
+              </AppButton>
+            ) : null}
+            {finance?.latestOutstandingInvoiceId ? (
+              <AppButton
+                accessibilityLabel={t('collectAmount', {
+                  amount: formatMoneyMinor(finance.balanceMinor, settings),
+                })}
+                icon={<MaterialSymbol color={colors.onDark} name="payments" size={19} />}
+                onPress={() =>
+                  router.push(
+                    `/member/${member.id}/payment?invoiceId=${finance.latestOutstandingInvoiceId}` as Href,
+                  )
+                }
+                style={styles.actionButton}
+              >
+                {t('collectAmount', { amount: formatMoneyMinor(finance.balanceMinor, settings) })}
+              </AppButton>
+            ) : null}
+          </View>
         ) : null}
-        {finance?.latestOutstandingInvoiceId ? (
+        <View style={styles.managementActions}>
           <AppButton
-            onPress={() =>
-              router.push(
-                `/member/${member.id}/payment?invoiceId=${finance.latestOutstandingInvoiceId}` as Href,
-              )
-            }
+            accessibilityLabel={t('editProfile')}
+            icon={<MaterialSymbol color={colors.primary} name="edit" size={18} />}
+            onPress={() => router.push(`/member/${member.id}/edit` as Href)}
+            style={styles.actionButton}
+            variant="secondary"
           >
-            {t('collectAmount', { amount: formatMoneyMinor(finance.balanceMinor, settings) })}
+            {t('editProfile')}
           </AppButton>
-        ) : null}
-        <AppButton
-          onPress={() => router.push(`/member/${member.id}/edit` as Href)}
-          variant="secondary"
-        >
-          {t('editProfile')}
-        </AppButton>
-        <AppButton onPress={toggleArchive} variant={member.isArchived ? 'secondary' : 'danger'}>
-          {member.isArchived ? t('restore') : t('archive')}
-        </AppButton>
+          <AppButton
+            accessibilityLabel={member.isArchived ? t('restore') : t('archive')}
+            icon={
+              <MaterialSymbol
+                color={member.isArchived ? colors.primary : colors.dangerText}
+                name={member.isArchived ? 'unarchive' : 'archive'}
+                size={18}
+              />
+            }
+            onPress={toggleArchive}
+            style={styles.actionButton}
+            variant={member.isArchived ? 'secondary' : 'dangerTonal'}
+          >
+            {member.isArchived ? t('restore') : t('archive')}
+          </AppButton>
+        </View>
       </View>
       <View style={styles.tabs}>
-        <View style={styles.activeTab}>
-          <Text style={styles.activeTabText}>{t('summary')}</Text>
-        </View>
-        <Text style={styles.tabText}>{`${t('plans')} (${memberships.length})`}</Text>
-        <Text style={styles.tabText}>{t('payments')}</Text>
-        <Text style={styles.tabText}>{t('notes')}</Text>
+        <ProfileTabButton
+          label={t('summary')}
+          onPress={() => setActiveTab('summary')}
+          selected={activeTab === 'summary'}
+        />
+        <ProfileTabButton
+          label={`${t('plans')} (${memberships.length})`}
+          onPress={() => setActiveTab('plans')}
+          selected={activeTab === 'plans'}
+        />
+        <ProfileTabButton
+          label={t('payments')}
+          onPress={() => setActiveTab('payments')}
+          selected={activeTab === 'payments'}
+        />
+        <ProfileTabButton
+          label={t('notes')}
+          onPress={() => setActiveTab('notes')}
+          selected={activeTab === 'notes'}
+        />
       </View>
-      {featured && progress ? (
+      {activeTab === 'summary' && featured && progress ? (
         <SurfaceCard style={styles.subscriptionCard}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
@@ -312,162 +363,203 @@ export function MemberProfilePanel({
           </View>
         </SurfaceCard>
       ) : null}
-      <SurfaceCard style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('financialLedger')}</Text>
-          <Text style={styles.sectionMeta}>{invoices.length}</Text>
-        </View>
-        {!invoices.length ? (
-          <Text style={styles.emptyText}>{t('noInvoices')}</Text>
-        ) : (
-          invoices.map((invoice) => (
-            <View key={invoice.id} style={styles.historyItem}>
-              <View style={styles.historyTop}>
-                <Text style={styles.historyName}>
-                  {invoice.invoiceNumber} • {invoice.planName}
+      {activeTab === 'payments' ? (
+        <SurfaceCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('financialLedger')}</Text>
+            <Text style={styles.sectionMeta}>{invoices.length}</Text>
+          </View>
+          {!invoices.length ? (
+            <Text style={styles.emptyText}>{t('noInvoices')}</Text>
+          ) : (
+            invoices.map((invoice) => (
+              <View key={invoice.id} style={styles.historyItem}>
+                <View style={styles.historyTop}>
+                  <Text style={styles.historyName}>
+                    {invoice.invoiceNumber} • {invoice.planName}
+                  </Text>
+                  <StatusChip
+                    label={t(`invoiceStatus_${invoice.status}`)}
+                    tone={
+                      invoice.status === 'paid'
+                        ? 'active'
+                        : invoice.dueStatus === 'overdue'
+                          ? 'danger'
+                          : 'warning'
+                    }
+                  />
+                </View>
+                <Text style={styles.historyMeta}>
+                  {t('recordedPaidAndBalance', {
+                    paid: formatMoneyMinor(invoice.paidMinor + invoice.adjustmentMinor, settings),
+                    balance: formatMoneyMinor(invoice.balanceMinor, settings),
+                  })}
                 </Text>
-                <StatusChip
-                  label={t(`invoiceStatus_${invoice.status}`)}
-                  tone={
-                    invoice.status === 'paid'
-                      ? 'active'
-                      : invoice.dueStatus === 'overdue'
-                        ? 'danger'
-                        : 'warning'
-                  }
-                />
+                <AppButton
+                  onPress={() => router.push(`/invoice/${invoice.id}` as Href)}
+                  variant="secondary"
+                >
+                  {t('viewInvoice')}
+                </AppButton>
               </View>
-              <Text style={styles.historyMeta}>
-                {t('recordedPaidAndBalance', {
-                  paid: formatMoneyMinor(invoice.paidMinor + invoice.adjustmentMinor, settings),
-                  balance: formatMoneyMinor(invoice.balanceMinor, settings),
-                })}
-              </Text>
-              <AppButton
-                onPress={() => router.push(`/invoice/${invoice.id}` as Href)}
-                variant="secondary"
-              >
-                {t('viewInvoice')}
-              </AppButton>
-            </View>
-          ))
-        )}
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('membershipHistory')}</Text>
-          <Text style={styles.sectionMeta}>{memberships.length}</Text>
-        </View>
-        {!memberships.length ? (
-          <Text style={styles.emptyText}>{t('noMembershipHistory')}</Text>
-        ) : (
-          memberships.map((membership) => (
-            <View key={membership.id} style={styles.historyItem}>
-              <View style={styles.historyTop}>
-                <Text style={styles.historyName}>{membership.planName}</Text>
-                <StatusChip
-                  label={t(STATUS_LABELS[membership.status])}
-                  tone={
-                    membership.status === 'active'
-                      ? 'active'
-                      : membership.status === 'scheduled'
-                        ? 'warning'
-                        : membership.status === 'expired'
-                          ? 'neutral'
-                          : 'danger'
-                  }
-                />
-              </View>
-              <Text style={styles.historyMeta}>
-                {t('membershipDateRange', {
-                  start: formatDateOnly(membership.startDate, settings),
-                  end: formatDateOnly(membership.endDate, settings),
-                })}
-              </Text>
-              <Text style={styles.historyAmount}>
-                {formatMoneyMinor(membership.totalMinor, settings)}
-              </Text>
-            </View>
-          ))
-        )}
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('lifecycleTimeline')}</Text>
-          <Text style={styles.sectionMeta}>{t('auditTrail')}</Text>
-        </View>
-        {!events.length ? (
-          <Text style={styles.emptyText}>{t('noMembershipHistory')}</Text>
-        ) : (
-          events.map((event) => (
-            <View key={event.id} style={styles.activity}>
-              <View style={styles.activityDot} />
-              <View style={styles.activityCopy}>
-                <Text style={styles.activityTitle}>
-                  {t(event.eventType === 'renewed' ? 'membershipRenewed' : 'membershipEnrolled')}
+            ))
+          )}
+        </SurfaceCard>
+      ) : null}
+      {activeTab === 'plans' ? (
+        <SurfaceCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('membershipHistory')}</Text>
+            <Text style={styles.sectionMeta}>{memberships.length}</Text>
+          </View>
+          {!memberships.length ? (
+            <Text style={styles.emptyText}>{t('noMembershipHistory')}</Text>
+          ) : (
+            memberships.map((membership) => (
+              <View key={membership.id} style={styles.historyItem}>
+                <View style={styles.historyTop}>
+                  <Text style={styles.historyName}>{membership.planName}</Text>
+                  <StatusChip
+                    label={t(STATUS_LABELS[membership.status])}
+                    tone={
+                      membership.status === 'active'
+                        ? 'active'
+                        : membership.status === 'scheduled'
+                          ? 'warning'
+                          : membership.status === 'expired'
+                            ? 'neutral'
+                            : 'danger'
+                    }
+                  />
+                </View>
+                <Text style={styles.historyMeta}>
+                  {t('membershipDateRange', {
+                    start: formatDateOnly(membership.startDate, settings),
+                    end: formatDateOnly(membership.endDate, settings),
+                  })}
                 </Text>
-                <Text style={styles.noteDate}>{formatDateOnly(event.effectiveDate, settings)}</Text>
-                {event.reason ? <Text style={styles.historyMeta}>{event.reason}</Text> : null}
-              </View>
-            </View>
-          ))
-        )}
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('memberDetails')}</Text>
-        <Detail label={t('emailOptional')} value={member.email || '—'} />
-        <Detail label={t('dateOfBirth')} value={member.dateOfBirth || '—'} />
-        <Detail label={t('genderOptional')} value={member.gender || '—'} />
-        <Detail label={t('addressOptional')} value={member.address || '—'} />
-        <Detail
-          label={t('emergencyContact')}
-          value={
-            [member.emergencyContactName, member.emergencyContactPhone]
-              .filter(Boolean)
-              .join(' • ') || '—'
-          }
-        />
-        <Detail label={t('joiningSource')} value={member.joiningSource || '—'} />
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('deskNotes')}</Text>
-          <Text style={styles.sectionMeta}>{member.notes.length}</Text>
-        </View>
-        {!member.notes.length ? (
-          <Text style={styles.emptyText}>{t('noNotes')}</Text>
-        ) : (
-          member.notes.map((note) => (
-            <View key={note.id} style={styles.note}>
-              <Text style={styles.noteText}>{note.content}</Text>
-              <Text style={styles.noteDate}>{note.createdAtUtc.slice(0, 10)}</Text>
-            </View>
-          ))
-        )}
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('recentActivity')}</Text>
-          <Text style={styles.sectionMeta}>{t('auditTrail')}</Text>
-        </View>
-        {!member.audit.length ? (
-          <Text style={styles.emptyText}>{t('noActivity')}</Text>
-        ) : (
-          member.audit.map((event) => (
-            <View key={event.id} style={styles.activity}>
-              <View style={styles.activityDot} />
-              <View style={styles.activityCopy}>
-                <Text style={styles.activityTitle}>
-                  {t(AUDIT_LABELS[event.summaryCode] ?? 'auditMemberUpdated')}
+                <Text style={styles.historyAmount}>
+                  {formatMoneyMinor(membership.totalMinor, settings)}
                 </Text>
-                <Text style={styles.noteDate}>{event.occurredAtUtc.slice(0, 10)}</Text>
               </View>
-            </View>
-          ))
-        )}
-      </SurfaceCard>
-      <Notice>{t('memberHistoryPreserved')}</Notice>
+            ))
+          )}
+        </SurfaceCard>
+      ) : null}
+      {activeTab === 'plans' ? (
+        <SurfaceCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('lifecycleTimeline')}</Text>
+            <Text style={styles.sectionMeta}>{t('auditTrail')}</Text>
+          </View>
+          {!events.length ? (
+            <Text style={styles.emptyText}>{t('noMembershipHistory')}</Text>
+          ) : (
+            events.map((event) => (
+              <View key={event.id} style={styles.activity}>
+                <View style={styles.activityDot} />
+                <View style={styles.activityCopy}>
+                  <Text style={styles.activityTitle}>
+                    {t(event.eventType === 'renewed' ? 'membershipRenewed' : 'membershipEnrolled')}
+                  </Text>
+                  <Text style={styles.noteDate}>
+                    {formatDateOnly(event.effectiveDate, settings)}
+                  </Text>
+                  {event.reason ? <Text style={styles.historyMeta}>{event.reason}</Text> : null}
+                </View>
+              </View>
+            ))
+          )}
+        </SurfaceCard>
+      ) : null}
+      {activeTab === 'summary' ? (
+        <SurfaceCard style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('memberDetails')}</Text>
+          <Detail label={t('emailOptional')} value={member.email || '—'} />
+          <Detail label={t('dateOfBirth')} value={member.dateOfBirth || '—'} />
+          <Detail label={t('genderOptional')} value={member.gender || '—'} />
+          <Detail label={t('addressOptional')} value={member.address || '—'} />
+          <Detail
+            label={t('emergencyContact')}
+            value={
+              [member.emergencyContactName, member.emergencyContactPhone]
+                .filter(Boolean)
+                .join(' • ') || '—'
+            }
+          />
+          <Detail label={t('joiningSource')} value={member.joiningSource || '—'} />
+        </SurfaceCard>
+      ) : null}
+      {activeTab === 'summary' || activeTab === 'notes' ? (
+        <SurfaceCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('deskNotes')}</Text>
+            <Text style={styles.sectionMeta}>{member.notes.length}</Text>
+          </View>
+          {!member.notes.length ? (
+            <Text style={styles.emptyText}>{t('noNotes')}</Text>
+          ) : (
+            member.notes.map((note) => (
+              <View key={note.id} style={styles.note}>
+                <Text style={styles.noteText}>{note.content}</Text>
+                <Text style={styles.noteDate}>{note.createdAtUtc.slice(0, 10)}</Text>
+              </View>
+            ))
+          )}
+        </SurfaceCard>
+      ) : null}
+      {activeTab === 'summary' ? (
+        <SurfaceCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('recentActivity')}</Text>
+            <Text style={styles.sectionMeta}>{t('auditTrail')}</Text>
+          </View>
+          {!member.audit.length ? (
+            <Text style={styles.emptyText}>{t('noActivity')}</Text>
+          ) : (
+            member.audit.map((event) => (
+              <View key={event.id} style={styles.activity}>
+                <View style={styles.activityDot} />
+                <View style={styles.activityCopy}>
+                  <Text style={styles.activityTitle}>
+                    {t(AUDIT_LABELS[event.summaryCode] ?? 'auditMemberUpdated')}
+                  </Text>
+                  <Text style={styles.noteDate}>{event.occurredAtUtc.slice(0, 10)}</Text>
+                </View>
+              </View>
+            ))
+          )}
+        </SurfaceCard>
+      ) : null}
+      {activeTab === 'summary' ? <Notice>{t('memberHistoryPreserved')}</Notice> : null}
     </View>
+  );
+}
+
+function ProfileTabButton({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress(): void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.tab,
+        selected && styles.activeTab,
+        pressed && styles.pressedTab,
+      ]}
+    >
+      <Text style={[styles.tabText, selected && styles.activeTabText]} numberOfLines={2}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -575,7 +667,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  actions: { gap: spacing.sm },
+  primaryActions: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.sm },
+  managementActions: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.sm },
+  actionButton: { minHeight: 52, flex: 1, paddingHorizontal: spacing.md },
   tabs: {
     minHeight: 48,
     flexDirection: 'row',
@@ -586,17 +681,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     backgroundColor: colors.surfaceHigh,
   },
-  activeTab: {
+  tab: {
     flex: 1,
-    minHeight: 38,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  activeTab: {
     backgroundColor: colors.surface,
   },
+  pressedTab: { opacity: 0.7 },
   activeTabText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
   tabText: {
-    flex: 1,
     color: colors.textMuted,
     fontFamily: fonts.medium,
     fontSize: 12,

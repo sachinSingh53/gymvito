@@ -84,7 +84,13 @@ export default function DataExportRoute() {
   };
 
   return (
-    <OperationalShell active="more" subtitle={t('dataExportSubtitle')} title={t('dataExport')}>
+    <OperationalShell
+      active="more"
+      backHref="/more"
+      canGoBack
+      subtitle={t('dataExportSubtitle')}
+      title={t('dataExport')}
+    >
       <View style={styles.page}>
         <LocalDataBadge />
         <Notice>{t('exportPrivacyWarning')}</Notice>

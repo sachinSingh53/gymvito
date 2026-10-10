@@ -8,7 +8,7 @@ export default function EditPlanRoute() {
   const { planId } = useLocalSearchParams<{ planId: string }>();
   const { t } = useTranslation();
   return (
-    <OperationalShell active="more" title={t('editPlan')}>
+    <OperationalShell active="more" backHref="/plans" canGoBack title={t('editPlan')}>
       <PlanForm planId={planId} />
     </OperationalShell>
   );

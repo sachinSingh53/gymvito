@@ -8,7 +8,12 @@ export default function EditMemberRoute() {
   const { memberId } = useLocalSearchParams<{ memberId: string }>();
   const { t } = useTranslation();
   return (
-    <OperationalShell active="members" title={t('editMember')}>
+    <OperationalShell
+      active="members"
+      backHref={`/member/${memberId}`}
+      canGoBack
+      title={t('editMember')}
+    >
       <MemberForm memberId={memberId} />
     </OperationalShell>
   );

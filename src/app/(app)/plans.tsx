@@ -65,7 +65,13 @@ export default function PlansRoute() {
   };
 
   return (
-    <OperationalShell active="more" title={t('membershipPlans')} subtitle={t('plansSubtitle')}>
+    <OperationalShell
+      active="more"
+      backHref="/more"
+      canGoBack
+      title={t('membershipPlans')}
+      subtitle={t('plansSubtitle')}
+    >
       <View style={styles.topRow}>
         <LocalDataBadge />
         <AppButton onPress={() => router.push('/plan/new' as Href)}>{t('newPlan')}</AppButton>

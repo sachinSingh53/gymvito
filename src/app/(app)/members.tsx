@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { MemberRecord } from '@/data/repositories/phase2-repository';
+import type { MemberPhotoInput, MemberRecord } from '@/data/repositories/phase2-repository';
 import type { MembershipDirectoryItem } from '@/data/repositories/phase3-repository';
 import type { MemberFinanceSummary } from '@/data/repositories/phase4-repository';
 import { addDays } from '@/domain/dates/date-rules';
@@ -70,6 +70,9 @@ export default function MembersRoute() {
   const [financeByMember, setFinanceByMember] = useState<ReadonlyMap<string, MemberFinanceSummary>>(
     new Map(),
   );
+  const [photoByMember, setPhotoByMember] = useState<ReadonlyMap<string, MemberPhotoInput>>(
+    new Map(),
+  );
   const [counts, setCounts] = useState({
     all: 0,
     active: 0,
@@ -100,11 +103,6 @@ export default function MembersRoute() {
       getPhase4Repository().listOutstandingInvoices(today),
     ])
       .then(async ([rows, memberCounts, statusCounts, outstanding]) => {
-        const finance = await getPhase4Repository().listMemberFinanceSummaries(
-          rows.map((member) => member.id),
-          today,
-        );
-        if (!active) return;
         const overdueMembers = new Set(
           outstanding
             .filter((invoice) => invoice.dueStatus === 'overdue')
@@ -125,8 +123,17 @@ export default function MembersRoute() {
                       member.current.endDate <= expiryEnd,
                   )
                 : rows.filter((member) => member.status === filter);
+        const memberIds = filteredRows.map((member) => member.id);
+        const [finance, photos] = await Promise.all([
+          getPhase4Repository().listMemberFinanceSummaries(memberIds, today),
+          repository.listMemberPhotos(
+            filteredRows.filter((member) => member.hasPhoto).map((member) => member.id),
+          ),
+        ]);
+        if (!active) return;
         setMembers(filteredRows);
         setFinanceByMember(finance);
+        setPhotoByMember(photos);
         setCounts({
           all: memberCounts.total,
           active: statusCounts.active,
@@ -295,6 +302,7 @@ export default function MembersRoute() {
             finance={financeByMember.get(item.id)}
             member={item}
             onPress={() => openMember(item)}
+            photo={photoByMember.get(item.id)}
             regionalSettings={regionalSettings}
             selected={splitView && selectedId === item.id}
             today={today}

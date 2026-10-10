@@ -14,12 +14,19 @@ export default function configure({ config }: ConfigContext): ExpoConfig {
   const base = appJson.expo as ExpoConfig;
   const environment = environmentFromProcess();
   const suffix = environment === 'production' ? '' : `.${environment}`;
+  const releaseExtra = Object.fromEntries(
+    Object.entries(base.extra ?? {}).filter(([key]) => key !== 'developmentRuntime'),
+  );
   return {
     ...config,
     ...base,
     name: environment === 'production' ? 'GymVito' : `GymVito ${environment}`,
     android: { ...base.android, package: `com.gymvito.app${suffix}` },
     ios: { ...base.ios, bundleIdentifier: `com.gymvito.app${suffix}` },
-    extra: { ...base.extra, environment, runtimeBackend: 'none' },
+    extra: {
+      ...(environment === 'development' ? base.extra : releaseExtra),
+      environment,
+      runtimeBackend: 'none',
+    },
   };
 }

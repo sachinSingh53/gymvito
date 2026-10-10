@@ -1,13 +1,25 @@
-import type { ComponentProps, PropsWithChildren } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import type { ComponentProps, PropsWithChildren, ReactNode } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
 
 type ButtonProps = PropsWithChildren<{
   onPress(): void;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'dangerTonal';
   accessibilityLabel?: string;
+  icon?: ReactNode;
+  iconOnly?: boolean;
+  style?: StyleProp<ViewStyle>;
 }>;
 
 export function AppButton({
@@ -16,6 +28,9 @@ export function AppButton({
   disabled = false,
   variant = 'primary',
   accessibilityLabel,
+  icon,
+  iconOnly = false,
+  style,
 }: ButtonProps) {
   return (
     <Pressable
@@ -28,13 +43,27 @@ export function AppButton({
         styles.button,
         variant === 'secondary' && styles.secondaryButton,
         variant === 'danger' && styles.dangerButton,
+        variant === 'dangerTonal' && styles.dangerTonalButton,
+        iconOnly && styles.iconOnlyButton,
+        style,
         pressed && styles.pressed,
         disabled && styles.disabled,
       ]}
     >
-      <Text style={[styles.buttonText, variant === 'secondary' && styles.secondaryButtonText]}>
-        {children}
-      </Text>
+      <View style={styles.buttonContent}>
+        {icon}
+        {children ? (
+          <Text
+            style={[
+              styles.buttonText,
+              variant === 'secondary' && styles.secondaryButtonText,
+              variant === 'dangerTonal' && styles.dangerTonalButtonText,
+            ]}
+          >
+            {children}
+          </Text>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -143,8 +172,21 @@ const styles = StyleSheet.create({
   },
   secondaryButton: { borderWidth: 1, borderColor: colors.primary, backgroundColor: 'transparent' },
   dangerButton: { backgroundColor: colors.danger },
+  dangerTonalButton: {
+    borderWidth: 1,
+    borderColor: '#f5bebe',
+    backgroundColor: colors.dangerSurface,
+  },
+  iconOnlyButton: { width: 48, paddingHorizontal: 0, paddingVertical: 0 },
   pressed: { opacity: 0.76 },
   disabled: { opacity: 0.45 },
+  buttonContent: {
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
   buttonText: {
     minWidth: 0,
     flexShrink: 1,
@@ -155,6 +197,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   secondaryButtonText: { color: colors.primary },
+  dangerTonalButtonText: { color: colors.dangerText },
   fieldGroup: { minWidth: 0, gap: spacing.xs },
   label: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 21 },
   input: {

@@ -6,7 +6,7 @@ import { OperationalShell } from '@/ui/components/operational-shell';
 export default function NewMemberRoute() {
   const { t } = useTranslation();
   return (
-    <OperationalShell active="members" title={t('newMember')}>
+    <OperationalShell active="members" backHref="/members" canGoBack title={t('newMember')}>
       <MemberForm />
     </OperationalShell>
   );

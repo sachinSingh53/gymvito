@@ -1,5 +1,5 @@
 import { router, type Href, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +8,7 @@ import { useLocalBusinessDate } from '@/features/memberships/use-local-business-
 import { useAppSession } from '@/features/session/app-session-context';
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
 import { AppButton, LoadingState, Notice } from '@/ui/components/core-controls';
+import { GlassSurface } from '@/ui/components/glass-surface';
 import {
   LocalDataBadge,
   MaterialSymbol,
@@ -15,7 +16,16 @@ import {
   StatusChip,
   SurfaceCard,
 } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import {
+  actionPressed,
+  CARD_RADIUS,
+  colors,
+  fonts,
+  GLASS_UI,
+  glass,
+  radii,
+  spacing,
+} from '@/ui/theme/tokens';
 
 export default function PaymentsRoute() {
   const params = useLocalSearchParams<{ filter?: string }>();
@@ -64,16 +74,25 @@ export default function PaymentsRoute() {
     params.filter === 'today'
       ? payments.filter((payment) => payment.receivedLocalDate === today)
       : payments;
+  const heading = (
+    <>
+      <View>
+        <LocalDataBadge />
+        <Text style={styles.subtitle}>{t('recordedPaymentsOnly')}</Text>
+      </View>
+      <AppButton onPress={() => router.push('/members' as Href)}>{t('recordPayment')}</AppButton>
+    </>
+  );
 
   return (
     <OperationalShell active="payments" title={t('payments')} subtitle={t('localFinancialLedger')}>
-      <View style={styles.headingRow}>
-        <View>
-          <LocalDataBadge />
-          <Text style={styles.subtitle}>{t('recordedPaymentsOnly')}</Text>
-        </View>
-        <AppButton onPress={() => router.push('/members' as Href)}>{t('recordPayment')}</AppButton>
-      </View>
+      {GLASS_UI ? (
+        <GlassSurface radius={CARD_RADIUS} style={[styles.headingRow, styles.glassHeadingRow]}>
+          {heading}
+        </GlassSurface>
+      ) : (
+        <View style={styles.headingRow}>{heading}</View>
+      )}
       <View style={styles.metrics}>
         <SurfaceCard style={styles.metric}>
           <Text style={styles.metricLabel}>{t('outstandingDues')}</Text>
@@ -88,7 +107,7 @@ export default function PaymentsRoute() {
           <Text style={styles.metricValue}>{visiblePayments.length}</Text>
         </SurfaceCard>
       </View>
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, GLASS_UI && styles.glassTabs]}>
         <Tab
           label={`${t('dues')} (${invoices.length})`}
           onPress={() => setTab('dues')}
@@ -103,7 +122,7 @@ export default function PaymentsRoute() {
       {loading ? <LoadingState label={t('loading')} /> : null}
       {failed ? <Notice danger>{t('paymentsLoadFailed')}</Notice> : null}
       {!loading && !failed && tab === 'dues' ? (
-        <View style={styles.list}>
+        <ListPanel empty={!invoices.length}>
           {!invoices.length ? (
             <Notice>{t('noOutstandingInvoices')}</Notice>
           ) : (
@@ -112,9 +131,9 @@ export default function PaymentsRoute() {
                 accessibilityRole="button"
                 key={invoice.id}
                 onPress={() => router.push(`/invoice/${invoice.id}` as Href)}
-                style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+                style={rowStyle}
               >
-                <View style={styles.rowIcon}>
+                <View style={[styles.rowIcon, GLASS_UI && styles.glassRowIcon]}>
                   <MaterialSymbol
                     color={invoice.dueStatus === 'overdue' ? colors.danger : colors.primaryDark}
                     name="receipt_long"
@@ -142,10 +161,10 @@ export default function PaymentsRoute() {
               </Pressable>
             ))
           )}
-        </View>
+        </ListPanel>
       ) : null}
       {!loading && !failed && tab === 'payments' ? (
-        <View style={styles.list}>
+        <ListPanel empty={!visiblePayments.length}>
           {!visiblePayments.length ? (
             <Notice>{t('noPaymentsRecorded')}</Notice>
           ) : (
@@ -156,9 +175,9 @@ export default function PaymentsRoute() {
                 onPress={() =>
                   router.push(`/invoice/${payment.invoiceId}?receipt=${payment.id}` as Href)
                 }
-                style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+                style={rowStyle}
               >
-                <View style={styles.rowIcon}>
+                <View style={[styles.rowIcon, GLASS_UI && styles.glassRowIcon]}>
                   <MaterialSymbol color={colors.primaryDark} name="payments" size={22} />
                 </View>
                 <View style={styles.rowCopy}>
@@ -180,10 +199,22 @@ export default function PaymentsRoute() {
               </Pressable>
             ))
           )}
-        </View>
+        </ListPanel>
       ) : null}
     </OperationalShell>
   );
+}
+
+/** In glass mode an empty list shows its notice on its own rather than as a panel in a panel. */
+function ListPanel({ children, empty }: { children: ReactNode; empty: boolean }) {
+  if (!GLASS_UI) return <View style={styles.list}>{children}</View>;
+  if (empty) return children;
+  return <GlassSurface radius={CARD_RADIUS}>{children}</GlassSurface>;
+}
+
+function rowStyle({ pressed }: { pressed: boolean }) {
+  if (GLASS_UI) return [styles.row, styles.glassRow, pressed && actionPressed];
+  return [styles.row, pressed && styles.pressed];
 }
 
 function Tab({ label, selected, onPress }: { label: string; selected: boolean; onPress(): void }) {
@@ -192,9 +223,27 @@ function Tab({ label, selected, onPress }: { label: string; selected: boolean; o
       accessibilityRole="tab"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={[styles.tab, selected && styles.tabSelected]}
+      style={({ pressed }) =>
+        GLASS_UI
+          ? [
+              styles.tab,
+              styles.glassTab,
+              selected && styles.glassTabSelected,
+              pressed && actionPressed,
+            ]
+          : [styles.tab, selected && styles.tabSelected]
+      }
     >
-      <Text style={[styles.tabText, selected && styles.tabTextSelected]}>{label}</Text>
+      <Text
+        style={[
+          styles.tabText,
+          GLASS_UI && styles.glassTabText,
+          selected && styles.tabTextSelected,
+          GLASS_UI && selected && styles.glassTabTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -286,4 +335,18 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   pressed: { opacity: 0.75 },
+  glassHeadingRow: { padding: spacing.md },
+  glassTabs: {
+    minHeight: 58,
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillNeutral,
+  },
+  glassTab: { minHeight: 48, paddingHorizontal: spacing.sm, borderRadius: radii.pill },
+  glassTabSelected: { backgroundColor: colors.primary },
+  glassTabText: { color: colors.text, textAlign: 'center' },
+  glassTabTextSelected: { color: colors.onPrimary },
+  glassRow: { borderBottomColor: glass.divider },
+  glassRowIcon: { borderWidth: 1, borderColor: glass.rimAccent, backgroundColor: glass.fillAccent },
 });

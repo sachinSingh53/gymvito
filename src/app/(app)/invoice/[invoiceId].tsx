@@ -28,7 +28,7 @@ import {
   StatusChip,
   SurfaceCard,
 } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
 
 export default function InvoiceDetailRoute() {
   const { invoiceId, receipt, issued } = useLocalSearchParams<{
@@ -261,10 +261,18 @@ export default function InvoiceDetailRoute() {
                 detail.payments.map((payment) => (
                   <View
                     key={payment.id}
-                    style={[
-                      styles.payment,
-                      selectedPayment?.id === payment.id && styles.paymentSelected,
-                    ]}
+                    style={
+                      GLASS_UI
+                        ? [
+                            styles.payment,
+                            styles.glassPayment,
+                            selectedPayment?.id === payment.id && styles.glassPaymentSelected,
+                          ]
+                        : [
+                            styles.payment,
+                            selectedPayment?.id === payment.id && styles.paymentSelected,
+                          ]
+                    }
                   >
                     <View style={styles.paymentTop}>
                       <View>
@@ -292,7 +300,9 @@ export default function InvoiceDetailRoute() {
                         <AppButton
                           accessibilityLabel={t('printReceipt')}
                           disabled={receiptBusy}
-                          icon={<MaterialSymbol color={colors.primary} name="print" size={22} />}
+                          icon={
+                            <MaterialSymbol color={colors.primaryDark} name="print" size={22} />
+                          }
                           iconOnly
                           onPress={() => void receiptAction(payment, 'print')}
                           variant="secondary"
@@ -302,7 +312,7 @@ export default function InvoiceDetailRoute() {
                           disabled={receiptBusy}
                           icon={
                             <MaterialSymbol
-                              color={colors.primary}
+                              color={colors.primaryDark}
                               name="picture_as_pdf"
                               size={22}
                             />
@@ -316,7 +326,9 @@ export default function InvoiceDetailRoute() {
                         <AppButton
                           accessibilityLabel={t('correctPayment')}
                           disabled={receiptBusy}
-                          icon={<MaterialSymbol color={colors.onDark} name="edit_note" size={19} />}
+                          icon={
+                            <MaterialSymbol color={colors.onPrimary} name="edit_note" size={19} />
+                          }
                           iconOnly
                           onPress={() => {
                             setCorrectionPaymentId(payment.id);
@@ -327,7 +339,7 @@ export default function InvoiceDetailRoute() {
                       ) : null}
                     </View>
                     {correctionPaymentId === payment.id ? (
-                      <View style={styles.correction}>
+                      <View style={[styles.correction, GLASS_UI && styles.glassCorrection]}>
                         <Notice danger>{t('correctionAppendsEvent')}</Notice>
                         <AppField
                           label={t('correctionReason')}
@@ -377,7 +389,13 @@ function Metric({
   danger?: boolean;
 }) {
   return (
-    <View style={[styles.metric, danger && styles.metricDanger]}>
+    <View
+      style={
+        GLASS_UI
+          ? [styles.metric, styles.glassMetric, danger && styles.glassMetricDanger]
+          : [styles.metric, danger && styles.metricDanger]
+      }
+    >
       <Text style={styles.metricLabel}>{label}</Text>
       <Text style={[styles.metricValue, danger && styles.metricValueDanger]}>{value}</Text>
     </View>
@@ -393,7 +411,7 @@ function Line({
   emphasized?: boolean;
 }) {
   return (
-    <View style={[styles.line, emphasized && styles.lineEmphasized]}>
+    <View style={[styles.line, GLASS_UI && styles.glassLine, emphasized && styles.lineEmphasized]}>
       <Text style={[styles.lineText, emphasized && styles.lineStrong]}>{label}</Text>
       <Text style={[styles.lineValue, emphasized && styles.lineStrong]}>{value}</Text>
     </View>
@@ -521,4 +539,23 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   empty: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 13 },
+  glassMetric: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillNeutral,
+  },
+  glassMetricDanger: { borderColor: glass.rimDanger, backgroundColor: glass.fillDanger },
+  glassLine: { borderBottomColor: glass.divider },
+  glassPayment: {
+    borderColor: glass.rimAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillOpaque,
+  },
+  glassPaymentSelected: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: glass.tintSelected,
+  },
+  glassCorrection: { borderTopColor: glass.divider },
 });

@@ -17,6 +17,8 @@ export const colors = Object.freeze({
   primaryDark: '#004c42',
   primaryPressed: '#084b42',
   onPrimary: '#ffffff',
+  /** Secondary text on solid primary fills. */
+  onPrimaryMuted: '#c9f2e8',
   text: '#162d29',
   textMuted: '#526963',
   onDark: '#f4fbf8',
@@ -26,6 +28,8 @@ export const colors = Object.freeze({
   successSurface: '#e6f5f0',
   successText: '#0d4732',
   warningSurface: '#fff4d6',
+  warningSurfaceHigh: '#f5e6c4',
+  warningSurfaceHighest: '#f2e3c6',
   warningText: '#7c5300',
   warningBorder: '#f1d38a',
   warningAccent: '#615a43',
@@ -33,6 +37,7 @@ export const colors = Object.freeze({
   border: '#dcece7',
   outline: '#6f7976',
   focus: '#2f8f80',
+  whatsapp: '#25d366',
 });
 
 export const spacing = Object.freeze({ xs: 4, sm: 8, md: 16, lg: 24, xl: 32 });
@@ -75,6 +80,8 @@ export const glass = Object.freeze({
   tintSuccess: 'rgba(230, 245, 240, 0.88)',
   tintWarning: 'rgba(250, 242, 220, 0.92)',
   tintDanger: 'rgba(253, 232, 232, 0.92)',
+  /** The selected row of a list, e.g. the open member in the tablet split view. */
+  tintSelected: 'rgba(223, 249, 243, 0.9)',
   /** Frost layer of a panel. Do not lower: in-flow panels on Android get no real blur. */
   frost: 'rgba(255, 255, 255, 0.62)',
   frostSolid: 'rgba(255, 255, 255, 0.86)',

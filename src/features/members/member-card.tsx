@@ -9,8 +9,18 @@ import { daysBetweenDateOnly, type DateOnly } from '@/domain/dates/date-rules';
 import { memberInitials } from '@/domain/members/member';
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
 import { memberPhotoDataUri } from '@/platform/images/member-photo';
+import { GlassSurface } from '@/ui/components/glass-surface';
 import { MaterialSymbol } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import {
+  actionPressed,
+  CARD_RADIUS,
+  colors,
+  fonts,
+  GLASS_UI,
+  glass,
+  radii,
+  spacing,
+} from '@/ui/theme/tokens';
 
 type RegionalSettings = Readonly<{
   language: 'en' | 'hi';
@@ -21,7 +31,6 @@ type RegionalSettings = Readonly<{
 type Tone = 'neutral' | 'active' | 'warning' | 'danger';
 
 const EXPIRY_ALERT_DAYS = 7;
-const WHATSAPP_GREEN = '#25d366';
 
 function whatsappUrl(phone: string) {
   const digits = phone.replace(/\D/g, '');
@@ -115,9 +124,13 @@ export function MemberCard({
 
   const avatarTone =
     chip.tone === 'warning'
-      ? styles.avatarWarning
+      ? GLASS_UI
+        ? styles.glassAvatarWarning
+        : styles.avatarWarning
       : expired || chip.tone === 'neutral'
-        ? styles.avatarMuted
+        ? GLASS_UI
+          ? styles.glassAvatarMuted
+          : styles.avatarMuted
         : null;
   const avatarTextTone =
     chip.tone === 'warning'
@@ -126,28 +139,22 @@ export function MemberCard({
         ? styles.initialsMuted
         : null;
 
-  return (
-    <Pressable
-      accessibilityLabel={t('openMemberProfile', { name: member.name })}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        expired && styles.cardDimmed,
-        selected && styles.selected,
-        pressed && styles.pressed,
-      ]}
-    >
+  const chipColor = (GLASS_UI ? glassChipTextColors : chipTextColors)[chip.tone];
+
+  const content = (
+    <>
       <View style={styles.topRow}>
         {photoUri ? (
           <Image
             accessibilityLabel={t('memberPhoto', { name: member.name })}
             source={{ uri: photoUri }}
-            style={styles.avatarPhoto}
+            style={[styles.avatarPhoto, GLASS_UI && styles.glassAvatarPhoto]}
           />
         ) : (
-          <View style={[styles.avatar, avatarTone]}>
-            <Text style={[styles.initials, avatarTextTone]}>{memberInitials(member.name)}</Text>
+          <View style={[styles.avatar, GLASS_UI && styles.glassAvatar, avatarTone]}>
+            <Text style={[styles.initials, GLASS_UI && styles.glassInitials, avatarTextTone]}>
+              {memberInitials(member.name)}
+            </Text>
           </View>
         )}
         <View style={styles.identity}>
@@ -155,13 +162,19 @@ export function MemberCard({
             <Text numberOfLines={1} style={styles.name}>
               {member.name}
             </Text>
-            <View style={[styles.chip, chipStyles[chip.tone]]}>
-              <MaterialSymbol color={chipTextColors[chip.tone]} name={chip.icon} size={14} />
+            <View
+              style={[
+                styles.chip,
+                GLASS_UI ? [styles.glassChip, glassChipStyles[chip.tone]] : chipStyles[chip.tone],
+              ]}
+            >
+              <MaterialSymbol color={chipColor} name={chip.icon} size={14} />
               <Text
                 numberOfLines={1}
                 style={[
                   styles.chipText,
-                  { color: chipTextColors[chip.tone] },
+                  GLASS_UI && styles.glassChipText,
+                  { color: chipColor },
                   chip.icon === 'warning' && styles.chipTextUpper,
                 ]}
               >
@@ -170,14 +183,14 @@ export function MemberCard({
             </View>
           </View>
           <View style={styles.metaRow}>
-            <Text style={styles.code}>{member.memberCode}</Text>
+            <Text style={[styles.code, GLASS_UI && styles.glassCode]}>{member.memberCode}</Text>
             <Text numberOfLines={1} style={styles.meta}>
               {featured?.planName ?? t('noMembership')}
             </Text>
           </View>
         </View>
       </View>
-      <View style={styles.statusStrip}>
+      <View style={[styles.statusStrip, GLASS_UI && styles.glassStatusStrip]}>
         <View style={styles.statusDate}>
           <MaterialSymbol
             color={expired ? colors.danger : colors.outline}
@@ -217,14 +230,14 @@ export function MemberCard({
           </View>
         ) : null}
       </View>
-      <View style={styles.contactRow}>
+      <View style={[styles.contactRow, GLASS_UI && styles.glassContactRow]}>
         <View style={styles.contactIdentity}>
           <MaterialSymbol color={colors.outline} name={member.phone ? 'call' : 'mail'} size={16} />
           <Text numberOfLines={1} style={styles.contact}>
             {member.phone || member.email || t('noContact')}
           </Text>
         </View>
-        <View style={styles.actions}>
+        <View style={[styles.actions, GLASS_UI && styles.glassActions]}>
           {member.phone ? (
             <>
               <Pressable
@@ -232,7 +245,7 @@ export function MemberCard({
                 accessibilityRole="button"
                 hitSlop={4}
                 onPress={() => void Linking.openURL(`tel:${member.phone.replace(/\s/g, '')}`)}
-                style={({ pressed }) => [styles.iconButton, pressed && styles.iconPressed]}
+                style={iconButtonStyle}
               >
                 <MaterialSymbol color={colors.primaryDark} name="call" size={22} />
               </Pressable>
@@ -241,9 +254,9 @@ export function MemberCard({
                 accessibilityRole="button"
                 hitSlop={4}
                 onPress={() => void Linking.openURL(whatsappUrl(member.phone))}
-                style={({ pressed }) => [styles.iconButton, pressed && styles.iconPressed]}
+                style={iconButtonStyle}
               >
-                <MaterialSymbol color={WHATSAPP_GREEN} name="chat" size={22} />
+                <MaterialSymbol color={colors.whatsapp} name="chat" size={22} />
               </Pressable>
             </>
           ) : null}
@@ -252,8 +265,48 @@ export function MemberCard({
           </View>
         </View>
       </View>
+    </>
+  );
+
+  if (GLASS_UI) {
+    return (
+      <Pressable
+        accessibilityLabel={t('openMemberProfile', { name: member.name })}
+        accessibilityRole="button"
+        onPress={onPress}
+        style={({ pressed }) => [expired && styles.cardDimmed, pressed && actionPressed]}
+      >
+        <GlassSurface
+          radius={CARD_RADIUS}
+          style={[styles.glassCard, selected && styles.glassSelected]}
+          tint={selected ? glass.tintSelected : undefined}
+        >
+          {content}
+        </GlassSurface>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityLabel={t('openMemberProfile', { name: member.name })}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        expired && styles.cardDimmed,
+        selected && styles.selected,
+        pressed && styles.pressed,
+      ]}
+    >
+      {content}
     </Pressable>
   );
+}
+
+function iconButtonStyle({ pressed }: { pressed: boolean }) {
+  if (GLASS_UI) return [styles.iconButton, styles.glassIconButton, pressed && actionPressed];
+  return [styles.iconButton, pressed && styles.iconPressed];
 }
 
 const chipTextColors: Record<Tone, string> = {
@@ -266,8 +319,22 @@ const chipTextColors: Record<Tone, string> = {
 const chipStyles = StyleSheet.create({
   neutral: { backgroundColor: colors.surfaceContainer },
   active: { backgroundColor: colors.surfaceLow },
-  warning: { backgroundColor: '#f5e6c4' },
+  warning: { backgroundColor: colors.warningSurfaceHigh },
   danger: { backgroundColor: colors.dangerSurface },
+});
+
+const glassChipTextColors: Record<Tone, string> = {
+  neutral: colors.text,
+  active: colors.successText,
+  warning: colors.warningText,
+  danger: colors.dangerText,
+};
+
+const glassChipStyles = StyleSheet.create({
+  neutral: { borderColor: glass.rimAccent, backgroundColor: glass.fillNeutral },
+  active: { borderColor: glass.rimSuccess, backgroundColor: glass.fillSuccess },
+  warning: { borderColor: glass.rimWarning, backgroundColor: glass.fillWarning },
+  danger: { borderColor: glass.rimDanger, backgroundColor: glass.fillDanger },
 });
 
 const styles = StyleSheet.create({
@@ -297,7 +364,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceHigh,
   },
   avatarPhoto: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.surfaceHigh },
-  avatarWarning: { backgroundColor: '#f2e3c6' },
+  avatarWarning: { backgroundColor: colors.warningSurfaceHighest },
   avatarMuted: { backgroundColor: colors.surfaceContainer },
   initials: { color: colors.primary, fontFamily: fonts.bold, fontSize: 18 },
   initialsWarning: { color: colors.warningText },
@@ -409,4 +476,40 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   iconPressed: { backgroundColor: colors.surfaceContainer },
+  glassCard: { gap: 10, padding: spacing.md },
+  glassSelected: { borderWidth: 2, borderColor: colors.primary },
+  glassAvatar: {
+    overflow: 'hidden',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: glass.rim,
+    backgroundColor: glass.fillMuted,
+  },
+  glassAvatarPhoto: { borderRadius: 24, borderWidth: 1, borderColor: glass.rim },
+  glassAvatarWarning: { borderColor: glass.rimWarning, backgroundColor: glass.fillWarning },
+  glassAvatarMuted: { backgroundColor: glass.fillNeutral },
+  glassInitials: { color: colors.primaryDark },
+  glassChip: { minHeight: 24, borderWidth: 1, paddingVertical: 3 },
+  glassChipText: { lineHeight: 16 },
+  glassCode: {
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillNeutral,
+  },
+  glassStatusStrip: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillAccent,
+  },
+  glassContactRow: { paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: glass.divider },
+  glassActions: { gap: spacing.xs, marginRight: 0 },
+  glassIconButton: {
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
+  },
 });

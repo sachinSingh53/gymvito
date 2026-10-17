@@ -23,7 +23,7 @@ import {
   StatusChip,
   SurfaceCard,
 } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import { actionPressed, colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
 
 const AUDIT_LABELS: Record<string, string> = {
   member_created: 'auditMemberCreated',
@@ -155,17 +155,17 @@ export function MemberProfilePanel({
             <Image
               accessibilityLabel={t('memberPhoto', { name: member.name })}
               source={{ uri: memberPhotoDataUri(member.photo) }}
-              style={styles.photo}
+              style={[styles.photo, GLASS_UI && styles.glassPhoto]}
             />
           ) : (
-            <View style={styles.photoFallback}>
+            <View style={[styles.photoFallback, GLASS_UI && styles.glassPhotoFallback]}>
               <Text style={styles.initials}>{memberInitials(member.name)}</Text>
             </View>
           )}
           <View style={styles.identityText}>
             <View style={styles.nameRow}>
               <Text style={styles.name}>{member.name}</Text>
-              <Text style={styles.code}>{member.memberCode}</Text>
+              <Text style={[styles.code, GLASS_UI && styles.glassCode]}>{member.memberCode}</Text>
             </View>
             <Text style={styles.memberSince}>
               {t('memberSince', { date: member.createdAtUtc.slice(0, 10) })}
@@ -175,10 +175,18 @@ export function MemberProfilePanel({
         </View>
         {featured ? (
           <View
-            style={[
-              styles.membershipBanner,
-              featured.status === 'expired' && styles.membershipBannerDanger,
-            ]}
+            style={
+              GLASS_UI
+                ? [
+                    styles.membershipBanner,
+                    styles.glassWell,
+                    featured.status === 'expired' && styles.glassDangerWell,
+                  ]
+                : [
+                    styles.membershipBanner,
+                    featured.status === 'expired' && styles.membershipBannerDanger,
+                  ]
+            }
           >
             <View style={styles.membershipBannerCopy}>
               <Text style={styles.emptyMembershipTitle}>
@@ -202,13 +210,13 @@ export function MemberProfilePanel({
             />
           </View>
         ) : (
-          <View style={styles.emptyMembership}>
+          <View style={[styles.emptyMembership, GLASS_UI && styles.glassWell]}>
             <Text style={styles.emptyMembershipTitle}>{t('noCurrentMembership')}</Text>
             <Text style={styles.emptyMembershipText}>{t('membershipPhase3Message')}</Text>
           </View>
         )}
         {finance && finance.balanceMinor > 0 ? (
-          <View style={styles.ledgerBanner}>
+          <View style={[styles.ledgerBanner, GLASS_UI && styles.glassDangerWell]}>
             <View style={styles.membershipBannerCopy}>
               <Text style={styles.ledgerTitle}>{t('pendingLedgerBalance')}</Text>
               <Text style={styles.ledgerMeta}>
@@ -227,7 +235,7 @@ export function MemberProfilePanel({
             {!member.isArchived ? (
               <AppButton
                 accessibilityLabel={featured ? t('renewMembership') : t('enrollMembership')}
-                icon={<MaterialSymbol color={colors.onDark} name="autorenew" size={19} />}
+                icon={<MaterialSymbol color={colors.onPrimary} name="autorenew" size={19} />}
                 onPress={() =>
                   router.push(
                     (featured
@@ -245,7 +253,7 @@ export function MemberProfilePanel({
                 accessibilityLabel={t('collectAmount', {
                   amount: formatMoneyMinor(finance.balanceMinor, settings),
                 })}
-                icon={<MaterialSymbol color={colors.onDark} name="payments" size={19} />}
+                icon={<MaterialSymbol color={colors.onPrimary} name="payments" size={19} />}
                 onPress={() =>
                   router.push(
                     `/member/${member.id}/payment?invoiceId=${finance.latestOutstandingInvoiceId}` as Href,
@@ -261,7 +269,7 @@ export function MemberProfilePanel({
         <View style={styles.managementActions}>
           <AppButton
             accessibilityLabel={t('editProfile')}
-            icon={<MaterialSymbol color={colors.primary} name="edit" size={18} />}
+            icon={<MaterialSymbol color={colors.primaryDark} name="edit" size={18} />}
             onPress={() => router.push(`/member/${member.id}/edit` as Href)}
             style={styles.actionButton}
             variant="secondary"
@@ -272,7 +280,7 @@ export function MemberProfilePanel({
             accessibilityLabel={member.isArchived ? t('restore') : t('archive')}
             icon={
               <MaterialSymbol
-                color={member.isArchived ? colors.primary : colors.dangerText}
+                color={member.isArchived ? colors.primaryDark : colors.dangerText}
                 name={member.isArchived ? 'unarchive' : 'archive'}
                 size={18}
               />
@@ -285,7 +293,7 @@ export function MemberProfilePanel({
           </AppButton>
         </View>
       </View>
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, GLASS_UI && styles.glassTabs]}>
         <ProfileTabButton
           label={t('summary')}
           onPress={() => setActiveTab('summary')}
@@ -328,7 +336,7 @@ export function MemberProfilePanel({
           {featured.planDescription ? (
             <Text style={styles.subscriptionDescription}>{featured.planDescription}</Text>
           ) : null}
-          <View style={styles.progressCard}>
+          <View style={[styles.progressCard, GLASS_UI && styles.glassWell]}>
             <View style={styles.progressLabels}>
               <Text style={[styles.progressText, styles.progressTextStart]}>
                 {formatDateOnly(featured.startDate, settings)}
@@ -340,7 +348,7 @@ export function MemberProfilePanel({
                 {formatDateOnly(featured.endDate, settings)}
               </Text>
             </View>
-            <View style={styles.progressTrack}>
+            <View style={[styles.progressTrack, GLASS_UI && styles.glassProgressTrack]}>
               <View
                 style={[styles.progressFill, { width: `${Math.round(progress.ratio * 100)}%` }]}
               />
@@ -373,7 +381,7 @@ export function MemberProfilePanel({
             <Text style={styles.emptyText}>{t('noInvoices')}</Text>
           ) : (
             invoices.map((invoice) => (
-              <View key={invoice.id} style={styles.historyItem}>
+              <View key={invoice.id} style={[styles.historyItem, GLASS_UI && styles.glassWell]}>
                 <View style={styles.historyTop}>
                   <Text style={styles.historyName}>
                     {invoice.invoiceNumber} • {invoice.planName}
@@ -416,7 +424,7 @@ export function MemberProfilePanel({
             <Text style={styles.emptyText}>{t('noMembershipHistory')}</Text>
           ) : (
             memberships.map((membership) => (
-              <View key={membership.id} style={styles.historyItem}>
+              <View key={membership.id} style={[styles.historyItem, GLASS_UI && styles.glassWell]}>
                 <View style={styles.historyTop}>
                   <Text style={styles.historyName}>{membership.planName}</Text>
                   <StatusChip
@@ -457,7 +465,7 @@ export function MemberProfilePanel({
           ) : (
             events.map((event) => (
               <View key={event.id} style={styles.activity}>
-                <View style={styles.activityDot} />
+                <View style={[styles.activityDot, GLASS_UI && styles.glassActivityDot]} />
                 <View style={styles.activityCopy}>
                   <Text style={styles.activityTitle}>
                     {t(event.eventType === 'renewed' ? 'membershipRenewed' : 'membershipEnrolled')}
@@ -500,7 +508,7 @@ export function MemberProfilePanel({
             <Text style={styles.emptyText}>{t('noNotes')}</Text>
           ) : (
             member.notes.map((note) => (
-              <View key={note.id} style={styles.note}>
+              <View key={note.id} style={[styles.note, GLASS_UI && styles.glassWell]}>
                 <Text style={styles.noteText}>{note.content}</Text>
                 <Text style={styles.noteDate}>{note.createdAtUtc.slice(0, 10)}</Text>
               </View>
@@ -519,7 +527,7 @@ export function MemberProfilePanel({
           ) : (
             member.audit.map((event) => (
               <View key={event.id} style={styles.activity}>
-                <View style={styles.activityDot} />
+                <View style={[styles.activityDot, GLASS_UI && styles.glassActivityDot]} />
                 <View style={styles.activityCopy}>
                   <Text style={styles.activityTitle}>
                     {t(AUDIT_LABELS[event.summaryCode] ?? 'auditMemberUpdated')}
@@ -550,13 +558,26 @@ function ProfileTabButton({
       accessibilityRole="tab"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.tab,
-        selected && styles.activeTab,
-        pressed && styles.pressedTab,
-      ]}
+      style={({ pressed }) =>
+        GLASS_UI
+          ? [
+              styles.tab,
+              styles.glassTab,
+              selected && styles.glassActiveTab,
+              pressed && actionPressed,
+            ]
+          : [styles.tab, selected && styles.activeTab, pressed && styles.pressedTab]
+      }
     >
-      <Text style={[styles.tabText, selected && styles.activeTabText]} numberOfLines={2}>
+      <Text
+        style={[
+          styles.tabText,
+          GLASS_UI && styles.glassTabText,
+          selected && styles.activeTabText,
+          GLASS_UI && selected && styles.glassActiveTabText,
+        ]}
+        numberOfLines={2}
+      >
         {label}
       </Text>
     </Pressable>
@@ -565,7 +586,7 @@ function ProfileTabButton({
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.detail}>
+    <View style={[styles.detail, GLASS_UI && styles.glassDetail]}>
       <Text style={styles.detailLabel}>{label}</Text>
       <Text style={styles.detailValue}>{value}</Text>
     </View>
@@ -582,7 +603,13 @@ function TermMetric({
   muted?: boolean;
 }) {
   return (
-    <View style={[styles.termMetric, muted && styles.termMetricMuted]}>
+    <View
+      style={
+        GLASS_UI
+          ? [styles.termMetric, styles.glassTermMetric, muted && styles.glassTermMetricMuted]
+          : [styles.termMetric, muted && styles.termMetricMuted]
+      }
+    >
       <Text style={styles.termLabel}>{label}</Text>
       <Text style={[styles.termValue, muted && styles.termValueMuted]}>{value}</Text>
     </View>
@@ -755,7 +782,7 @@ const styles = StyleSheet.create({
   termLabel: {
     color: colors.textMuted,
     fontFamily: fonts.bold,
-    fontSize: 9,
+    fontSize: 10,
     textTransform: 'uppercase',
   },
   termValue: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
@@ -845,4 +872,45 @@ const styles = StyleSheet.create({
   activityDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceHigh },
   activityCopy: { flex: 1 },
   activityTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13 },
+  glassPhoto: { borderWidth: 1, borderColor: glass.rim },
+  glassPhotoFallback: { borderWidth: 1, borderColor: glass.rim, backgroundColor: glass.fillMuted },
+  glassCode: {
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillNeutral,
+  },
+  glassWell: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillAccent,
+  },
+  glassDangerWell: {
+    borderWidth: 1,
+    borderColor: glass.rimDanger,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillDanger,
+  },
+  glassTabs: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillNeutral,
+  },
+  glassTab: { borderRadius: radii.pill },
+  glassActiveTab: { backgroundColor: colors.primary },
+  glassTabText: { color: colors.text },
+  glassActiveTabText: { color: colors.onPrimary },
+  glassProgressTrack: { backgroundColor: glass.fillMuted },
+  glassTermMetric: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillNeutral,
+  },
+  glassTermMetricMuted: { backgroundColor: glass.fillOpaque },
+  glassDetail: { borderBottomWidth: 1, borderBottomColor: glass.divider },
+  glassActivityDot: { borderWidth: 1, borderColor: glass.rim, backgroundColor: glass.fillMuted },
 });

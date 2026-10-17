@@ -20,7 +20,7 @@ import {
   Notice,
 } from '@/ui/components/core-controls';
 import { LocalDataBadge, StatusChip, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
 
 import { useLocalBusinessDate } from './use-local-business-date';
 
@@ -296,13 +296,17 @@ export function MembershipForm({
 
   if (loading) return <LoadingState label={t('loading')} />;
 
+  const intro = (
+    <>
+      <Text style={styles.title}>{t('membershipSetupTitle')}</Text>
+      <Text style={styles.subtitle}>{t('membershipSetupSubtitle')}</Text>
+    </>
+  );
+
   return (
     <View style={styles.form}>
       <LocalDataBadge />
-      <View>
-        <Text style={styles.title}>{t('membershipSetupTitle')}</Text>
-        <Text style={styles.subtitle}>{t('membershipSetupSubtitle')}</Text>
-      </View>
+      {GLASS_UI ? <SurfaceCard>{intro}</SurfaceCard> : <View>{intro}</View>}
       {errors.form === 'load' ? <Notice danger>{t('memberLoadFailed')}</Notice> : null}
       {errors.form === 'save' ? <Notice danger>{t('membershipSaveFailed')}</Notice> : null}
       {!plans.length ? (
@@ -429,7 +433,7 @@ export function MembershipForm({
                 label={t('tax')}
                 value={formatMoneyMinor(preview.charges.taxMinor, settings)}
               />
-              <View style={styles.totalRow}>
+              <View style={[styles.totalRow, GLASS_UI && styles.glassWell]}>
                 <Text style={styles.totalLabel}>{t('projectedTotal')}</Text>
                 <Text style={styles.totalValue}>
                   {formatMoneyMinor(preview.charges.totalMinor, settings)}
@@ -490,7 +494,7 @@ export function MembershipForm({
                     onChangeText={setInitialPaymentNote}
                     value={initialPaymentNote}
                   />
-                  <View style={styles.paymentBalance}>
+                  <View style={[styles.paymentBalance, GLASS_UI && styles.glassWell]}>
                     <Text style={styles.paymentBalanceLabel}>
                       {t('balanceAfterPayment', {
                         amount: formatMoneyMinor(
@@ -510,7 +514,7 @@ export function MembershipForm({
             </SurfaceCard>
           ) : null}
           {preview?.overlaps.length ? (
-            <SurfaceCard style={styles.overlapCard}>
+            <SurfaceCard style={GLASS_UI ? styles.glassOverlapCard : styles.overlapCard}>
               <Text style={styles.overlapTitle}>{t('overlapTitle')}</Text>
               <Text style={styles.overlapText}>
                 {t('overlapMessage', { count: preview.overlaps.length })}
@@ -551,7 +555,7 @@ export function MembershipForm({
 
 function ChargeRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.chargeRow}>
+    <View style={[styles.chargeRow, GLASS_UI && styles.glassChargeRow]}>
       <Text style={styles.chargeLabel}>{label}</Text>
       <Text style={styles.chargeValue}>{value}</Text>
     </View>
@@ -680,4 +684,16 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   actions: { gap: spacing.sm },
+  glassWell: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillAccent,
+  },
+  glassChargeRow: { borderBottomWidth: 1, borderBottomColor: glass.divider },
+  glassOverlapCard: {
+    gap: spacing.sm,
+    borderColor: glass.rimWarning,
+    backgroundColor: glass.tintWarning,
+  },
 });

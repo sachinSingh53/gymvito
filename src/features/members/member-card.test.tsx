@@ -1,10 +1,21 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import { BlurView } from 'expo-blur';
+import { StyleSheet } from 'react-native';
 
 import '@/i18n';
 
 import type { MembershipDirectoryItem } from '@/data/repositories/phase3-repository';
 
 import { MemberCard } from './member-card';
+
+const mockGlassUi = { enabled: true };
+
+jest.mock('@/ui/theme/tokens', () => {
+  const actual = jest.requireActual('@/ui/theme/tokens');
+  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
+    get: () => mockGlassUi.enabled,
+  });
+});
 
 const MEMBER: MembershipDirectoryItem = {
   id: 'member-1',
@@ -189,5 +200,26 @@ describe('MemberCard', () => {
 
     expect(screen.getByText(/₹250\.00 Due/)).toBeTruthy();
     expect(screen.getByText('Overdue')).toBeTruthy();
+  });
+});
+
+describe.each([true, false])('MemberCard surface (GLASS_UI %s)', (enabled) => {
+  beforeEach(() => {
+    mockGlassUi.enabled = enabled;
+  });
+  afterAll(() => {
+    mockGlassUi.enabled = true;
+  });
+
+  it('keeps the profile label, 48dp contact actions and blurs only in glass mode', () => {
+    const screen = render(<MemberCard member={MEMBER} onPress={jest.fn()} selected />);
+
+    expect(screen.getByLabelText("Open अमित Sharma's profile")).toBeTruthy();
+    for (const label of ['Call अमित Sharma', 'Send WhatsApp message to अमित Sharma']) {
+      const style = StyleSheet.flatten(screen.getByLabelText(label).props.style);
+      expect(style.width).toBeGreaterThanOrEqual(48);
+      expect(style.height).toBeGreaterThanOrEqual(48);
+    }
+    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(enabled ? 1 : 0);
   });
 });

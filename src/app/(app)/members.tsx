@@ -21,8 +21,18 @@ import { MemberProfilePanel } from '@/features/members/member-profile-panel';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppButton, LoadingState, Notice } from '@/ui/components/core-controls';
+import { GlassSurface } from '@/ui/components/glass-surface';
 import { MaterialSymbol, OperationalShell, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import {
+  actionPressed,
+  CARD_RADIUS,
+  colors,
+  fonts,
+  GLASS_UI,
+  glass,
+  radii,
+  spacing,
+} from '@/ui/theme/tokens';
 
 type Filter =
   'all' | 'active' | 'expiring' | 'overdue' | 'expired' | 'upcoming' | 'no-membership' | 'archived';
@@ -59,6 +69,7 @@ export default function MembersRoute() {
   const { state, getPhase2Repository, getPhase3Repository, getPhase4Repository } = useAppSession();
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const requestedFilter = FILTERS.includes(params.filter as Filter)
     ? (params.filter as Filter)
     : 'all';
@@ -195,16 +206,28 @@ export default function MembersRoute() {
     else router.push(`/member/${member.id}` as Href);
   };
 
-  const directory = (
-    <View style={styles.directoryPane}>
+  const toolbar = (
+    <>
       <View style={styles.searchRow}>
-        <View style={styles.searchBox}>
-          <MaterialSymbol color={colors.outline} name="search" size={22} />
+        <View
+          style={[
+            styles.searchBox,
+            GLASS_UI && styles.glassSearchBox,
+            GLASS_UI && searchFocused && styles.glassSearchBoxFocused,
+          ]}
+        >
+          <MaterialSymbol
+            color={GLASS_UI ? colors.textMuted : colors.outline}
+            name="search"
+            size={22}
+          />
           <TextInput
             accessibilityLabel={t('searchMembers')}
+            onBlur={() => setSearchFocused(false)}
             onChangeText={setQuery}
+            onFocus={() => setSearchFocused(true)}
             placeholder={t('memberSearchPlaceholder')}
-            placeholderTextColor={colors.outline}
+            placeholderTextColor={GLASS_UI ? colors.textMuted : colors.outline}
             style={styles.searchInput}
             value={query}
           />
@@ -214,7 +237,7 @@ export default function MembersRoute() {
               onPress={() => setQuery('')}
               style={styles.clear}
             >
-              <Text style={styles.clearText}>×</Text>
+              <Text style={[styles.clearText, GLASS_UI && styles.glassClearText]}>×</Text>
             </Pressable>
           ) : null}
         </View>
@@ -234,19 +257,40 @@ export default function MembersRoute() {
               accessibilityState={{ selected: isSelected }}
               key={value}
               onPress={() => setFilter(value)}
-              style={[styles.filterChip, isSelected && styles.filterChipSelected]}
+              style={({ pressed }) =>
+                GLASS_UI
+                  ? [
+                      styles.filterChip,
+                      styles.glassFilterChip,
+                      isSelected && styles.glassFilterChipSelected,
+                      pressed && actionPressed,
+                    ]
+                  : [styles.filterChip, isSelected && styles.filterChipSelected]
+              }
             >
               {icon ? (
                 <MaterialSymbol
-                  color={isSelected ? '#ffffff' : icon.color}
+                  color={isSelected ? colors.onPrimary : icon.color}
                   name={icon.name}
                   size={16}
                 />
               ) : null}
-              <Text style={[styles.filterText, isSelected && styles.filterTextSelected]}>
+              <Text
+                style={[
+                  styles.filterText,
+                  GLASS_UI && styles.glassFilterText,
+                  isSelected && styles.filterTextSelected,
+                ]}
+              >
                 {t(FILTER_LABELS[value])}
               </Text>
-              <Text style={[styles.filterCount, isSelected && styles.filterCountSelected]}>
+              <Text
+                style={[
+                  styles.filterCount,
+                  GLASS_UI && styles.glassFilterCount,
+                  isSelected && styles.filterCountSelected,
+                ]}
+              >
                 {counts[value]}
               </Text>
             </Pressable>
@@ -262,7 +306,10 @@ export default function MembersRoute() {
             })}
           </Text>
           <View style={styles.localDot} />
-          <Text numberOfLines={1} style={styles.localStateText}>
+          <Text
+            numberOfLines={1}
+            style={[styles.localStateText, GLASS_UI && styles.glassLocalStateText]}
+          >
             {t('offlineCached')}
           </Text>
         </View>
@@ -271,6 +318,18 @@ export default function MembersRoute() {
           <Text style={styles.sortText}>{t('recent')}</Text>
         </View>
       </View>
+    </>
+  );
+
+  const directory = (
+    <View style={styles.directoryPane}>
+      {GLASS_UI ? (
+        <GlassSurface radius={CARD_RADIUS} style={styles.glassToolbar}>
+          {toolbar}
+        </GlassSurface>
+      ) : (
+        toolbar
+      )}
       {error ? <Notice danger>{t('membersLoadFailed')}</Notice> : null}
       <FlatList
         contentContainerStyle={styles.list}
@@ -313,9 +372,13 @@ export default function MembersRoute() {
         accessibilityLabel={t('addMember')}
         accessibilityRole="button"
         onPress={() => router.push('/member/new' as Href)}
-        style={styles.floatingAdd}
+        style={({ pressed }) =>
+          GLASS_UI
+            ? [styles.floatingAdd, styles.glassFloatingAdd, pressed && actionPressed]
+            : styles.floatingAdd
+        }
       >
-        <MaterialSymbol color="#ffffff" name="person_add" size={22} />
+        <MaterialSymbol color={colors.onPrimary} name="person_add" size={22} />
         <Text style={styles.floatingAddText}>+ {t('member')}</Text>
       </Pressable>
     </View>
@@ -414,7 +477,7 @@ const styles = StyleSheet.create({
   },
   filterChipSelected: { backgroundColor: colors.primaryDark },
   filterText: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 14 },
-  filterTextSelected: { color: '#ffffff' },
+  filterTextSelected: { color: colors.onPrimary },
   filterCount: {
     paddingHorizontal: 6,
     paddingVertical: 1,
@@ -425,8 +488,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   filterCountSelected: {
-    color: '#ffffff',
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    color: colors.onPrimary,
+    backgroundColor: glass.fillOnPrimary,
   },
   directoryMeta: {
     minHeight: 48,
@@ -500,7 +563,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
   },
-  floatingAddText: { color: '#fff', fontFamily: fonts.bold, fontSize: 15 },
+  floatingAddText: { color: colors.onPrimary, fontFamily: fonts.bold, fontSize: 15 },
   headerLocalState: {
     width: 48,
     height: 48,
@@ -508,4 +571,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   detailEmpty: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, minHeight: 300 },
+  glassToolbar: { gap: spacing.sm, padding: 12 },
+  glassSearchBox: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillOpaque,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  glassSearchBoxFocused: { borderWidth: 2, borderColor: colors.focus, paddingHorizontal: 11 },
+  glassClearText: { color: colors.textMuted },
+  glassFilterChip: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
+  },
+  glassFilterChipSelected: { borderColor: colors.primaryDark, backgroundColor: colors.primary },
+  glassFilterText: { color: colors.text },
+  glassFilterCount: { overflow: 'hidden', backgroundColor: glass.fillOpaque },
+  glassLocalStateText: { color: colors.textMuted },
+  glassFloatingAdd: { backgroundColor: colors.primary },
 });

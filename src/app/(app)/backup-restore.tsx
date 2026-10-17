@@ -16,8 +16,8 @@ import {
   LoadingState,
   Notice,
 } from '@/ui/components/core-controls';
-import { OperationalShell, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import { OperationalShell, StatusChip, SurfaceCard } from '@/ui/components/operational-shell';
+import { colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
 
 type Mode = 'overview' | 'create' | 'restore' | 'delete';
 
@@ -227,7 +227,7 @@ export default function BackupRestoreRoute() {
               <Text style={styles.muted}>{t('noBackupHistory')}</Text>
             ) : null}
             {history.map((record) => (
-              <View key={record.id} style={styles.historyRow}>
+              <View key={record.id} style={[styles.historyRow, GLASS_UI && styles.glassHistoryRow]}>
                 <View style={styles.flexCopy}>
                   <Text style={styles.historyTitle}>
                     {record.operationType === 'backup' ? t('historyBackup') : t('historyRestore')}
@@ -240,18 +240,27 @@ export default function BackupRestoreRoute() {
                     {record.targetDescriptor ? ` • ${record.targetDescriptor}` : ''}
                   </Text>
                 </View>
-                <Text
-                  style={[
-                    styles.status,
-                    record.result === 'success' ? styles.statusSuccess : styles.statusDanger,
-                  ]}
-                >
-                  {t(`backupResult_${record.result}`)}
-                </Text>
+                {GLASS_UI ? (
+                  <View style={styles.glassStatus}>
+                    <StatusChip
+                      label={t(`backupResult_${record.result}`)}
+                      tone={record.result === 'success' ? 'active' : 'danger'}
+                    />
+                  </View>
+                ) : (
+                  <Text
+                    style={[
+                      styles.status,
+                      record.result === 'success' ? styles.statusSuccess : styles.statusDanger,
+                    ]}
+                  >
+                    {t(`backupResult_${record.result}`)}
+                  </Text>
+                )}
               </View>
             ))}
           </SurfaceCard>
-          <SurfaceCard style={styles.dangerCard}>
+          <SurfaceCard style={[styles.dangerCard, GLASS_UI && styles.glassDangerCard]}>
             <Text style={styles.dangerTitle}>{t('deleteAllTitle')}</Text>
             <Text style={styles.muted}>{t('deleteAllCardBody')}</Text>
             <AppButton onPress={() => resetSensitive('delete')} variant="danger">
@@ -437,7 +446,10 @@ function ActionCard({
 function RestorePreview({ manifest }: { manifest: BackupManifest }) {
   const { t, i18n } = useTranslation();
   return (
-    <View accessibilityLabel={t('restorePreview')} style={styles.preview}>
+    <View
+      accessibilityLabel={t('restorePreview')}
+      style={[styles.preview, GLASS_UI && styles.glassPreview]}
+    >
       <Text style={styles.previewTitle}>{manifest.gymName}</Text>
       <Text style={styles.muted}>
         {new Intl.DateTimeFormat(i18n.language, {
@@ -466,7 +478,7 @@ function RestorePreview({ manifest }: { manifest: BackupManifest }) {
 
 function PreviewMetric({ label, value }: { label: string; value: number }) {
   return (
-    <View style={styles.previewMetric}>
+    <View style={[styles.previewMetric, GLASS_UI && styles.glassPreviewMetric]}>
       <Text style={styles.metricValue}>{value}</Text>
       <Text style={styles.metricLabel}>{label}</Text>
     </View>
@@ -533,4 +545,18 @@ const styles = StyleSheet.create({
   },
   metricValue: { color: colors.primaryDark, fontFamily: fonts.bold, fontSize: 22 },
   metricLabel: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 12 },
+  glassHistoryRow: { borderBottomWidth: 1, borderBottomColor: glass.divider },
+  glassStatus: { maxWidth: '45%', flexShrink: 0 },
+  glassDangerCard: { borderColor: glass.rimDanger },
+  glassPreview: {
+    borderColor: glass.rimPrimary,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillAccent,
+  },
+  glassPreviewMetric: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillOpaque,
+  },
 });

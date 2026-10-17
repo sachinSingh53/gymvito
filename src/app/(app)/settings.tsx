@@ -1,13 +1,13 @@
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { AppLanguage } from '@/domain/onboarding/onboarding';
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppScreen } from '@/ui/components/app-screen';
 import { AppButton, AppChoice, AppField, Notice } from '@/ui/components/core-controls';
-import { colors, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, spacing } from '@/ui/theme/tokens';
 
 const TIMEOUTS = [60, 300, 900] as const;
 
@@ -47,11 +47,15 @@ export default function SettingsRoute() {
   };
 
   return (
-    <AppScreen backHref="/more" canGoBack title={t('settings')} subtitle={t('settingsSubtitle')}>
-      <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>
-        {t('languageLabel')}
-      </Text>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+    <AppScreen
+      backHref="/more"
+      canGoBack
+      glass
+      title={t('settings')}
+      subtitle={t('settingsSubtitle')}
+    >
+      <Text style={styles.sectionTitle}>{t('languageLabel')}</Text>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         <AppChoice
           label="English"
           onPress={() => void switchLanguage('en')}
@@ -66,8 +70,8 @@ export default function SettingsRoute() {
       <AppButton onPress={() => router.push('/gym-settings' as Href)} variant="secondary">
         {t('editGymSettings')}
       </AppButton>
-      <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>{t('autoLock')}</Text>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <Text style={styles.sectionTitle}>{t('autoLock')}</Text>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         {TIMEOUTS.map((seconds) => (
           <AppChoice
             key={seconds}
@@ -100,3 +104,8 @@ export default function SettingsRoute() {
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  sectionTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 26 },
+  choices: { gap: spacing.sm },
+});

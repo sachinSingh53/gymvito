@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { validateGymSetup, type GymSetupInput } from '@/domain/onboarding/onboarding';
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppScreen } from '@/ui/components/app-screen';
 import { AppButton, AppChoice, AppField, Notice } from '@/ui/components/core-controls';
-import { colors, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, spacing } from '@/ui/theme/tokens';
 
 export default function GymSettingsRoute() {
   const { state, updateGym } = useAppSession();
@@ -51,6 +51,7 @@ export default function GymSettingsRoute() {
     <AppScreen
       backHref="/settings"
       canGoBack
+      glass
       title={t('editGymSettings')}
       subtitle={t('gymSettingsSubtitle')}
     >
@@ -99,8 +100,8 @@ export default function GymSettingsRoute() {
         onChangeText={(value) => update('currencyCode', value.toUpperCase())}
         value={form.currencyCode}
       />
-      <Text style={{ color: colors.text }}>{t('dateFormat')}</Text>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <Text style={styles.groupLabel}>{t('dateFormat')}</Text>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         {(['day-month-year', 'month-day-year', 'year-month-day'] as const).map((value) => (
           <AppChoice
             key={value}
@@ -110,8 +111,8 @@ export default function GymSettingsRoute() {
           />
         ))}
       </View>
-      <Text style={{ color: colors.text }}>{t('timeFormat')}</Text>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <Text style={styles.groupLabel}>{t('timeFormat')}</Text>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         <AppChoice
           label={t('time12')}
           onPress={() => update('timeFormat', '12-hour')}
@@ -123,8 +124,8 @@ export default function GymSettingsRoute() {
           selected={form.timeFormat === '24-hour'}
         />
       </View>
-      <Text style={{ color: colors.text }}>{t('weekStartsOn')}</Text>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <Text style={styles.groupLabel}>{t('weekStartsOn')}</Text>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         <AppChoice
           label={t('monday')}
           onPress={() => update('weekStartsOn', 1)}
@@ -136,8 +137,8 @@ export default function GymSettingsRoute() {
           selected={form.weekStartsOn === 0}
         />
       </View>
-      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        <View style={{ minWidth: 0, flex: 1 }}>
+      <View style={styles.fieldRow}>
+        <View style={styles.rowField}>
           <AppField
             error={errorFor('financialYearStartMonth')}
             keyboardType="number-pad"
@@ -146,7 +147,7 @@ export default function GymSettingsRoute() {
             value={String(form.financialYearStartMonth)}
           />
         </View>
-        <View style={{ minWidth: 0, flex: 1 }}>
+        <View style={styles.rowField}>
           <AppField
             error={errorFor('financialYearStartDay')}
             keyboardType="number-pad"
@@ -156,7 +157,7 @@ export default function GymSettingsRoute() {
           />
         </View>
       </View>
-      <Text style={{ color: colors.textMuted }}>{t('deviceTimezoneNotice')}</Text>
+      <Text style={styles.hint}>{t('deviceTimezoneNotice')}</Text>
       {saved ? <Notice>{t('settingsSaved')}</Notice> : null}
       <AppButton disabled={saving} onPress={() => void submit()}>
         {saving ? t('saving') : t('save')}
@@ -167,3 +168,11 @@ export default function GymSettingsRoute() {
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  groupLabel: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 21 },
+  choices: { gap: spacing.sm },
+  fieldRow: { flexDirection: 'row', gap: spacing.sm },
+  rowField: { minWidth: 0, flex: 1 },
+  hint: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 13, lineHeight: 19 },
+});

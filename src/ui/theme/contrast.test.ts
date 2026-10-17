@@ -178,6 +178,19 @@ describe('wells and tabs inside glass panels (worst case over every blob)', () =
     expect(contrastRatio(colors.onPrimaryMuted, colors.primary)).toBeGreaterThanOrEqual(AA_BODY);
   });
 
+  it.each([
+    ['restore preview title', colors.text],
+    ['restore preview metric value', colors.primaryDark],
+    ['restore preview detail', colors.textMuted],
+  ])('keeps %s in the accent preview well at AA', (_, foreground) => {
+    expect(worstCase(foreground, glass.fillAccent, panels)).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
+  it('keeps restore preview metric labels at AA on an opaque tile inside the accent well', () => {
+    const wells = panels.map((panel) => [...panel, glass.fillAccent]);
+    expect(worstCase(colors.textMuted, glass.fillOpaque, wells)).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
   it('keeps the selected-row tint at or above 0.85 alpha', () => {
     expect(parseColor(glass.tintSelected)[3]).toBeGreaterThanOrEqual(0.85);
   });

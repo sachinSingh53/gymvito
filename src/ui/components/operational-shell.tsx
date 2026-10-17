@@ -1,19 +1,38 @@
-import { BlurTargetView } from 'expo-blur';
-import { router, type Href, usePathname } from 'expo-router';
-import { type PropsWithChildren, type ReactNode, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { router, type Href, useIsFocused, usePathname } from 'expo-router';
+import {
+  createContext,
+  type PropsWithChildren,
+  type ReactNode,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { type EdgeInsets, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppSession } from '@/features/session/app-session-context';
+import { useGlassBlurTarget } from '@/ui/components/glass-context';
 import { GlassBackdrop, GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
-import { GLASS_UI, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
+import { GLASS_UI, actionPressed, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 type NavKey = 'home' | 'members' | 'payments' | 'more';
 
 export const BUSINESS_NAV_PHONE_HEIGHT = 68;
 export const BUSINESS_NAV_TABLET_WIDTH = 84;
-const GLASS_HEADER_INSET = 12;
+/** Gap between floating glass chrome and the screen edges. */
+const GLASS_CHROME_INSET = 12;
 
 type Props = PropsWithChildren<{
   title: string;
@@ -24,9 +43,113 @@ type Props = PropsWithChildren<{
   headerAction?: ReactNode;
   scroll?: boolean;
   contentStyle?: object;
-  /** Liquid glass chrome: ambient backdrop and a floating, blurred header over the content. */
-  glass?: boolean;
 }>;
+
+type NavigationInset = { left: number; bottom: number };
+
+const NO_NAVIGATION_INSET: NavigationInset = Object.freeze({ left: 0, bottom: 0 });
+
+/** Space the floating glass navigation takes from the route area. */
+function floatingNavigationInset(tablet: boolean, insets: EdgeInsets): NavigationInset {
+  return tablet
+    ? { left: GLASS_CHROME_INSET + BUSINESS_NAV_TABLET_WIDTH + insets.left, bottom: 0 }
+    : {
+        left: 0,
+        bottom: Math.max(insets.bottom, GLASS_CHROME_INSET) + BUSINESS_NAV_PHONE_HEIGHT,
+      };
+}
+
+/** Holds the focused screen's floating header so it can render outside the blur target. */
+type FloatingHeaderSlot = {
+  show(owner: object, header: ReactNode): void;
+  hide(owner: object): void;
+  subscribe(listener: () => void): () => void;
+  current(): ReactNode;
+};
+
+function createFloatingHeaderSlot(): FloatingHeaderSlot {
+  let owner: object | null = null;
+  let header: ReactNode = null;
+  const listeners = new Set<() => void>();
+  const notify = () => listeners.forEach((listener) => listener());
+  return {
+    show(nextOwner, nextHeader) {
+      owner = nextOwner;
+      header = nextHeader;
+      notify();
+    },
+    hide(currentOwner) {
+      if (owner !== currentOwner) return;
+      owner = null;
+      header = null;
+      notify();
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    current: () => header,
+  };
+}
+
+const BusinessChromeContext = createContext<{
+  header: FloatingHeaderSlot;
+  navigationInset: NavigationInset;
+} | null>(null);
+
+/**
+ * Floating glass chrome for the business navigator. On Android a blur target cannot contain the
+ * blur, so screens hand their header to `FloatingHeaderHost`, which sits beside the
+ * `GlassBlurTarget` with `BusinessNavigation`.
+ */
+export function BusinessChromeProvider({ children }: { children: ReactNode }) {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const [header] = useState(createFloatingHeaderSlot);
+  const navigationInset = floatingNavigationInset(width >= 600, insets);
+  const { left, bottom } = navigationInset;
+  const value = useMemo(
+    () => ({ header, navigationInset: { left, bottom } }),
+    [header, left, bottom],
+  );
+  return <BusinessChromeContext.Provider value={value}>{children}</BusinessChromeContext.Provider>;
+}
+
+/** Space to leave for the floating navigation; zero outside `BusinessChromeProvider`. */
+export function useBusinessNavigationInset(): NavigationInset {
+  return useContext(BusinessChromeContext)?.navigationInset ?? NO_NAVIGATION_INSET;
+}
+
+const NO_HEADER_SLOT: Pick<FloatingHeaderSlot, 'subscribe' | 'current'> = {
+  subscribe: () => () => undefined,
+  current: () => null,
+};
+
+export function FloatingHeaderHost({ style }: { style?: StyleProp<ViewStyle> }) {
+  const slot = useContext(BusinessChromeContext)?.header ?? NO_HEADER_SLOT;
+  const header = useSyncExternalStore(slot.subscribe, slot.current);
+  return (
+    <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, style]}>
+      {header}
+    </View>
+  );
+}
+
+/** Shows `header` in the host while this screen is focused. */
+function FloatingHeaderPortal({ slot, header }: { slot: FloatingHeaderSlot; header: ReactNode }) {
+  const focused = useIsFocused();
+  const [owner] = useState(() => ({}));
+  useLayoutEffect(() => {
+    if (focused) slot.show(owner, header);
+  }, [focused, header, owner, slot]);
+  useLayoutEffect(() => {
+    if (!focused) return;
+    return () => slot.hide(owner);
+  }, [focused, owner, slot]);
+  return null;
+}
 
 const NAV_ITEMS: readonly {
   key: NavKey;
@@ -79,13 +202,13 @@ export function OperationalShell({
   headerAction,
   scroll = true,
   contentStyle,
-  glass: glassRequested = false,
   children,
 }: Props) {
-  const glassChrome = GLASS_UI && glassRequested;
+  const glassChrome = GLASS_UI;
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const blurTargetRef = useRef<View | null>(null);
+  const chrome = useContext(BusinessChromeContext);
+  const blurTargetRef = useGlassBlurTarget();
   const [glassHeaderHeight, setGlassHeaderHeight] = useState(64);
   const tablet = width >= 600;
   const { t } = useTranslation();
@@ -103,9 +226,14 @@ export function OperationalShell({
     else router.replace(fallbackHref);
   };
 
+  const navigationInset = chrome?.navigationInset ?? NO_NAVIGATION_INSET;
   const glassContentStyle = glassChrome && [
     styles.glassContent,
-    { paddingTop: insets.top + GLASS_HEADER_INSET + glassHeaderHeight + spacing.md },
+    { paddingTop: insets.top + GLASS_CHROME_INSET + glassHeaderHeight + spacing.md },
+    navigationInset.bottom > 0 &&
+      (scroll
+        ? { paddingBottom: navigationInset.bottom + contentPadding }
+        : { marginBottom: navigationInset.bottom }),
   ];
 
   const body = scroll ? (
@@ -192,27 +320,36 @@ export function OperationalShell({
   );
 
   if (glassChrome) {
+    const header = (
+      <GlassSurface
+        blurTarget={blurTargetRef}
+        onLayout={setGlassHeaderHeight}
+        style={[
+          styles.header,
+          styles.glassHeader,
+          {
+            top: insets.top + GLASS_CHROME_INSET,
+            left: GLASS_CHROME_INSET + (tablet ? navigationInset.left : insets.left),
+            right: GLASS_CHROME_INSET + insets.right,
+          },
+        ]}
+      >
+        {headerContent}
+      </GlassSurface>
+    );
+    if (chrome) {
+      return (
+        <View style={styles.flex}>
+          {body}
+          <FloatingHeaderPortal header={header} slot={chrome.header} />
+        </View>
+      );
+    }
     return (
       <View style={styles.safeArea}>
-        <BlurTargetView ref={blurTargetRef} style={styles.glassBlurTarget}>
-          <GlassBackdrop />
-          {body}
-        </BlurTargetView>
-        <GlassSurface
-          blurTarget={blurTargetRef}
-          onLayout={setGlassHeaderHeight}
-          style={[
-            styles.header,
-            styles.glassHeader,
-            {
-              top: insets.top + GLASS_HEADER_INSET,
-              left: GLASS_HEADER_INSET + (tablet ? 0 : insets.left),
-              right: GLASS_HEADER_INSET + insets.right,
-            },
-          ]}
-        >
-          {headerContent}
-        </GlassSurface>
+        <GlassBackdrop />
+        {body}
+        {header}
       </View>
     );
   }
@@ -274,14 +411,155 @@ export function BusinessNavigation() {
   const tablet = width >= 600;
   const { t } = useTranslation();
   const { state, lock } = useAppSession();
+  const blurTargetRef = useGlassBlurTarget();
   if (state.status !== 'unlocked') return null;
   const language = state.snapshot.settings?.language ?? 'en';
+  const glassNav = GLASS_UI;
+  const chromeBottom = Math.max(insets.bottom, GLASS_CHROME_INSET);
 
   const navigate = (item: (typeof NAV_ITEMS)[number]) => {
     if (!item.route) return;
     if (item.key === active) return;
     router.navigate(item.route as Href);
   };
+
+  const iconColor = (selected: boolean) => {
+    if (glassNav) return selected ? colors.primaryDark : colors.textMuted;
+    if (tablet) return selected ? '#a5f1e0' : colors.border;
+    return selected ? colors.primaryDark : colors.textMuted;
+  };
+
+  const content = (
+    <>
+      {tablet ? (
+        <View style={styles.sideBrand}>
+          <View style={[styles.sideBrandMark, glassNav && styles.glassBubble]}>
+            {glassNav ? <GlassSheen radius={14} /> : null}
+            <MaterialSymbol color={colors.onDark} name="fitness_center" size={26} />
+          </View>
+          <Text style={[styles.sideBrandText, glassNav && styles.glassSideBrandText]}>GYMVITO</Text>
+        </View>
+      ) : null}
+      <View style={tablet ? styles.sideNavItems : styles.bottomNavItems}>
+        {NAV_ITEMS.map((item) => {
+          const selected = active === item.key;
+          return (
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              key={item.key}
+              onPress={() => navigate(item)}
+              style={({ pressed }) =>
+                glassNav
+                  ? [
+                      styles.navItem,
+                      styles.glassNavItem,
+                      !tablet && styles.bottomNavItem,
+                      tablet && styles.sideNavItem,
+                      selected && styles.glassNavItemSelected,
+                      pressed && actionPressed,
+                    ]
+                  : [
+                      styles.navItem,
+                      !tablet && styles.bottomNavItem,
+                      tablet && styles.sideNavItem,
+                      !tablet && selected && styles.bottomNavItemSelected,
+                      tablet && selected && styles.sideNavItemSelected,
+                      pressed && styles.pressed,
+                    ]
+              }
+            >
+              <MaterialSymbol
+                color={iconColor(selected)}
+                name={tablet ? item.tabletIcon : item.phoneIcon}
+                size={tablet ? 22 : 24}
+              />
+              <Text
+                adjustsFontSizeToFit={glassNav}
+                minimumFontScale={0.8}
+                numberOfLines={1}
+                style={[
+                  styles.navLabel,
+                  glassNav && styles.glassNavLabel,
+                  !glassNav && tablet && styles.sideNavLabel,
+                  selected && styles.navTextSelected,
+                  !glassNav && tablet && selected && styles.sideNavTextSelected,
+                ]}
+              >
+                {t(item.labelKey)}
+              </Text>
+              {tablet ? (
+                <Text
+                  adjustsFontSizeToFit={glassNav}
+                  minimumFontScale={0.8}
+                  numberOfLines={1}
+                  style={
+                    glassNav
+                      ? [styles.navSecondaryLabel, styles.glassNavSecondaryLabel]
+                      : [styles.navSecondaryLabel, selected && styles.sideNavTextSelected]
+                  }
+                >
+                  {language === 'hi' ? t(item.labelKey, { lng: 'en' }) : item.hindiLabel}
+                </Text>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
+      {tablet ? (
+        <View style={styles.sideUtilities}>
+          <View style={[styles.localBadgeCompact, glassNav && styles.glassAccent]}>
+            <Text style={styles.localBadgeText}>{t('localDb')}</Text>
+          </View>
+          <Pressable
+            accessibilityLabel={t('lockNow')}
+            accessibilityRole="button"
+            onPress={() => void lock('manual')}
+            style={({ pressed }) => [
+              styles.lockButton,
+              glassNav && styles.glassAccent,
+              glassNav && pressed && actionPressed,
+            ]}
+          >
+            <MaterialSymbol
+              color={glassNav ? colors.primaryDark : colors.onDark}
+              name="lock"
+              size={20}
+            />
+          </Pressable>
+        </View>
+      ) : null}
+    </>
+  );
+
+  if (glassNav) {
+    return (
+      <GlassSurface
+        blurTarget={blurTargetRef}
+        style={
+          tablet
+            ? [
+                styles.glassSideNavigation,
+                {
+                  top: insets.top + GLASS_CHROME_INSET,
+                  bottom: chromeBottom,
+                  left: GLASS_CHROME_INSET + insets.left,
+                },
+              ]
+            : [
+                styles.glassBottomNavigation,
+                {
+                  bottom: chromeBottom,
+                  left: GLASS_CHROME_INSET + insets.left,
+                  right: GLASS_CHROME_INSET + insets.right,
+                },
+              ]
+        }
+      >
+        {content}
+      </GlassSurface>
+    );
+  }
 
   return (
     <View
@@ -307,83 +585,7 @@ export function BusinessNavigation() {
             ]
       }
     >
-      {tablet ? (
-        <View style={styles.sideBrand}>
-          <View style={styles.sideBrandMark}>
-            <MaterialSymbol color={colors.onDark} name="fitness_center" size={26} />
-          </View>
-          <Text style={styles.sideBrandText}>GYMVITO</Text>
-        </View>
-      ) : null}
-      <View style={tablet ? styles.sideNavItems : styles.bottomNavItems}>
-        {NAV_ITEMS.map((item) => {
-          const selected = active === item.key;
-          return (
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              key={item.key}
-              onPress={() => navigate(item)}
-              style={({ pressed }) => [
-                styles.navItem,
-                !tablet && styles.bottomNavItem,
-                tablet && styles.sideNavItem,
-                !tablet && selected && styles.bottomNavItemSelected,
-                tablet && selected && styles.sideNavItemSelected,
-                pressed && styles.pressed,
-              ]}
-            >
-              <MaterialSymbol
-                color={
-                  selected
-                    ? tablet
-                      ? '#a5f1e0'
-                      : colors.primaryDark
-                    : tablet
-                      ? colors.border
-                      : colors.textMuted
-                }
-                name={tablet ? item.tabletIcon : item.phoneIcon}
-                size={tablet ? 22 : 24}
-              />
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.navLabel,
-                  tablet && styles.sideNavLabel,
-                  selected && styles.navTextSelected,
-                  tablet && selected && styles.sideNavTextSelected,
-                ]}
-              >
-                {t(item.labelKey)}
-              </Text>
-              {tablet ? (
-                <Text
-                  numberOfLines={1}
-                  style={[styles.navSecondaryLabel, selected && styles.sideNavTextSelected]}
-                >
-                  {language === 'hi' ? t(item.labelKey, { lng: 'en' }) : item.hindiLabel}
-                </Text>
-              ) : null}
-            </Pressable>
-          );
-        })}
-      </View>
-      {tablet ? (
-        <View style={styles.sideUtilities}>
-          <View style={styles.localBadgeCompact}>
-            <Text style={styles.localBadgeText}>{t('localDb')}</Text>
-          </View>
-          <Pressable
-            accessibilityLabel={t('lockNow')}
-            accessibilityRole="button"
-            onPress={() => void lock('manual')}
-            style={styles.lockButton}
-          >
-            <MaterialSymbol color={colors.onDark} name="lock" size={20} />
-          </Pressable>
-        </View>
-      ) : null}
+      {content}
     </View>
   );
 }
@@ -523,17 +725,51 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: colors.primaryDark,
   },
-  glassBlurTarget: { flex: 1, backgroundColor: colors.background },
   glassContent: { backgroundColor: 'transparent' },
   glassHeader: {
     position: 'absolute',
     paddingTop: spacing.sm,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.75)',
+    borderBottomColor: glass.panelRim,
     backgroundColor: 'transparent',
     shadowOpacity: 0.12,
     elevation: 6,
+  },
+  glassBottomNavigation: {
+    position: 'absolute',
+    zIndex: 20,
+    height: BUSINESS_NAV_PHONE_HEIGHT,
+    paddingHorizontal: spacing.xs,
+    shadowOpacity: 0.12,
+    elevation: 6,
+  },
+  glassSideNavigation: {
+    position: 'absolute',
+    zIndex: 30,
+    width: BUSINESS_NAV_TABLET_WIDTH,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    shadowOpacity: 0.12,
+    elevation: 6,
+  },
+  glassSideBrandText: { color: colors.primaryDark },
+  glassNavItem: {
+    borderWidth: 1,
+    borderColor: 'transparent',
+    borderRadius: radii.pill,
+  },
+  glassNavItemSelected: {
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
+  },
+  glassNavLabel: { lineHeight: 16 },
+  glassNavSecondaryLabel: { color: colors.textMuted, fontSize: 10, lineHeight: 15 },
+  glassAccent: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
   },
   glassBubble: {
     overflow: 'hidden',

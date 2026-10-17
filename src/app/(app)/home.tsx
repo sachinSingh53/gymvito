@@ -387,7 +387,6 @@ export default function HomeRoute() {
     <OperationalShell
       active="home"
       contentStyle={styles.dashboardContent}
-      glass
       subtitle={gym?.name ?? t('appName')}
       title={t('dashboard')}
     >

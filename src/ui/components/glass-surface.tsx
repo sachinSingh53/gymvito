@@ -11,6 +11,9 @@ import {
 
 import { GLASS_RADIUS, GLASS_UI, colors, glass, radii } from '@/ui/theme/tokens';
 
+/** Android 12; below it `blurTarget` cannot blur, so the panel takes the dense no-blur frost. */
+const ANDROID_BLUR_API = 31;
+
 /**
  * Frosted "liquid glass" panel: native blur, a milky tint, a specular top edge and a hairline
  * rim. On Android a real blur needs a `blurTarget` that is not an ancestor of the panel, so
@@ -45,7 +48,8 @@ export function GlassSurface({
       </View>
     );
   }
-  const androidBlur = Platform.OS === 'android' && blurTarget;
+  const androidBlur =
+    Platform.OS === 'android' && Platform.Version >= ANDROID_BLUR_API && blurTarget;
   return (
     <View onLayout={handleLayout} style={[styles.glass, { borderRadius: radius }, style]}>
       <BlurView

@@ -13,8 +13,18 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
-import { MaterialSymbol } from '@/ui/components/operational-shell';
+import {
+  CARD_RADIUS,
+  GLASS_UI,
+  actionPressed,
+  colors,
+  fonts,
+  radii,
+  spacing,
+} from '@/ui/theme/tokens';
+import { useGlassBlurTarget } from '@/ui/components/glass-context';
+import { GlassBackdrop, GlassSurface } from '@/ui/components/glass-surface';
+import { MaterialSymbol, useBusinessNavigationInset } from '@/ui/components/operational-shell';
 
 type Props = PropsWithChildren<{
   title: string;
@@ -23,6 +33,8 @@ type Props = PropsWithChildren<{
   scroll?: boolean;
   canGoBack?: boolean;
   backHref?: Href;
+  /** Liquid glass panels over the backdrop. Ignored when `GLASS_UI` is off. */
+  glass?: boolean;
 }>;
 
 export function AppScreen({
@@ -32,47 +44,78 @@ export function AppScreen({
   scroll = true,
   canGoBack = false,
   backHref = '/home',
+  glass: glassRequested = false,
   children,
 }: Props) {
   const { width } = useWindowDimensions();
   const { t } = useTranslation();
+  const layoutBackdrop = Boolean(useGlassBlurTarget());
+  const navigationInset = useBusinessNavigationInset();
+  const glassMode = GLASS_UI && glassRequested;
   const tablet = width >= 600;
   const goBack = () => {
     if (router.canGoBack()) router.back();
     else router.replace(backHref);
   };
-  const body = (
-    <View style={[styles.content, tablet && styles.tabletContent]}>
-      <View style={styles.headerRow}>
-        {canGoBack ? (
-          <Pressable
-            accessibilityLabel={t('back')}
-            accessibilityRole="button"
-            onPress={goBack}
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-          >
-            <MaterialSymbol color={colors.primaryDark} name="arrow_back" size={24} />
-          </Pressable>
-        ) : null}
-        <View style={styles.header}>
-          <Text accessibilityRole="header" style={styles.title}>
-            {title}
-          </Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-        </View>
+  const headerRow = (
+    <View style={styles.headerRow}>
+      {canGoBack ? (
+        <Pressable
+          accessibilityLabel={t('back')}
+          accessibilityRole="button"
+          onPress={goBack}
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && (glassMode ? actionPressed : styles.pressed),
+          ]}
+        >
+          <MaterialSymbol color={colors.primaryDark} name="arrow_back" size={24} />
+        </Pressable>
+      ) : null}
+      <View style={styles.header}>
+        <Text accessibilityRole="header" style={styles.title}>
+          {title}
+        </Text>
+        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
+    </View>
+  );
+  const body = glassMode ? (
+    <View style={[styles.content, styles.glassContent, tablet && styles.tabletContent]}>
+      <GlassSurface radius={CARD_RADIUS} style={[styles.glassPanel, tablet && styles.tabletCard]}>
+        {headerRow}
+      </GlassSurface>
+      <GlassSurface
+        radius={CARD_RADIUS}
+        style={[styles.glassPanel, styles.cardGap, tablet && styles.tabletCard]}
+      >
+        {children}
+      </GlassSurface>
+    </View>
+  ) : (
+    <View style={[styles.content, tablet && styles.tabletContent]}>
+      {headerRow}
       <View style={[styles.card, tablet && styles.tabletCard]}>{children}</View>
     </View>
   );
+  const navigationSpace = navigationInset.bottom;
+  const scrollUnderNavigation = scroll && !footer && navigationSpace > 0;
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      edges={navigationSpace > 0 ? ['top', 'left', 'right'] : undefined}
+      style={[styles.safeArea, glassMode && layoutBackdrop && styles.transparent]}
+    >
+      {glassMode && !layoutBackdrop ? <GlassBackdrop /> : null}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
       >
         {scroll ? (
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              scrollUnderNavigation && { paddingBottom: navigationSpace },
+            ]}
             keyboardShouldPersistTaps="handled"
           >
             {body}
@@ -80,7 +123,16 @@ export function AppScreen({
         ) : (
           body
         )}
-        {footer ? <View style={styles.footer}>{footer}</View> : null}
+        {footer ? (
+          glassMode ? (
+            <GlassSurface style={styles.glassFooter}>{footer}</GlassSurface>
+          ) : (
+            <View style={styles.footer}>{footer}</View>
+          )
+        ) : null}
+        {navigationSpace > 0 && !scrollUnderNavigation ? (
+          <View style={{ height: navigationSpace }} />
+        ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -89,6 +141,7 @@ export function AppScreen({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   safeArea: { flex: 1, backgroundColor: colors.background },
+  transparent: { backgroundColor: 'transparent' },
   scrollContent: { flexGrow: 1 },
   content: {
     width: '100%',
@@ -97,6 +150,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.md,
   },
+  glassContent: { gap: 12 },
   tabletContent: { padding: spacing.lg, gap: spacing.lg },
   headerRow: { minWidth: 0, flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   header: { minWidth: 0, flex: 1, gap: spacing.sm },
@@ -125,6 +179,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     backgroundColor: colors.surface,
   },
+  glassPanel: { minWidth: 0, padding: spacing.md },
+  cardGap: { gap: spacing.md },
   tabletCard: { padding: spacing.lg },
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -132,4 +188,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     padding: spacing.md,
   },
+  glassFooter: { marginHorizontal: 12, marginBottom: 12, padding: spacing.md },
 });

@@ -278,8 +278,8 @@ Each wave's exit gate:
 | Phase                       | Owner | Status      |
 | --------------------------- | ----- | ----------- |
 | Pilot: Dashboard and Unlock | —     | Done        |
-| G0 Foundations              | —     | In review   |
-| G1 Shell and navigation     | —     | Not started |
+| G0 Foundations              | —     | Done        |
+| G1 Shell and navigation     | —     | Done        |
 | G2 Shared components        | —     | Not started |
 | G3-A Daily desk             | —     | Not started |
 | G3-B Catalogue and records  | —     | Not started |

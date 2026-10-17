@@ -62,6 +62,15 @@ describe('glass legibility (worst case: frost over the most saturated backdrop b
     expect(failures).toEqual([]);
   });
 
+  it.each(Object.entries(frosts))(
+    'keeps the selected navigation tab label at AA on %s frost',
+    (_, frost) => {
+      expect(worstCase(colors.primaryDark, frost, glass.fillAccent)).toBeGreaterThanOrEqual(
+        AA_BODY,
+      );
+    },
+  );
+
   it('keeps section titles legible directly on the backdrop', () => {
     for (const blob of blobs) {
       expect(contrastRatio(colors.text, flatten([colors.background, blob]))).toBeGreaterThan(

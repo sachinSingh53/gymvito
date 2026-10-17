@@ -1,6 +1,6 @@
 import { Redirect, router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { AppLanguage } from '@/domain/onboarding/onboarding';
@@ -26,8 +26,8 @@ export default function LanguageRoute() {
   };
 
   return (
-    <AppScreen title={t('chooseLanguageTitle')} subtitle={t('chooseLanguageSubtitle')}>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+    <AppScreen glass title={t('chooseLanguageTitle')} subtitle={t('chooseLanguageSubtitle')}>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         <AppChoice label="English" selected={language === 'en'} onPress={() => setLanguage('en')} />
         <AppChoice label="हिन्दी" selected={language === 'hi'} onPress={() => setLanguage('hi')} />
       </View>
@@ -41,3 +41,7 @@ export default function LanguageRoute() {
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  choices: { gap: spacing.sm },
+});

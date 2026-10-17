@@ -139,6 +139,9 @@ moves both into `src/app/(app)/_layout.tsx`:
   sticky footers can blur without each screen managing a ref.
 - `AppScreen` gets the same treatment in `(setup)/_layout.tsx` and `(public)` (unlock
   already does this inline; refactor it onto the shared context).
+  - _As built (G3-D):_ `(public)` has no layout, and adding one would put a new Stack in
+    front of language, recovery and unlock. Unlock wraps itself in `GlassProvider` and
+    `GlassBlurTarget` instead, and language and recovery use `AppScreen`'s own backdrop.
 - Content must scroll _under_ the floating nav. Pad content by the nav height and keep the
   nav translucent so the frost shows content behind it.
 
@@ -283,6 +286,21 @@ Each wave's exit gate:
 | G2 Shared components        | —     | Done        |
 | G3-A Daily desk             | —     | Done        |
 | G3-B Catalogue and records  | —     | Done        |
-| G3-C Admin                  | —     | In review   |
-| G3-D First run and access   | —     | Not started |
+| G3-C Admin                  | —     | Done        |
+| G3-D First run and access   | —     | In review   |
 | G4 Cleanup                  | —     | Not started |
+
+### 8.1 Open items
+
+- **G3-D exit gate:** phone and tablet screenshots in English and Hindi, and the font scale
+  1.3 check, still need a device. All other gates pass: no hard-coded colours, contrast
+  tests, unit tests and `pnpm validate`.
+- **Screenshots for G3-A to G3-D:** `docs/design/screens/<screen>_glass/` has not been
+  filled for any wave. The waves were checked on a device in Expo Go.
+- **G3-D deviations:** keypad keys keep a solid dark fill as the pressed echo and use only
+  the 0.98 scale from `actionPressed`, since 0.72 opacity would wash out the fill. The
+  unlock offline footer moved inside the notice panel so no text sits on the backdrop.
+- **For G4:** `operational-shell.tsx` still uses `#fff` for the brand mark and avatar, the
+  flat branch of `core-controls.tsx` still uses hex values, and `src/app/index.tsx`
+  (startup and recovery error) is in no wave and still flat.
+- **Not built yet:** the §3.2 reduce-transparency fallback.

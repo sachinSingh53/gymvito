@@ -196,6 +196,51 @@ describe('wells and tabs inside glass panels (worst case over every blob)', () =
   });
 });
 
+describe('unlock screen legibility (worst case over every blob, on frost of either kind)', () => {
+  const blobs = Object.values(glass.backdrop);
+  const frosts = [glass.frost, glass.frostSolid];
+
+  function worstCase(foreground: string, fill?: string) {
+    return Math.min(
+      ...frosts.flatMap((frost) =>
+        blobs.map((blob) =>
+          contrastRatio(
+            foreground,
+            flatten([colors.background, blob, frost, ...(fill ? [fill] : [])]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  it.each([
+    ['digit key', colors.text, glass.fillOpaque],
+    ['digit key letters', colors.textMuted, glass.fillOpaque],
+    ['scan and clear key labels', colors.text, glass.fillAccent],
+    ['default status pill', colors.textMuted, glass.fillSuccess],
+    ['error status pill', colors.dangerText, glass.fillDanger],
+    ['locked badge', colors.primaryDark, glass.fillNeutral],
+    ['language toggle', colors.primaryDark, glass.fillAccent],
+    ['offline footer note', colors.textMuted, undefined],
+  ])('keeps the %s text at AA', (_, foreground, fill) => {
+    expect(worstCase(foreground, fill)).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
+  it('keeps the label of a pressed key at AA on its solid fill', () => {
+    expect(contrastRatio(colors.onPrimary, colors.primaryDark)).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
+  it('keeps a filled PIN slot distinguishable from the panel and from an empty slot', () => {
+    expect(worstCase(colors.primaryDark)).toBeGreaterThanOrEqual(AA_LARGE);
+    for (const frost of frosts) {
+      for (const blob of blobs) {
+        const empty = flatten([colors.background, blob, frost, glass.fillMuted]);
+        expect(contrastRatio(colors.primaryDark, empty)).toBeGreaterThanOrEqual(AA_LARGE);
+      }
+    }
+  });
+});
+
 describe('plan colour swatches', () => {
   it('keeps every swatch a value the plan validator accepts', () => {
     for (const color of planColors) expect(color).toMatch(/^#[0-9A-F]{6}$/);

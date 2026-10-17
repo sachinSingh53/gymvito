@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppScreen } from '@/ui/components/app-screen';
 import { AppButton, Notice } from '@/ui/components/core-controls';
-import { colors, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, spacing } from '@/ui/theme/tokens';
 
 export default function BackupIntroRoute() {
   const { state, completeOnboarding } = useAppSession();
@@ -25,7 +25,7 @@ export default function BackupIntroRoute() {
   };
 
   return (
-    <AppScreen title={t('localDataTitle')} subtitle={t('localDataSubtitle')}>
+    <AppScreen glass title={t('localDataTitle')} subtitle={t('localDataSubtitle')}>
       <Notice danger>{t('localDataLossNotice')}</Notice>
       <View style={styles.list}>
         <Text style={styles.item}>• {t('privacyStoredLocally')}</Text>
@@ -43,5 +43,5 @@ export default function BackupIntroRoute() {
 
 const styles = StyleSheet.create({
   list: { gap: spacing.sm },
-  item: { color: colors.text, fontSize: 15, lineHeight: 22 },
+  item: { color: colors.text, fontFamily: fonts.regular, fontSize: 15, lineHeight: 22 },
 });

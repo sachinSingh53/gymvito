@@ -1,13 +1,13 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { validateGymSetup, type GymSetupInput } from '@/domain/onboarding/onboarding';
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppScreen } from '@/ui/components/app-screen';
 import { AppButton, AppChoice, AppField } from '@/ui/components/core-controls';
-import { colors, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, spacing } from '@/ui/theme/tokens';
 
 export default function GymSetupRoute() {
   const { state, saveGym } = useAppSession();
@@ -49,7 +49,7 @@ export default function GymSetupRoute() {
   };
 
   return (
-    <AppScreen title={t('gymSetupTitle')} subtitle={t('gymSetupSubtitle')}>
+    <AppScreen glass title={t('gymSetupTitle')} subtitle={t('gymSetupSubtitle')}>
       <AppField
         autoCapitalize="words"
         error={errorFor('gymName')}
@@ -89,7 +89,7 @@ export default function GymSetupRoute() {
         onChangeText={(value) => update('receiptFooter', value)}
         value={form.receiptFooter}
       />
-      <Text style={{ color: colors.text, fontWeight: '700' }}>{t('regionalSettings')}</Text>
+      <Text style={styles.sectionTitle}>{t('regionalSettings')}</Text>
       <AppField
         autoCapitalize="characters"
         error={errorFor('currencyCode')}
@@ -98,8 +98,8 @@ export default function GymSetupRoute() {
         onChangeText={(value) => update('currencyCode', value.toUpperCase())}
         value={form.currencyCode}
       />
-      <Text style={{ color: colors.text }}>{t('dateFormat')}</Text>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <Text style={styles.groupLabel}>{t('dateFormat')}</Text>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         {(['day-month-year', 'month-day-year', 'year-month-day'] as const).map((value) => (
           <AppChoice
             key={value}
@@ -109,8 +109,8 @@ export default function GymSetupRoute() {
           />
         ))}
       </View>
-      <Text style={{ color: colors.text }}>{t('timeFormat')}</Text>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <Text style={styles.groupLabel}>{t('timeFormat')}</Text>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         <AppChoice
           label={t('time12')}
           onPress={() => update('timeFormat', '12-hour')}
@@ -122,8 +122,8 @@ export default function GymSetupRoute() {
           selected={form.timeFormat === '24-hour'}
         />
       </View>
-      <Text style={{ color: colors.text }}>{t('weekStartsOn')}</Text>
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
+      <Text style={styles.groupLabel}>{t('weekStartsOn')}</Text>
+      <View accessibilityRole="radiogroup" style={styles.choices}>
         <AppChoice
           label={t('monday')}
           onPress={() => update('weekStartsOn', 1)}
@@ -135,8 +135,8 @@ export default function GymSetupRoute() {
           selected={form.weekStartsOn === 0}
         />
       </View>
-      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        <View style={{ minWidth: 0, flex: 1 }}>
+      <View style={styles.fieldRow}>
+        <View style={styles.rowField}>
           <AppField
             error={errorFor('financialYearStartMonth')}
             keyboardType="number-pad"
@@ -145,7 +145,7 @@ export default function GymSetupRoute() {
             value={String(form.financialYearStartMonth)}
           />
         </View>
-        <View style={{ minWidth: 0, flex: 1 }}>
+        <View style={styles.rowField}>
           <AppField
             error={errorFor('financialYearStartDay')}
             keyboardType="number-pad"
@@ -155,10 +155,19 @@ export default function GymSetupRoute() {
           />
         </View>
       </View>
-      <Text style={{ color: colors.textMuted }}>{t('deviceTimezoneNotice')}</Text>
+      <Text style={styles.hint}>{t('deviceTimezoneNotice')}</Text>
       <AppButton disabled={saving} onPress={() => void submit()}>
         {saving ? t('saving') : t('continue')}
       </AppButton>
     </AppScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  sectionTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 26 },
+  groupLabel: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 21 },
+  choices: { gap: spacing.sm },
+  fieldRow: { flexDirection: 'row', gap: spacing.sm },
+  rowField: { minWidth: 0, flex: 1 },
+  hint: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 13, lineHeight: 19 },
+});

@@ -8,7 +8,7 @@ import { useAppSession } from '@/features/session/app-session-context';
 import { getRuntimeCapabilities } from '@/platform/runtime/runtime-capabilities';
 import { AppScreen } from '@/ui/components/app-screen';
 import { AppButton, AppField, Notice } from '@/ui/components/core-controls';
-import { colors, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, spacing } from '@/ui/theme/tokens';
 
 export default function SecuritySetupRoute() {
   const { state, saveSecurity } = useAppSession();
@@ -41,7 +41,7 @@ export default function SecuritySetupRoute() {
   };
 
   return (
-    <AppScreen title={t('securitySetupTitle')} subtitle={t('securitySetupSubtitle')}>
+    <AppScreen glass title={t('securitySetupTitle')} subtitle={t('securitySetupSubtitle')}>
       <Notice danger>{t('pinNoRecoveryNotice')}</Notice>
       {getRuntimeCapabilities().isExpoGo ? <Notice>{t('expoGoPinNotice')}</Notice> : null}
       <AppField
@@ -84,8 +84,13 @@ export default function SecuritySetupRoute() {
 }
 
 const styles = StyleSheet.create({
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  switchCopy: { flex: 1, gap: spacing.xs },
-  switchTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-  switchSubtitle: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  switchRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  switchCopy: { minWidth: 0, flex: 1, gap: spacing.xs },
+  switchTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 16, lineHeight: 22 },
+  switchSubtitle: {
+    color: colors.textMuted,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 19,
+  },
 });

@@ -21,10 +21,18 @@ import {
   LoadingState,
   Notice,
 } from '@/ui/components/core-controls';
-import { LocalDataBadge, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, spacing } from '@/ui/theme/tokens';
+import { GlassSheen } from '@/ui/components/glass-surface';
+import { LocalDataBadge, MaterialSymbol, SurfaceCard } from '@/ui/components/operational-shell';
+import {
+  actionPressed,
+  colors,
+  fonts,
+  GLASS_UI,
+  glass,
+  planColors,
+  spacing,
+} from '@/ui/theme/tokens';
 
-const PLAN_COLORS = ['#0D6659', '#156A5D', '#7C5300', '#A92E2E', '#49432D'] as const;
 const DURATION_LABELS = {
   day: 'durationDay',
   week: 'durationWeek',
@@ -58,7 +66,7 @@ export function PlanForm({ planId }: { planId?: string }) {
   const [taxRate, setTaxRate] = useState('0');
   const [discountType, setDiscountType] = useState<DiscountType>('none');
   const [discountValue, setDiscountValue] = useState('0');
-  const [colorHex, setColorHex] = useState<string>('#0D6659');
+  const [colorHex, setColorHex] = useState<string>(planColors[0]);
   const [freezeAllowed, setFreezeAllowed] = useState(false);
   const [maxFreezeDays, setMaxFreezeDays] = useState('30');
   const [freezeExtends, setFreezeExtends] = useState(true);
@@ -198,20 +206,38 @@ export function PlanForm({ planId }: { planId?: string }) {
         />
         <Text style={styles.label}>{t('planColor')}</Text>
         <View style={styles.colorRow}>
-          {PLAN_COLORS.map((color) => (
-            <Pressable
-              accessibilityLabel={color}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: colorHex === color }}
-              key={color}
-              onPress={() => setColorHex(color)}
-              style={[
-                styles.colorChoice,
-                { backgroundColor: color },
-                colorHex === color && styles.colorSelected,
-              ]}
-            />
-          ))}
+          {planColors.map((color) => {
+            const selected = colorHex === color;
+            return (
+              <Pressable
+                accessibilityLabel={color}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                key={color}
+                onPress={() => setColorHex(color)}
+                style={({ pressed }) =>
+                  GLASS_UI
+                    ? [
+                        styles.colorChoice,
+                        styles.glassColorChoice,
+                        { backgroundColor: color },
+                        selected && styles.glassColorSelected,
+                        pressed && actionPressed,
+                      ]
+                    : [
+                        styles.colorChoice,
+                        { backgroundColor: color },
+                        selected && styles.colorSelected,
+                      ]
+                }
+              >
+                {GLASS_UI ? <GlassSheen /> : null}
+                {GLASS_UI && selected ? (
+                  <MaterialSymbol color={colors.onPrimary} name="check" size={22} />
+                ) : null}
+              </Pressable>
+            );
+          })}
         </View>
       </SurfaceCard>
       <SurfaceCard style={styles.section}>
@@ -357,6 +383,14 @@ const styles = StyleSheet.create({
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   colorChoice: { width: 48, height: 48, borderRadius: 24 },
   colorSelected: { borderWidth: 4, borderColor: colors.brandHeader },
+  glassColorChoice: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: glass.rimSoft,
+  },
+  glassColorSelected: { borderWidth: 3, borderColor: colors.onPrimary },
   choiceGrid: { gap: spacing.sm },
   toggleRow: {
     minHeight: 52,

@@ -1,5 +1,5 @@
 import { compositeOver, contrastRatio, flatten, parseColor } from './contrast';
-import { actionPressed, colors, glass } from './tokens';
+import { actionPressed, colors, glass, planColors } from './tokens';
 
 const AA_BODY = 4.5;
 const AA_LARGE = 3;
@@ -180,6 +180,18 @@ describe('wells and tabs inside glass panels (worst case over every blob)', () =
 
   it('keeps the selected-row tint at or above 0.85 alpha', () => {
     expect(parseColor(glass.tintSelected)[3]).toBeGreaterThanOrEqual(0.85);
+  });
+});
+
+describe('plan colour swatches', () => {
+  it('keeps every swatch a value the plan validator accepts', () => {
+    for (const color of planColors) expect(color).toMatch(/^#[0-9A-F]{6}$/);
+  });
+
+  it('keeps the selected check mark legible on every swatch', () => {
+    for (const color of planColors) {
+      expect(contrastRatio(colors.onPrimary, color)).toBeGreaterThanOrEqual(AA_BODY);
+    }
   });
 });
 

@@ -29,7 +29,7 @@ import {
   Notice,
 } from '@/ui/components/core-controls';
 import { OperationalShell, StatusChip, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, spacing } from '@/ui/theme/tokens';
+import { actionPressed, colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
 
 const CATEGORIES: readonly MemberReportCategory[] = [
   'all',
@@ -234,7 +234,7 @@ export default function ReportsRoute() {
       subtitle={t('reportsSubtitle')}
       title={t('reports')}
     >
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, GLASS_UI && styles.glassTabs]}>
         <Tab
           label={t('memberReports')}
           selected={tab === 'members'}
@@ -413,18 +413,41 @@ function Tab({ label, selected, onPress }: { label: string; selected: boolean; o
       accessibilityRole="tab"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={[styles.tab, selected && styles.tabSelected]}
+      style={({ pressed }) =>
+        GLASS_UI
+          ? [
+              styles.tab,
+              styles.glassTab,
+              selected && styles.glassTabSelected,
+              pressed && actionPressed,
+            ]
+          : [styles.tab, selected && styles.tabSelected]
+      }
     >
-      <Text style={[styles.tabText, selected && styles.tabTextSelected]}>{label}</Text>
+      <Text
+        style={[
+          styles.tabText,
+          GLASS_UI && styles.glassTabText,
+          selected && styles.tabTextSelected,
+          GLASS_UI && selected && styles.glassTabTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
+}
+
+function rowStyle({ pressed }: { pressed: boolean }) {
+  if (GLASS_UI) return [styles.row, styles.glassRow, pressed && actionPressed];
+  return styles.row;
 }
 
 function MemberResults({ rows }: { rows: readonly MemberReportRow[] }) {
   const { t } = useTranslation();
   return (
     <SurfaceCard style={styles.list}>
-      <Text style={styles.title}>
+      <Text style={[styles.title, GLASS_UI && styles.glassListTitle]}>
         {t('reportResults')} · {rows.length}
       </Text>
       {!rows.length ? (
@@ -434,7 +457,7 @@ function MemberResults({ rows }: { rows: readonly MemberReportRow[] }) {
           <Pressable
             key={row.id}
             onPress={() => router.push(`/member/${row.id}` as Href)}
-            style={styles.row}
+            style={rowStyle}
           >
             <View style={styles.rowCopy}>
               <Text style={styles.rowTitle}>{row.name}</Text>
@@ -488,7 +511,7 @@ function FinanceResults({
         ))}
       </View>
       <SurfaceCard style={styles.list}>
-        <Text style={styles.title}>
+        <Text style={[styles.title, GLASS_UI && styles.glassListTitle]}>
           {t('invoicesCount', { count: report.summary.invoiceCount })} ·{' '}
           {t('paymentsCount', { count: report.summary.paymentCount })}
         </Text>
@@ -499,7 +522,7 @@ function FinanceResults({
             <Pressable
               key={invoice.id}
               onPress={() => router.push(`/invoice/${invoice.id}` as Href)}
-              style={styles.row}
+              style={rowStyle}
             >
               <View style={styles.rowCopy}>
                 <Text style={styles.rowTitle}>{invoice.memberName}</Text>
@@ -565,4 +588,21 @@ const styles = StyleSheet.create({
   amount: { color: colors.primaryDark, fontFamily: fonts.bold, fontVariant: ['tabular-nums'] },
   exportCard: { gap: spacing.md },
   exportActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  glassTabs: {
+    minHeight: 58,
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillNeutral,
+  },
+  glassTab: { minHeight: 48, paddingHorizontal: spacing.sm, borderRadius: radii.pill },
+  glassTabSelected: { backgroundColor: colors.primary },
+  glassTabText: { color: colors.text, textAlign: 'center' },
+  glassTabTextSelected: { color: colors.onPrimary },
+  glassListTitle: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  glassRow: { borderTopColor: glass.divider },
 });

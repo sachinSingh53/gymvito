@@ -40,6 +40,15 @@ export const colors = Object.freeze({
   whatsapp: '#25d366',
 });
 
+/** Colours an owner can give a plan. Stored on the plan, so existing values must not change. */
+export const planColors = Object.freeze([
+  '#0D6659',
+  '#156A5D',
+  '#7C5300',
+  '#A92E2E',
+  '#49432D',
+] as const);
+
 export const spacing = Object.freeze({ xs: 4, sm: 8, md: 16, lg: 24, xl: 32 });
 export const radii = Object.freeze({ sm: 8, md: 14, lg: 16, pill: 999 });
 

@@ -12,8 +12,8 @@ import { validateMember, type MemberInput } from '@/domain/members/member';
 import { useAppSession } from '@/features/session/app-session-context';
 import { memberPhotoDataUri, pickMemberPhoto } from '@/platform/images/member-photo';
 import { AppButton, AppField, LoadingState, Notice } from '@/ui/components/core-controls';
-import { LocalDataBadge, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import { LocalDataBadge, MaterialSymbol, SurfaceCard } from '@/ui/components/operational-shell';
+import { actionPressed, colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
 
 const DUPLICATE_LABELS = {
   phone: 'duplicatePhone',
@@ -146,10 +146,17 @@ export function MemberForm({ memberId }: { memberId?: string }) {
         <Text style={styles.sectionTitle}>{t('memberIdentity')}</Text>
         <View style={styles.photoRow}>
           {displayedPhoto ? (
-            <Image source={{ uri: memberPhotoDataUri(displayedPhoto) }} style={styles.photo} />
+            <Image
+              source={{ uri: memberPhotoDataUri(displayedPhoto) }}
+              style={[styles.photo, GLASS_UI && styles.glassPhoto]}
+            />
           ) : (
-            <View style={styles.photoPlaceholder}>
-              <Text style={styles.photoGlyph}>＋</Text>
+            <View style={[styles.photoPlaceholder, GLASS_UI && styles.glassPhotoPlaceholder]}>
+              {GLASS_UI ? (
+                <MaterialSymbol color={colors.primaryDark} name="add_a_photo" size={30} />
+              ) : (
+                <Text style={styles.photoGlyph}>＋</Text>
+              )}
             </View>
           )}
           <View style={styles.photoActions}>
@@ -160,9 +167,20 @@ export function MemberForm({ memberId }: { memberId?: string }) {
               <Pressable
                 accessibilityRole="button"
                 onPress={() => setPhoto(null)}
-                style={styles.removePhoto}
+                style={({ pressed }) =>
+                  GLASS_UI
+                    ? [styles.removePhoto, styles.glassRemovePhoto, pressed && actionPressed]
+                    : styles.removePhoto
+                }
               >
-                <Text style={styles.removePhotoText}>{t('removePhoto')}</Text>
+                <Text
+                  adjustsFontSizeToFit={GLASS_UI}
+                  minimumFontScale={0.8}
+                  numberOfLines={GLASS_UI ? 1 : undefined}
+                  style={[styles.removePhotoText, GLASS_UI && styles.glassRemovePhotoText]}
+                >
+                  {t('removePhoto')}
+                </Text>
               </Pressable>
             ) : null}
           </View>
@@ -192,7 +210,7 @@ export function MemberForm({ memberId }: { memberId?: string }) {
           value={form.email}
         />
         {existing ? (
-          <View style={styles.codeReadOnly}>
+          <View style={[styles.codeReadOnly, GLASS_UI && styles.glassCodeReadOnly]}>
             <Text style={styles.codeLabel}>{t('memberCode')}</Text>
             <Text style={styles.codeValue}>{existing.memberCode}</Text>
           </View>
@@ -248,7 +266,7 @@ export function MemberForm({ memberId }: { memberId?: string }) {
         />
       </SurfaceCard>
       {duplicates.length ? (
-        <SurfaceCard style={styles.duplicateCard}>
+        <SurfaceCard style={[styles.duplicateCard, GLASS_UI && styles.glassDuplicateCard]}>
           <Text style={styles.duplicateTitle}>{t('duplicateWarningTitle')}</Text>
           <Text style={styles.duplicateText}>{t('duplicateWarningMessage')}</Text>
           {duplicates.map((match) => (
@@ -324,4 +342,25 @@ const styles = StyleSheet.create({
   },
   duplicateMatch: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13 },
   actions: { gap: spacing.sm },
+  glassPhoto: { borderWidth: 2, borderColor: glass.rim },
+  glassPhotoPlaceholder: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
+  },
+  glassRemovePhoto: {
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: glass.rimDanger,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillDanger,
+  },
+  glassRemovePhotoText: { color: colors.dangerText },
+  glassCodeReadOnly: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillAccent,
+  },
+  glassDuplicateCard: { borderColor: glass.rimWarning, backgroundColor: glass.tintWarning },
 });

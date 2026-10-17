@@ -282,7 +282,7 @@ Each wave's exit gate:
 | G1 Shell and navigation     | —     | Done        |
 | G2 Shared components        | —     | Done        |
 | G3-A Daily desk             | —     | Done        |
-| G3-B Catalogue and records  | —     | Not started |
+| G3-B Catalogue and records  | —     | Done        |
 | G3-C Admin                  | —     | Not started |
 | G3-D First run and access   | —     | Not started |
 | G4 Cleanup                  | —     | Not started |

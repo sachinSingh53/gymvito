@@ -56,7 +56,7 @@ const MEMBER: MemberRecord = {
   id: 'member-1',
   memberCode: 'GV-00001',
   name: 'Sachin',
-  phone: '8005863655',
+  phone: '5005863655',
   email: 'sachin@example.com',
   dateOfBirth: '',
   gender: '',

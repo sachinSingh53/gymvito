@@ -1,10 +1,20 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import { BlurTargetView } from 'expo-blur';
 import { router, usePathname } from 'expo-router';
 import { Text } from 'react-native';
 
 import '@/i18n';
 
 import { BusinessNavigation, OperationalShell } from './operational-shell';
+
+const mockGlassUi = { enabled: true };
+
+jest.mock('@/ui/theme/tokens', () => {
+  const actual = jest.requireActual('@/ui/theme/tokens');
+  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
+    get: () => mockGlassUi.enabled,
+  });
+});
 
 jest.mock('expo-router', () => ({
   router: {
@@ -94,5 +104,39 @@ describe('OperationalShell navigation', () => {
 
     expect(mockBack).not.toHaveBeenCalled();
     expect(mockReplace).toHaveBeenCalledWith('/plans');
+  });
+});
+
+describe('OperationalShell GLASS_UI switch', () => {
+  afterEach(() => {
+    mockGlassUi.enabled = true;
+  });
+
+  it('renders glass chrome over a blur target when requested', () => {
+    const screen = render(
+      <OperationalShell active="home" glass title="Dashboard">
+        <Text>Dashboard content</Text>
+      </OperationalShell>,
+    );
+
+    expect(screen.UNSAFE_queryAllByType(BlurTargetView)).toHaveLength(1);
+    expect(screen.getByText('Dashboard content')).toBeTruthy();
+  });
+
+  it('renders the flat shell unchanged when GLASS_UI is off', () => {
+    mockGlassUi.enabled = false;
+    const glassRequested = render(
+      <OperationalShell active="home" glass title="Dashboard">
+        <Text>Dashboard content</Text>
+      </OperationalShell>,
+    );
+    const flat = render(
+      <OperationalShell active="home" title="Dashboard">
+        <Text>Dashboard content</Text>
+      </OperationalShell>,
+    );
+
+    expect(glassRequested.UNSAFE_queryAllByType(BlurTargetView)).toHaveLength(0);
+    expect(JSON.stringify(glassRequested.toJSON())).toBe(JSON.stringify(flat.toJSON()));
   });
 });

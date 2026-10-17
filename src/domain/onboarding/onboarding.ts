@@ -48,6 +48,11 @@ export function validateGymSetup(input: GymSetupInput): Record<string, string> {
   return errors;
 }
 
+export const MIN_PIN_LENGTH = 6;
+export const MAX_PIN_LENGTH = 12;
+
+const PIN_PATTERN = new RegExp(`^\\d{${MIN_PIN_LENGTH},${MAX_PIN_LENGTH}}$`);
+
 export function isValidPin(pin: string): boolean {
-  return /^\d{6,12}$/.test(pin);
+  return PIN_PATTERN.test(pin);
 }

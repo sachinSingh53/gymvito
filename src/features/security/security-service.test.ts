@@ -1,9 +1,12 @@
 import type { AppStateRepository } from '@/data/repositories/app-state-repository';
-import { verifyPin } from '@/platform/security/pin-kdf';
+import { DEVELOPMENT_PIN_ITERATIONS, verifyPin } from '@/platform/security/pin-kdf';
 
 import { SecurityService } from './security-service';
 
-jest.mock('@/platform/security/pin-kdf', () => ({ verifyPin: jest.fn() }));
+jest.mock('@/platform/security/pin-kdf', () => ({
+  ...jest.requireActual('@/platform/security/pin-kdf'),
+  verifyPin: jest.fn(),
+}));
 
 const mockedVerifyPin = jest.mocked(verifyPin);
 
@@ -19,6 +22,7 @@ function repository(overrides: Partial<AppStateRepository> = {}): AppStateReposi
     })),
     recordFailedPin: jest.fn(async () => null),
     recordSuccessfulUnlock: jest.fn(async () => undefined),
+    updateOwnerPinVerifier: jest.fn(async () => undefined),
     ...overrides,
   } as unknown as AppStateRepository;
 }
@@ -61,5 +65,38 @@ describe('security service', () => {
       ownerName: 'Owner',
     });
     expect(repo.recordSuccessfulUnlock).toHaveBeenCalledWith('owner-id', 'pin', expect.any(Date));
+  });
+
+  it('upgrades a slow development verifier after a correct PIN', async () => {
+    mockedVerifyPin.mockResolvedValue(true);
+    const repo = repository({
+      getOwnerAuth: jest.fn(async () => ({
+        id: 'owner-id',
+        display_name: 'Owner',
+        pin_verifier_json: JSON.stringify({
+          version: 1,
+          algorithm: 'pbkdf2-sha256-development-only',
+          saltHex: '00',
+          hashHex: '00',
+          iterations: 120_000,
+          hashLength: 32,
+        }),
+        preferred_language: 'en' as const,
+        failed_pin_attempts: 0,
+        locked_until_utc: null,
+      })),
+    });
+    await expect(new SecurityService(repo).unlockWithPin('123456')).resolves.toMatchObject({
+      status: 'success',
+    });
+    const [, json] = jest.mocked(repo.updateOwnerPinVerifier).mock.calls[0];
+    expect(JSON.parse(json)).toMatchObject({ iterations: DEVELOPMENT_PIN_ITERATIONS });
+  });
+
+  it('does not rewrite an Argon2 verifier', async () => {
+    mockedVerifyPin.mockResolvedValue(true);
+    const repo = repository();
+    await new SecurityService(repo).unlockWithPin('123456');
+    expect(repo.updateOwnerPinVerifier).not.toHaveBeenCalled();
   });
 });

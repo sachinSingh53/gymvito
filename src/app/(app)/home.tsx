@@ -11,13 +11,21 @@ import { useAppSession } from '@/features/session/app-session-context';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
 import { AppButton } from '@/ui/components/core-controls';
+import { GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
 import {
   LocalDataBadge,
   MaterialSymbol,
   OperationalShell,
-  SurfaceCard,
 } from '@/ui/components/operational-shell';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import {
+  actionPressed,
+  CARD_RADIUS,
+  colors,
+  fonts,
+  glass,
+  radii,
+  spacing,
+} from '@/ui/theme/tokens';
 
 export default function HomeRoute() {
   const { width } = useWindowDimensions();
@@ -107,7 +115,7 @@ export default function HomeRoute() {
   const urgentCount = overdueInvoices.length + counts.expiringSoon;
 
   const welcome = (
-    <SurfaceCard style={[styles.dashboardCard, styles.welcomeCard]}>
+    <GlassSurface radius={CARD_RADIUS} style={styles.welcomeCard}>
       <View style={styles.welcomeTop}>
         <View style={styles.welcomeCopy}>
           <Text numberOfLines={2} style={styles.welcome}>
@@ -122,10 +130,10 @@ export default function HomeRoute() {
             accessibilityLabel={showSensitive ? t('hideAmounts') : t('showAmounts')}
             accessibilityRole="button"
             onPress={() => setShowSensitive((visible) => !visible)}
-            style={({ pressed }) => [styles.iconButton, pressed && styles.actionPressed]}
+            style={({ pressed }) => [styles.iconButton, pressed && actionPressed]}
           >
             <MaterialSymbol
-              color={colors.textMuted}
+              color={colors.primaryDark}
               name={showSensitive ? 'visibility' : 'visibility_off'}
               size={22}
             />
@@ -134,9 +142,9 @@ export default function HomeRoute() {
             accessibilityLabel={t('lockNow')}
             accessibilityRole="button"
             onPress={() => void lock('manual')}
-            style={({ pressed }) => [styles.iconButton, pressed && styles.actionPressed]}
+            style={({ pressed }) => [styles.iconButton, pressed && actionPressed]}
           >
-            <MaterialSymbol color={colors.textMuted} name="lock" size={22} />
+            <MaterialSymbol color={colors.primaryDark} name="lock" size={22} />
           </Pressable>
         </View>
       </View>
@@ -146,7 +154,7 @@ export default function HomeRoute() {
           {state.deviceLocale.timeZone}
         </Text>
       </View>
-    </SurfaceCard>
+    </GlassSurface>
   );
 
   const actions = (
@@ -172,7 +180,7 @@ export default function HomeRoute() {
 
   const firstPlan =
     planCount === 0 ? (
-      <SurfaceCard style={[styles.dashboardCard, styles.firstPlanCard]}>
+      <GlassSurface radius={CARD_RADIUS} style={styles.firstPlanCard} tint={glass.fillMint}>
         <View style={styles.firstPlanCopy}>
           <Text style={styles.firstPlanTitle}>{t('noPlansTitle')}</Text>
           <Text style={styles.firstPlanText}>{t('createFirstPlanPrompt')}</Text>
@@ -180,7 +188,7 @@ export default function HomeRoute() {
         <AppButton onPress={() => router.push('/plan/new' as Href)}>
           {t('createFirstPlan')}
         </AppButton>
-      </SurfaceCard>
+      </GlassSurface>
     ) : null;
 
   const urgentTasks =
@@ -200,7 +208,7 @@ export default function HomeRoute() {
           <Pressable
             accessibilityRole="button"
             onPress={() => router.push('/payments' as Href)}
-            style={({ pressed }) => [styles.linkButton, pressed && styles.actionPressed]}
+            style={({ pressed }) => [styles.linkButton, pressed && actionPressed]}
           >
             <Text style={styles.linkButtonText}>{t('viewLedger')}</Text>
           </Pressable>
@@ -251,8 +259,9 @@ export default function HomeRoute() {
           <Pressable
             accessibilityRole="button"
             onPress={() => router.push('/members?filter=expiring' as Href)}
-            style={({ pressed }) => [styles.reviewRow, pressed && styles.actionPressed]}
+            style={({ pressed }) => [styles.reviewRow, pressed && actionPressed]}
           >
+            <GlassSheen />
             <MaterialSymbol color={colors.textMuted} name="date_range" size={22} />
             <View style={styles.reviewCopy}>
               <Text style={styles.reviewTitle}>{t('expiringSoon')}</Text>
@@ -309,9 +318,9 @@ export default function HomeRoute() {
     <Pressable
       accessibilityRole="button"
       onPress={() => router.push('/payments?filter=today' as Href)}
-      style={({ pressed }) => pressed && styles.actionPressed}
+      style={({ pressed }) => pressed && actionPressed}
     >
-      <SurfaceCard style={[styles.dashboardCard, styles.collectionCard]}>
+      <GlassSurface radius={CARD_RADIUS} style={styles.collectionCard}>
         <View style={styles.collectionHeading}>
           <MaterialSymbol color={colors.primaryDark} name="point_of_sale" size={20} />
           <Text style={styles.collectionTitle}>{t('todayRecordedCollections')}</Text>
@@ -325,15 +334,18 @@ export default function HomeRoute() {
           {showSensitive ? formatMoneyMinor(finance.todayRecordedMinor, regionalSettings) : '••••'}
         </Text>
         <Text style={styles.collectionDetail}>{t('recordedPaymentsOnly')}</Text>
-      </SurfaceCard>
+      </GlassSurface>
     </Pressable>
   );
 
   const backup = (
-    <SurfaceCard
-      style={[styles.dashboardCard, styles.backupBanner, !lastBackup && styles.backupBannerWarning]}
+    <GlassSurface
+      radius={CARD_RADIUS}
+      style={styles.backupBanner}
+      tint={lastBackup ? glass.tintSuccess : glass.tintWarning}
     >
       <View style={[styles.backupIcon, !lastBackup && styles.backupIconWarning]}>
+        <GlassSheen />
         <MaterialSymbol
           color={lastBackup ? colors.successText : colors.warningSurface}
           name={lastBackup ? 'cloud_done' : 'warning'}
@@ -361,20 +373,21 @@ export default function HomeRoute() {
       <Pressable
         accessibilityRole="button"
         onPress={() => router.push('/backup-restore' as Href)}
-        style={({ pressed }) => [styles.backupAction, pressed && styles.actionPressed]}
+        style={({ pressed }) => [styles.backupAction, pressed && actionPressed]}
       >
-        <MaterialSymbol color="#fff" name="cloud_upload" size={18} />
+        <MaterialSymbol color={colors.onPrimary} name="cloud_upload" size={18} />
         <Text numberOfLines={1} style={styles.backupActionText}>
           {t('homeBackupNow')}
         </Text>
       </Pressable>
-    </SurfaceCard>
+    </GlassSurface>
   );
 
   return (
     <OperationalShell
       active="home"
       contentStyle={styles.dashboardContent}
+      glass
       subtitle={gym?.name ?? t('appName')}
       title={t('dashboard')}
     >
@@ -426,15 +439,22 @@ function CounterAction({
       style={({ pressed }) => [
         styles.counterAction,
         primary && styles.counterActionPrimary,
-        pressed && styles.actionPressed,
+        pressed && actionPressed,
       ]}
     >
-      <MaterialSymbol color={primary ? '#fff' : colors.primaryDark} name={icon} size={20} />
+      <View style={[styles.counterActionIcon, primary && styles.counterActionIconPrimary]}>
+        <MaterialSymbol
+          color={primary ? colors.onPrimary : colors.primaryDark}
+          name={icon}
+          size={22}
+        />
+      </View>
       <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
         numberOfLines={1}
         style={[styles.counterActionText, primary && styles.counterActionTextPrimary]}
       >
-        {primary ? '+ ' : ''}
         {label}
       </Text>
     </Pressable>
@@ -461,33 +481,34 @@ function UrgentTaskCard({
   onPress(): void;
 }) {
   return (
-    <SurfaceCard style={[styles.dashboardCard, styles.taskCard]}>
+    <GlassSurface radius={CARD_RADIUS} style={styles.taskCard}>
       <View style={styles.taskTop}>
         <View style={styles.taskIdentity}>
           <View style={[styles.taskAvatar, tone === 'danger' && styles.taskAvatarDanger]}>
+            <GlassSheen />
             <Text style={[styles.taskAvatarText, tone === 'danger' && styles.taskAvatarTextDanger]}>
               {initialsFor(name)}
             </Text>
           </View>
           <View style={styles.taskCopy}>
-            <View style={styles.taskNameRow}>
-              <Text numberOfLines={1} style={styles.taskName}>
-                {name}
-              </Text>
-              <View style={[styles.taskStatus, tone === 'danger' && styles.taskStatusDanger]}>
-                <Text
-                  numberOfLines={1}
-                  style={[styles.taskStatusText, tone === 'danger' && styles.taskStatusTextDanger]}
-                >
-                  {status}
-                </Text>
-              </View>
-            </View>
-            <Text numberOfLines={1} style={styles.taskMeta}>
+            <Text numberOfLines={1} style={styles.taskName}>
+              {name}
+            </Text>
+            <Text numberOfLines={2} style={styles.taskMeta}>
               {meta}
             </Text>
           </View>
         </View>
+        <View style={[styles.taskStatus, tone === 'danger' && styles.taskStatusDanger]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.taskStatusText, tone === 'danger' && styles.taskStatusTextDanger]}
+          >
+            {status}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.taskActionRow}>
         <Text
           adjustsFontSizeToFit
           minimumFontScale={0.72}
@@ -496,21 +517,23 @@ function UrgentTaskCard({
         >
           {amount}
         </Text>
-      </View>
-      <View style={styles.taskActionRow}>
         <Pressable
           accessibilityLabel={`${actionLabel}: ${name}`}
           accessibilityRole="button"
           onPress={onPress}
-          style={({ pressed }) => [styles.taskAction, pressed && styles.actionPressed]}
+          style={({ pressed }) => [
+            styles.taskAction,
+            tone === 'danger' && styles.taskActionDanger,
+            pressed && actionPressed,
+          ]}
         >
-          <MaterialSymbol color="#fff" name={actionIcon} size={18} />
+          <MaterialSymbol color={colors.onPrimary} name={actionIcon} size={18} />
           <Text numberOfLines={1} style={styles.taskActionText}>
             {actionLabel}
           </Text>
         </Pressable>
       </View>
-    </SurfaceCard>
+    </GlassSurface>
   );
 }
 
@@ -531,9 +554,9 @@ function MetricCard({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.metricPressable, pressed && styles.actionPressed]}
+      style={({ pressed }) => [styles.metricPressable, pressed && actionPressed]}
     >
-      <SurfaceCard style={[styles.dashboardCard, styles.metricCard]}>
+      <GlassSurface radius={CARD_RADIUS} style={styles.metricCard}>
         <View style={styles.metricLabelRow}>
           <Text numberOfLines={2} style={styles.metricLabel}>
             {label}
@@ -558,7 +581,7 @@ function MetricCard({
         <Text numberOfLines={2} style={styles.metricDetail}>
           {detail}
         </Text>
-      </SurfaceCard>
+      </GlassSurface>
     </Pressable>
   );
 }
@@ -578,15 +601,7 @@ const styles = StyleSheet.create({
   tabletColumns: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', gap: spacing.lg },
   tabletPrimaryColumn: { minWidth: 0, flex: 3, gap: spacing.md },
   tabletSecondaryColumn: { minWidth: 300, flex: 2, gap: spacing.md },
-  dashboardCard: {
-    borderWidth: 0,
-    elevation: 1,
-    shadowColor: colors.brandHeader,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-  },
-  welcomeCard: { gap: 6, padding: 12 },
+  welcomeCard: { gap: spacing.sm, padding: spacing.md },
   welcomeTop: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -596,13 +611,17 @@ const styles = StyleSheet.create({
   welcomeCopy: { minWidth: 0, flex: 1 },
   welcome: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 24 },
   gym: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 12, lineHeight: 16 },
-  welcomeActions: { flexShrink: 0, flexDirection: 'row', alignItems: 'center' },
+  welcomeActions: { flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   iconButton: {
     width: 48,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
   },
   localRow: {
     minWidth: 0,
@@ -610,9 +629,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
-    paddingTop: 6,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: glass.divider,
   },
   device: {
     minWidth: 0,
@@ -623,41 +642,47 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     textAlign: 'right',
   },
-  actionDeck: { width: '100%', flexDirection: 'row', gap: spacing.xs },
+  actionDeck: { width: '100%', flexDirection: 'row', gap: spacing.sm },
   counterAction: {
     minWidth: 0,
-    minHeight: 48,
+    minHeight: 84,
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
+    gap: 6,
     paddingHorizontal: spacing.xs,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#bec9c5',
-    borderRadius: 12,
-    backgroundColor: colors.surface,
+    borderColor: glass.rimAccent,
+    borderRadius: 20,
+    backgroundColor: glass.fillOpaque,
   },
-  counterActionPrimary: { borderColor: colors.primary, backgroundColor: colors.primary },
+  counterActionPrimary: { borderColor: colors.primaryDark, backgroundColor: colors.primary },
+  counterActionIcon: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+    backgroundColor: glass.fillAccent,
+  },
+  counterActionIconPrimary: { backgroundColor: glass.fillOnPrimary },
   counterActionText: {
-    minWidth: 0,
-    flexShrink: 1,
+    maxWidth: '100%',
     color: colors.primaryDark,
     fontFamily: fonts.semibold,
     fontSize: 12,
     lineHeight: 16,
     textAlign: 'center',
   },
-  counterActionTextPrimary: { color: '#fff' },
-  actionPressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
+  counterActionTextPrimary: { color: colors.onPrimary },
   firstPlanCard: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: colors.surfaceLow,
+    padding: spacing.md,
+    borderColor: glass.rimPrimary,
   },
   firstPlanCopy: { minWidth: 180, flex: 1, gap: spacing.xs },
   firstPlanTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 16 },
@@ -695,16 +720,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radii.pill,
-    backgroundColor: colors.danger,
+    borderWidth: 1,
+    borderColor: glass.rimSoft,
+    backgroundColor: glass.fillDangerStrong,
   },
-  pendingBadgeText: { color: '#fff', fontFamily: fonts.bold, fontSize: 10, lineHeight: 14 },
-  linkButton: { minHeight: 48, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  pendingBadgeText: {
+    color: colors.onPrimary,
+    fontFamily: fonts.bold,
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  linkButton: {
+    minHeight: 36,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
+  },
   linkButtonText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
-  taskCard: { gap: spacing.sm, padding: 12 },
+  taskCard: { gap: spacing.sm, padding: spacing.md },
   taskTop: {
     minWidth: 0,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
@@ -721,54 +763,62 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     borderRadius: 20,
-    backgroundColor: colors.surfaceHighest,
+    borderWidth: 1,
+    borderColor: glass.rim,
+    backgroundColor: glass.fillMuted,
   },
-  taskAvatarDanger: { backgroundColor: colors.dangerSurface },
+  taskAvatarDanger: { borderColor: glass.rimDangerStrong, backgroundColor: glass.fillDanger },
   taskAvatarText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 14 },
   taskAvatarTextDanger: { color: colors.dangerText },
-  taskCopy: { minWidth: 0, flex: 1 },
-  taskNameRow: { minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  taskCopy: { minWidth: 0, flex: 1, gap: 2 },
   taskName: {
-    minWidth: 0,
-    flexShrink: 1,
     color: colors.text,
     fontFamily: fonts.semibold,
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 20,
   },
   taskStatus: {
-    maxWidth: 90,
-    flexShrink: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    maxWidth: 120,
+    flexShrink: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: radii.pill,
-    backgroundColor: colors.warningSurface,
+    borderWidth: 1,
+    borderColor: glass.rimWarning,
+    backgroundColor: glass.fillWarning,
   },
-  taskStatusDanger: { backgroundColor: colors.dangerSurface },
+  taskStatusDanger: { borderColor: glass.rimDanger, backgroundColor: glass.fillDanger },
   taskStatusText: {
     color: colors.warningText,
     fontFamily: fonts.bold,
-    fontSize: 9,
-    lineHeight: 12,
+    fontSize: 10,
+    lineHeight: 14,
   },
   taskStatusTextDanger: { color: colors.dangerText },
   taskMeta: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 12, lineHeight: 16 },
   taskAmount: {
-    maxWidth: 92,
-    flexShrink: 1,
+    minWidth: 0,
+    flex: 1,
     color: colors.text,
     fontFamily: fonts.bold,
-    fontSize: 16,
-    lineHeight: 22,
-    textAlign: 'right',
+    fontSize: 18,
+    lineHeight: 24,
     fontVariant: ['tabular-nums'],
   },
   taskAmountDanger: { color: colors.danger },
-  taskActionRow: { flexDirection: 'row', justifyContent: 'flex-end' },
+  taskActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: glass.divider,
+  },
   taskAction: {
-    minWidth: 126,
-    minHeight: 48,
+    minHeight: 44,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -777,15 +827,19 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     backgroundColor: colors.primary,
   },
-  taskActionText: { color: '#fff', fontFamily: fonts.semibold, fontSize: 12 },
+  taskActionDanger: { backgroundColor: colors.danger },
+  taskActionText: { color: colors.onPrimary, fontFamily: fonts.semibold, fontSize: 13 },
   reviewRow: {
     minHeight: 64,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     padding: 12,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceContainer,
+    overflow: 'hidden',
+    borderRadius: CARD_RADIUS,
+    borderWidth: 1,
+    borderColor: glass.rim,
+    backgroundColor: glass.fillMint,
   },
   reviewCopy: { minWidth: 0, flex: 1 },
   reviewTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
@@ -801,7 +855,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 14,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillOpaque,
   },
   reviewButtonText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
   metricGrid: {
@@ -812,7 +868,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   metricPressable: { minWidth: 136, flexBasis: '48%', flexGrow: 1, flexShrink: 1 },
-  metricCard: { width: '100%', minWidth: 136, minHeight: 102, gap: spacing.xs, padding: 12 },
+  metricCard: { width: '100%', minWidth: 136, minHeight: 102, gap: spacing.xs, padding: 14 },
   metricLabelRow: {
     minWidth: 0,
     flexDirection: 'row',
@@ -828,9 +884,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  metricDot: { width: 10, height: 10, marginTop: 2, borderRadius: 5 },
+  metricDot: {
+    width: 12,
+    height: 12,
+    marginTop: 2,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: glass.rim,
+  },
   metricDotActive: { backgroundColor: colors.primary },
-  metricDotWarning: { backgroundColor: '#615a43' },
+  metricDotWarning: { backgroundColor: colors.warningAccent },
   metricDotDanger: { backgroundColor: colors.danger },
   metricValue: {
     color: colors.text,
@@ -846,7 +909,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
   },
-  collectionCard: { gap: spacing.xs, padding: 12 },
+  collectionCard: { gap: spacing.xs, padding: spacing.md },
   collectionHeading: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   collectionTitle: {
     minWidth: 0,
@@ -875,22 +938,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     padding: 12,
-    backgroundColor: colors.successSurface,
   },
-  backupBannerWarning: { backgroundColor: '#ede2c5' },
   backupIcon: {
     width: 34,
     height: 34,
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     borderRadius: 17,
-    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: glass.rim,
+    backgroundColor: glass.fill,
   },
-  backupIconWarning: { backgroundColor: '#615a43' },
+  backupIconWarning: { borderColor: glass.rimSoft, backgroundColor: glass.fillWarningStrong },
   backupCopy: { minWidth: 0, flex: 1 },
   backupTitle: { color: colors.successText, fontFamily: fonts.bold, fontSize: 14, lineHeight: 20 },
-  backupTitleWarning: { color: '#201b09' },
+  backupTitleWarning: { color: colors.warningStrongText },
   backupDetail: {
     color: colors.textMuted,
     fontFamily: fonts.regular,
@@ -907,12 +971,12 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: 12,
     borderRadius: radii.pill,
-    backgroundColor: '#201b09',
+    backgroundColor: colors.primary,
   },
   backupActionText: {
     minWidth: 0,
     flexShrink: 1,
-    color: '#fff',
+    color: colors.onPrimary,
     fontFamily: fonts.semibold,
     fontSize: 12,
   },

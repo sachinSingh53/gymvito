@@ -4,21 +4,26 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { UnsupportedDatabaseError } from '@/domain/errors/foundation-errors';
 
 import { migrations } from './migrations';
+import { atDatabaseStartupStage } from './database-startup-error';
 
 type AppliedMigration = { id: number; name: string; checksum: string };
 
 export async function runMigrations(database: SQLiteDatabase): Promise<void> {
-  await database.execAsync(`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
-      id INTEGER PRIMARY KEY NOT NULL,
-      name TEXT NOT NULL UNIQUE,
-      checksum TEXT NOT NULL,
-      applied_at_utc TEXT NOT NULL
-    );
-  `);
+  await atDatabaseStartupStage('DATABASE_MIGRATION_STATE_FAILED', () =>
+    database.execAsync(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        id INTEGER PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL UNIQUE,
+        checksum TEXT NOT NULL,
+        applied_at_utc TEXT NOT NULL
+      );
+    `),
+  );
 
-  const applied = await database.getAllAsync<AppliedMigration>(
-    'SELECT id, name, checksum FROM schema_migrations ORDER BY id',
+  const applied = await atDatabaseStartupStage('DATABASE_MIGRATION_STATE_FAILED', () =>
+    database.getAllAsync<AppliedMigration>(
+      'SELECT id, name, checksum FROM schema_migrations ORDER BY id',
+    ),
   );
   const appliedById = new Map(applied.map((migration) => [migration.id, migration]));
 
@@ -38,16 +43,18 @@ export async function runMigrations(database: SQLiteDatabase): Promise<void> {
       continue;
     }
 
-    await database.withExclusiveTransactionAsync(async (transaction) => {
-      await transaction.execAsync(migration.sql);
-      await transaction.runAsync(
-        'INSERT INTO schema_migrations(id, name, checksum, applied_at_utc) VALUES (?, ?, ?, ?)',
-        migration.id,
-        migration.name,
-        migration.checksum,
-        new Date().toISOString(),
-      );
-      await transaction.execAsync(`PRAGMA user_version = ${migration.id}`);
-    });
+    await atDatabaseStartupStage(`DATABASE_MIGRATION_${migration.id}_FAILED`, () =>
+      database.withExclusiveTransactionAsync(async (transaction) => {
+        await transaction.execAsync(migration.sql);
+        await transaction.runAsync(
+          'INSERT INTO schema_migrations(id, name, checksum, applied_at_utc) VALUES (?, ?, ?, ?)',
+          migration.id,
+          migration.name,
+          migration.checksum,
+          new Date().toISOString(),
+        );
+        await transaction.execAsync(`PRAGMA user_version = ${migration.id}`);
+      }),
+    );
   }
 }

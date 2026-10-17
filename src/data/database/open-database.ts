@@ -11,6 +11,8 @@ import {
 import { getOrCreateDatabaseKey } from '@/platform/secure-storage/database-key';
 
 import { applyDatabaseKey } from './apply-key';
+import { atDatabaseStartupStage, DatabaseStartupError } from './database-startup-error';
+import { installKeyedExclusiveTransactions } from './keyed-exclusive-transaction';
 import {
   DATABASE_APPLICATION_ID,
   DATABASE_BUSY_TIMEOUT_MS,
@@ -22,6 +24,7 @@ import { FoundationRepository } from '../repositories/foundation-repository';
 
 type PragmaNumber = { application_id?: number; user_version?: number };
 type IntegrityResult = { quick_check: string };
+type CipherVersionResult = { cipher_version?: string };
 
 export type OpenedDatabase = Readonly<{
   database: SQLiteDatabase;
@@ -58,33 +61,60 @@ function cleanupVerifiedStartupTemporaryFiles(): void {
 
 export async function openGymVitoDatabase(): Promise<OpenedDatabase> {
   const capabilities = getRuntimeCapabilities();
-  const key = capabilities.isExpoGo ? null : await getOrCreateDatabaseKey(databaseFile().exists);
-  const database = await openDatabaseAsync(DATABASE_NAME, { useNewConnection: true });
+  const key = capabilities.isExpoGo
+    ? null
+    : await atDatabaseStartupStage('DATABASE_KEY_ACCESS_FAILED', () =>
+        getOrCreateDatabaseKey(databaseFile().exists),
+      );
+  const database = await atDatabaseStartupStage('DATABASE_OPEN_FAILED', () =>
+    openDatabaseAsync(DATABASE_NAME, { useNewConnection: true }),
+  );
 
   try {
-    if (key) await applyDatabaseKey(database, key);
-    await database.getFirstAsync('SELECT count(*) AS count FROM sqlite_master');
-    await database.execAsync(`
-      PRAGMA foreign_keys = ON;
-      PRAGMA busy_timeout = ${DATABASE_BUSY_TIMEOUT_MS};
-      PRAGMA journal_mode = WAL;
-    `);
-
-    const appId = await database.getFirstAsync<PragmaNumber>('PRAGMA application_id');
-    if ((appId?.application_id ?? 0) === 0) {
-      await database.execAsync(`PRAGMA application_id = ${DATABASE_APPLICATION_ID}`);
-    } else if (appId?.application_id !== DATABASE_APPLICATION_ID) {
-      throw new UnsupportedDatabaseError('The database belongs to another application.');
+    if (key) {
+      const cipher = await atDatabaseStartupStage('DATABASE_CIPHER_CHECK_FAILED', () =>
+        database.getFirstAsync<CipherVersionResult>('PRAGMA cipher_version'),
+      );
+      if (!cipher?.cipher_version) {
+        throw new DatabaseStartupError('DATABASE_CIPHER_UNAVAILABLE');
+      }
+      await atDatabaseStartupStage('DATABASE_KEY_APPLY_FAILED', () =>
+        applyDatabaseKey(database, key),
+      );
     }
+    await atDatabaseStartupStage('DATABASE_KEY_VERIFY_FAILED', () =>
+      database.getFirstAsync('SELECT count(*) AS count FROM sqlite_master'),
+    );
+    if (key) installKeyedExclusiveTransactions(database, key);
+    await atDatabaseStartupStage('DATABASE_PRAGMA_CONFIG_FAILED', () =>
+      database.execAsync(`
+        PRAGMA foreign_keys = ON;
+        PRAGMA busy_timeout = ${DATABASE_BUSY_TIMEOUT_MS};
+        PRAGMA journal_mode = WAL;
+      `),
+    );
 
-    const versionBefore = await database.getFirstAsync<PragmaNumber>('PRAGMA user_version');
-    const latestVersion = migrations.at(-1)?.id ?? 0;
-    if ((versionBefore?.user_version ?? 0) > latestVersion) {
-      throw new UnsupportedDatabaseError('This database was created by a newer GymVito build.');
-    }
+    await atDatabaseStartupStage('DATABASE_APPLICATION_ID_FAILED', async () => {
+      const appId = await database.getFirstAsync<PragmaNumber>('PRAGMA application_id');
+      if ((appId?.application_id ?? 0) === 0) {
+        await database.execAsync(`PRAGMA application_id = ${DATABASE_APPLICATION_ID}`);
+      } else if (appId?.application_id !== DATABASE_APPLICATION_ID) {
+        throw new UnsupportedDatabaseError('The database belongs to another application.');
+      }
+    });
+
+    await atDatabaseStartupStage('DATABASE_VERSION_CHECK_FAILED', async () => {
+      const versionBefore = await database.getFirstAsync<PragmaNumber>('PRAGMA user_version');
+      const latestVersion = migrations.at(-1)?.id ?? 0;
+      if ((versionBefore?.user_version ?? 0) > latestVersion) {
+        throw new UnsupportedDatabaseError('This database was created by a newer GymVito build.');
+      }
+    });
 
     await runMigrations(database);
-    const integrity = await database.getFirstAsync<IntegrityResult>('PRAGMA quick_check(1)');
+    const integrity = await atDatabaseStartupStage('DATABASE_INTEGRITY_CHECK_FAILED', () =>
+      database.getFirstAsync<IntegrityResult>('PRAGMA quick_check(1)'),
+    );
     if (integrity?.quick_check !== 'ok') {
       throw new UnsupportedDatabaseError('Database integrity check failed.');
     }
@@ -95,7 +125,9 @@ export async function openGymVitoDatabase(): Promise<OpenedDatabase> {
       logLocalDiagnostic('warning', 'STARTUP.TEMP_FILE_CLEANUP_FAILED');
     }
 
-    const versionAfter = await database.getFirstAsync<PragmaNumber>('PRAGMA user_version');
+    const versionAfter = await atDatabaseStartupStage('DATABASE_FINAL_VERSION_FAILED', () =>
+      database.getFirstAsync<PragmaNumber>('PRAGMA user_version'),
+    );
     const developmentRestartCount = __DEV__
       ? await new FoundationRepository(database).recordDevelopmentRestart()
       : 0;

@@ -11,6 +11,10 @@ export const PIN_KDF_PARAMETERS = Object.freeze({
   hashLength: 32,
 });
 
+// Expo Go has no native Argon2, so this pure-JS PBKDF2 runs on the JS thread.
+// Keep it light enough for an instant unlock; it only protects synthetic test data.
+export const DEVELOPMENT_PIN_ITERATIONS = 10_000;
+
 export type Argon2PinVerifier = Readonly<{
   version: 1;
   algorithm: 'argon2id';
@@ -65,7 +69,7 @@ async function deriveDevelopmentPin(
   const result = await pbkdf2Async(sha256, pin, hexToBytes(verifier.saltHex), {
     c: verifier.iterations,
     dkLen: verifier.hashLength,
-    asyncTick: 8,
+    asyncTick: 50,
   });
   return bytesToHex(result);
 }
@@ -79,7 +83,7 @@ export async function createPinVerifier(
     const base = {
       algorithm: 'pbkdf2-sha256-development-only' as const,
       saltHex: bytesToHex(await getRandomBytesAsync(16)),
-      iterations: 120_000,
+      iterations: DEVELOPMENT_PIN_ITERATIONS,
       hashLength: 32,
     };
     return { version: 1, ...base, hashHex: await deriveDevelopmentPin(pin, base) };
@@ -102,6 +106,13 @@ export async function verifyPin(pin: string, verifier: PinVerifier): Promise<boo
       ? await deriveArgon2(pin, verifier)
       : await deriveDevelopmentPin(pin, verifier);
   return constantTimeEqual(actual, verifier.hashHex);
+}
+
+export function needsPinRehash(verifier: PinVerifier): boolean {
+  return (
+    verifier.algorithm === 'pbkdf2-sha256-development-only' &&
+    verifier.iterations > DEVELOPMENT_PIN_ITERATIONS
+  );
 }
 
 export async function benchmarkPinKdf(pin = '739184'): Promise<number> {

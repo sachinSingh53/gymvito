@@ -1,6 +1,11 @@
 import { remainingLockoutSeconds } from '@/domain/security/lockout-policy';
 import type { AppStateRepository } from '@/data/repositories/app-state-repository';
-import { verifyPin, type PinVerifier } from '@/platform/security/pin-kdf';
+import {
+  createPinVerifier,
+  needsPinRehash,
+  verifyPin,
+  type PinVerifier,
+} from '@/platform/security/pin-kdf';
 
 export type UnlockResult =
   | { status: 'success'; ownerId: string; ownerName: string }
@@ -31,6 +36,14 @@ export class SecurityService {
     }
 
     await this.repository.recordSuccessfulUnlock(owner.id, 'pin', now);
+    if (needsPinRehash(verifier)) {
+      try {
+        const upgraded = await createPinVerifier(pin, 'expo-go-development');
+        await this.repository.updateOwnerPinVerifier(owner.id, JSON.stringify(upgraded), now);
+      } catch {
+        // The old verifier still works; retry the upgrade on the next unlock.
+      }
+    }
     return { status: 'success', ownerId: owner.id, ownerName: owner.display_name };
   }
 }

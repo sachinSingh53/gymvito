@@ -32,6 +32,11 @@ export default function IndexRoute() {
             {t('startupRecoveryMessage')}
           </Text>
           <Text style={styles.errorCode}>{state.messageCode}</Text>
+          {state.messageDetail ? (
+            <Text selectable style={styles.errorDetail}>
+              {state.messageDetail}
+            </Text>
+          ) : null}
           <AppButton onPress={retryStartup}>{t('retry')}</AppButton>
           <AppButton onPress={() => router.push('/recovery' as Href)} variant="secondary">
             {t('restoreFromBackup')}
@@ -77,4 +82,5 @@ const styles = StyleSheet.create({
   errorTitle: { color: colors.text, fontSize: 24, fontWeight: '700' },
   errorText: { color: colors.text, fontSize: 16, lineHeight: 23 },
   errorCode: { color: colors.textMuted, fontSize: 12 },
+  errorDetail: { color: colors.textMuted, fontSize: 12, lineHeight: 18 },
 });

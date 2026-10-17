@@ -1,16 +1,19 @@
+import { BlurTargetView } from 'expo-blur';
 import { router, type Href, usePathname } from 'expo-router';
-import type { PropsWithChildren, ReactNode } from 'react';
+import { type PropsWithChildren, type ReactNode, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppSession } from '@/features/session/app-session-context';
-import { colors, fonts, radii, spacing } from '@/ui/theme/tokens';
+import { GlassBackdrop, GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
+import { GLASS_UI, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 type NavKey = 'home' | 'members' | 'payments' | 'more';
 
 export const BUSINESS_NAV_PHONE_HEIGHT = 68;
 export const BUSINESS_NAV_TABLET_WIDTH = 84;
+const GLASS_HEADER_INSET = 12;
 
 type Props = PropsWithChildren<{
   title: string;
@@ -21,6 +24,8 @@ type Props = PropsWithChildren<{
   headerAction?: ReactNode;
   scroll?: boolean;
   contentStyle?: object;
+  /** Liquid glass chrome: ambient backdrop and a floating, blurred header over the content. */
+  glass?: boolean;
 }>;
 
 const NAV_ITEMS: readonly {
@@ -74,10 +79,14 @@ export function OperationalShell({
   headerAction,
   scroll = true,
   contentStyle,
+  glass: glassRequested = false,
   children,
 }: Props) {
+  const glassChrome = GLASS_UI && glassRequested;
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const blurTargetRef = useRef<View | null>(null);
+  const [glassHeaderHeight, setGlassHeaderHeight] = useState(64);
   const tablet = width >= 600;
   const { t } = useTranslation();
   const { state, changeLanguage } = useAppSession();
@@ -94,6 +103,11 @@ export function OperationalShell({
     else router.replace(fallbackHref);
   };
 
+  const glassContentStyle = glassChrome && [
+    styles.glassContent,
+    { paddingTop: insets.top + GLASS_HEADER_INSET + glassHeaderHeight + spacing.md },
+  ];
+
   const body = scroll ? (
     <ScrollView
       contentContainerStyle={[
@@ -101,6 +115,7 @@ export function OperationalShell({
         tablet && styles.tabletContent,
         responsiveContentStyle,
         contentStyle,
+        glassContentStyle,
       ]}
       keyboardShouldPersistTaps="handled"
     >
@@ -114,11 +129,93 @@ export function OperationalShell({
         responsiveContentStyle,
         styles.flex,
         contentStyle,
+        glassContentStyle,
       ]}
     >
       {children}
     </View>
   );
+
+  const headerContent = (
+    <>
+      <View style={styles.headerIdentity}>
+        {canGoBack ? (
+          <Pressable
+            accessibilityLabel={t('back')}
+            accessibilityRole="button"
+            onPress={goBack}
+            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          >
+            <MaterialSymbol color={colors.primaryDark} name="arrow_back" size={24} />
+          </Pressable>
+        ) : !tablet ? (
+          <View style={[styles.brandMark, glassChrome && styles.glassBubble]}>
+            {glassChrome ? <GlassSheen radius={12} /> : null}
+            <MaterialSymbol color="#fff" name="fitness_center" size={24} />
+          </View>
+        ) : null}
+        <View style={styles.headerTitles}>
+          <View style={styles.brandLine}>
+            <Text style={styles.brandName}>GymVito</Text>
+            <Text style={styles.posBadge}>POS</Text>
+          </View>
+          <Text numberOfLines={1} style={styles.headerTitle}>
+            {title}
+          </Text>
+          {tablet && subtitle ? (
+            <Text numberOfLines={1} style={styles.headerSubtitle}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+      <View style={styles.headerActions}>
+        <Pressable
+          accessibilityLabel={t('languageLabel')}
+          accessibilityRole="button"
+          onPress={() => void changeLanguage(language === 'en' ? 'hi' : 'en')}
+          style={[styles.languageToggle, glassChrome && styles.glassLanguageToggle]}
+        >
+          <Text numberOfLines={1} style={styles.languageText}>
+            {language === 'en' ? 'EN|हिं' : 'हिन्दी|EN'}
+          </Text>
+        </Pressable>
+        {headerAction}
+        <View style={[styles.ownerAvatar, glassChrome && styles.glassBubble]}>
+          {glassChrome ? <GlassSheen /> : null}
+          <Text style={styles.ownerAvatarText}>
+            {state.ownerName.trim().charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      </View>
+    </>
+  );
+
+  if (glassChrome) {
+    return (
+      <View style={styles.safeArea}>
+        <BlurTargetView ref={blurTargetRef} style={styles.glassBlurTarget}>
+          <GlassBackdrop />
+          {body}
+        </BlurTargetView>
+        <GlassSurface
+          blurTarget={blurTargetRef}
+          onLayout={setGlassHeaderHeight}
+          style={[
+            styles.header,
+            styles.glassHeader,
+            {
+              top: insets.top + GLASS_HEADER_INSET,
+              left: GLASS_HEADER_INSET + (tablet ? 0 : insets.left),
+              right: GLASS_HEADER_INSET + insets.right,
+            },
+          ]}
+        >
+          {headerContent}
+        </GlassSurface>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.safeArea}>
@@ -134,54 +231,7 @@ export function OperationalShell({
             },
           ]}
         >
-          <View style={styles.headerIdentity}>
-            {canGoBack ? (
-              <Pressable
-                accessibilityLabel={t('back')}
-                accessibilityRole="button"
-                onPress={goBack}
-                style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-              >
-                <MaterialSymbol color={colors.primaryDark} name="arrow_back" size={24} />
-              </Pressable>
-            ) : !tablet ? (
-              <View style={styles.brandMark}>
-                <MaterialSymbol color="#fff" name="fitness_center" size={24} />
-              </View>
-            ) : null}
-            <View style={styles.headerTitles}>
-              <View style={styles.brandLine}>
-                <Text style={styles.brandName}>GymVito</Text>
-                <Text style={styles.posBadge}>POS</Text>
-              </View>
-              <Text numberOfLines={1} style={styles.headerTitle}>
-                {title}
-              </Text>
-              {tablet && subtitle ? (
-                <Text numberOfLines={1} style={styles.headerSubtitle}>
-                  {subtitle}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-          <View style={styles.headerActions}>
-            <Pressable
-              accessibilityLabel={t('languageLabel')}
-              accessibilityRole="button"
-              onPress={() => void changeLanguage(language === 'en' ? 'hi' : 'en')}
-              style={styles.languageToggle}
-            >
-              <Text numberOfLines={1} style={styles.languageText}>
-                {language === 'en' ? 'EN|हिं' : 'हिन्दी|EN'}
-              </Text>
-            </Pressable>
-            {headerAction}
-            <View style={styles.ownerAvatar}>
-              <Text style={styles.ownerAvatarText}>
-                {state.ownerName.trim().charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          </View>
+          {headerContent}
         </View>
         {body}
       </View>
@@ -472,6 +522,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 20,
     backgroundColor: colors.primaryDark,
+  },
+  glassBlurTarget: { flex: 1, backgroundColor: colors.background },
+  glassContent: { backgroundColor: 'transparent' },
+  glassHeader: {
+    position: 'absolute',
+    paddingTop: spacing.sm,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.75)',
+    backgroundColor: 'transparent',
+    shadowOpacity: 0.12,
+    elevation: 6,
+  },
+  glassBubble: {
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: glass.rimSoft,
+  },
+  glassLanguageToggle: {
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
   },
   ownerAvatarText: { color: '#fff', fontFamily: fonts.bold, fontSize: 16 },
   content: {

@@ -315,6 +315,19 @@ export class AppStateRepository {
     );
   }
 
+  async updateOwnerPinVerifier(
+    ownerId: string,
+    pinVerifierJson: string,
+    now = new Date(),
+  ): Promise<void> {
+    await this.database.runAsync(
+      'UPDATE staff_profile SET pin_verifier_json = ?, updated_at_utc = ? WHERE id = ?',
+      pinVerifierJson,
+      now.toISOString(),
+      ownerId,
+    );
+  }
+
   async recordFailedPin(ownerId: string, now = new Date()): Promise<string | null> {
     let lockedUntil: string | null = null;
     await this.database.withExclusiveTransactionAsync(async (transaction) => {

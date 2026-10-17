@@ -16,6 +16,7 @@ import {
   openGymVitoDatabase,
   type OpenedDatabase,
 } from '@/data/database/open-database';
+import { startupDiagnostic } from '@/data/database/database-startup-error';
 import { AppStateRepository, type StartupSnapshot } from '@/data/repositories/app-state-repository';
 import { Phase2Repository } from '@/data/repositories/phase2-repository';
 import { Phase3Repository } from '@/data/repositories/phase3-repository';
@@ -54,7 +55,7 @@ export type AppSessionState =
   | ({ status: 'setup-required'; step: OnboardingStep } & ReadyBase)
   | ({ status: 'locked' } & ReadyBase)
   | ({ status: 'unlocked'; ownerId: string; ownerName: string } & ReadyBase)
-  | { status: 'recovery-error'; messageCode: string };
+  | { status: 'recovery-error'; messageCode: string; messageDetail?: string };
 
 type AppSessionContextValue = Readonly<{
   state: AppSessionState;
@@ -85,15 +86,6 @@ type AppSessionContextValue = Readonly<{
 }>;
 
 const AppSessionContext = createContext<AppSessionContextValue | null>(null);
-
-function diagnosticCode(error: unknown): string {
-  if (!(error instanceof Error)) return 'SESSION.UNKNOWN_ERROR';
-  const code = error.message
-    .replace(/[^A-Za-z0-9_.-]/g, '_')
-    .toUpperCase()
-    .slice(0, 60);
-  return code || 'SESSION.UNKNOWN_ERROR';
-}
 
 export function AppSessionProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<AppSessionState>({ status: 'initializing' });
@@ -146,9 +138,15 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
         repositoryRef.current = repository;
         setState(readyState(snapshot, opened));
       } catch (error) {
-        const code = diagnosticCode(error);
-        logLocalDiagnostic('error', `STARTUP.${code}`);
-        if (active) setState({ status: 'recovery-error', messageCode: code });
+        const diagnostic = startupDiagnostic(error);
+        logLocalDiagnostic('error', `STARTUP.${diagnostic.code}`);
+        if (active) {
+          setState({
+            status: 'recovery-error',
+            messageCode: diagnostic.code,
+            messageDetail: diagnostic.detail,
+          });
+        }
       }
     })();
     return () => {
@@ -471,7 +469,12 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
         setStartupAttempt((attempt) => attempt + 1);
         return manifest;
       } catch (error) {
-        setState({ status: 'recovery-error', messageCode: diagnosticCode(error) });
+        const diagnostic = startupDiagnostic(error);
+        setState({
+          status: 'recovery-error',
+          messageCode: diagnostic.code,
+          messageDetail: diagnostic.detail,
+        });
         throw error;
       }
     },

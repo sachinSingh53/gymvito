@@ -25,7 +25,16 @@ import { type EdgeInsets, useSafeAreaInsets } from 'react-native-safe-area-conte
 import { useAppSession } from '@/features/session/app-session-context';
 import { useGlassBlurTarget } from '@/ui/components/glass-context';
 import { GlassBackdrop, GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
-import { GLASS_UI, actionPressed, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
+import {
+  CARD_RADIUS,
+  GLASS_UI,
+  actionPressed,
+  colors,
+  fonts,
+  glass,
+  radii,
+  spacing,
+} from '@/ui/theme/tokens';
 
 type NavKey = 'home' | 'members' | 'payments' | 'more';
 
@@ -609,14 +618,29 @@ export function MaterialSymbol({
   );
 }
 
+/**
+ * Content panel. In glass mode a caller's `backgroundColor` (e.g. a warning wash) becomes the
+ * glass tint, since the frost would otherwise cover it.
+ */
 export function SurfaceCard({ children, style }: PropsWithChildren<{ style?: object }>) {
-  return <View style={[styles.surfaceCard, style]}>{children}</View>;
+  if (!GLASS_UI) return <View style={[styles.surfaceCard, style]}>{children}</View>;
+  const { backgroundColor, ...panelStyle } =
+    StyleSheet.flatten(style as StyleProp<ViewStyle>) ?? {};
+  return (
+    <GlassSurface
+      radius={CARD_RADIUS}
+      style={[styles.glassSurfaceCard, panelStyle]}
+      tint={typeof backgroundColor === 'string' ? backgroundColor : undefined}
+    >
+      {children}
+    </GlassSurface>
+  );
 }
 
 export function LocalDataBadge() {
   const { t } = useTranslation();
   return (
-    <View style={styles.localBadge}>
+    <View style={[styles.localBadge, GLASS_UI && styles.glassChip]}>
       <View style={styles.localDot} />
       <Text style={styles.localBadgeText}>{t('savedOnDevice')}</Text>
     </View>
@@ -632,12 +656,22 @@ export function StatusChip({
 }) {
   return (
     <View
-      style={[
-        styles.statusChip,
-        tone === 'active' && styles.statusActive,
-        tone === 'warning' && styles.statusWarning,
-        tone === 'danger' && styles.statusDanger,
-      ]}
+      style={
+        GLASS_UI
+          ? [
+              styles.statusChip,
+              styles.glassChip,
+              tone === 'active' && styles.glassStatusActive,
+              tone === 'warning' && styles.glassStatusWarning,
+              tone === 'danger' && styles.glassStatusDanger,
+            ]
+          : [
+              styles.statusChip,
+              tone === 'active' && styles.statusActive,
+              tone === 'warning' && styles.statusWarning,
+              tone === 'danger' && styles.statusDanger,
+            ]
+      }
     >
       <Text
         style={[
@@ -884,6 +918,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     backgroundColor: colors.surface,
   },
+  glassSurfaceCard: { minWidth: 0, padding: spacing.md },
   localBadge: {
     minWidth: 0,
     minHeight: 28,
@@ -933,6 +968,14 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: 'center',
   },
+  glassChip: {
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillNeutral,
+  },
+  glassStatusActive: { borderColor: glass.rimSuccess, backgroundColor: glass.fillSuccess },
+  glassStatusWarning: { borderColor: glass.rimWarning, backgroundColor: glass.fillWarning },
+  glassStatusDanger: { borderColor: glass.rimDanger, backgroundColor: glass.fillDanger },
   statusTextActive: { color: colors.successText },
   statusTextWarning: { color: colors.warningText },
   statusTextDanger: { color: colors.dangerText },

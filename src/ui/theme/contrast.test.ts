@@ -95,6 +95,49 @@ describe('glass legibility (worst case: frost over the most saturated backdrop b
   });
 });
 
+describe('shared control legibility (worst case over every blob, on a panel or the bare backdrop)', () => {
+  const blobs = Object.values(glass.backdrop);
+  const grounds = [[], [glass.frost], [glass.frostSolid]] as const;
+
+  function worstCase(foreground: string, fill: string) {
+    return Math.min(
+      ...grounds.flatMap((ground) =>
+        blobs.map((blob) =>
+          contrastRatio(foreground, flatten([colors.background, blob, ...ground, fill])),
+        ),
+      ),
+    );
+  }
+
+  it.each([
+    ['neutral chip', colors.text, glass.fillNeutral],
+    ['active chip', colors.successText, glass.fillSuccess],
+    ['warning chip', colors.warningText, glass.fillWarning],
+    ['danger chip', colors.dangerText, glass.fillDanger],
+    ['warning notice', colors.warningText, glass.tintWarning],
+    ['danger notice', colors.danger, glass.tintDanger],
+    ['secondary button', colors.primaryDark, glass.fillAccent],
+    ['danger-tonal button', colors.dangerText, glass.fillDanger],
+    ['unselected choice', colors.text, glass.fillAccent],
+    ['field value', colors.text, glass.fillOpaque],
+    ['field placeholder', colors.textMuted, glass.fillOpaque],
+  ])('keeps %s text at AA', (_, foreground, fill) => {
+    expect(worstCase(foreground, fill)).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
+  it('keeps chip and notice fills at the alpha floors', () => {
+    for (const fill of [
+      glass.fillNeutral,
+      glass.fillSuccess,
+      glass.fillWarning,
+      glass.fillDanger,
+    ]) {
+      expect(parseColor(fill)[3]).toBeGreaterThanOrEqual(0.8);
+    }
+    expect(parseColor(glass.tintDanger)[3]).toBeGreaterThanOrEqual(0.85);
+  });
+});
+
 describe('actionPressed', () => {
   it('dims and slightly shrinks the pressed element', () => {
     expect(actionPressed).toEqual({ opacity: 0.72, transform: [{ scale: 0.98 }] });

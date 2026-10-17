@@ -6,14 +6,18 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import '@/i18n';
 
-import { colors } from '@/ui/theme/tokens';
+import { parseColor } from '@/ui/theme/contrast';
+import { CARD_RADIUS, colors, glass, radii } from '@/ui/theme/tokens';
 
 import { GlassBlurTarget, GlassProvider } from './glass-context';
 import {
   BusinessChromeProvider,
   BusinessNavigation,
   FloatingHeaderHost,
+  LocalDataBadge,
   OperationalShell,
+  StatusChip,
+  SurfaceCard,
 } from './operational-shell';
 
 const mockGlassUi = { enabled: true };
@@ -244,5 +248,101 @@ describe('OperationalShell glass chrome', () => {
     expect(shell.getByText('Dashboard')).toBeTruthy();
     expect(navigation.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
     expect(navigation.toJSON()).toHaveStyle({ backgroundColor: colors.background });
+  });
+});
+
+describe('shared glass surfaces', () => {
+  afterEach(() => {
+    mockGlassUi.enabled = true;
+  });
+
+  function backgrounds(screen: ReturnType<typeof render>) {
+    return screen
+      .UNSAFE_getAllByType(View)
+      .map((view) => StyleSheet.flatten(view.props.style)?.backgroundColor);
+  }
+
+  it('renders SurfaceCard as a glass panel with card radius and no blur target', () => {
+    const screen = render(
+      <SurfaceCard style={{ gap: 8 }}>
+        <Text>Plan</Text>
+      </SurfaceCard>,
+    );
+
+    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(1);
+    expect(screen.UNSAFE_getByType(BlurView).props.blurTarget).toBeUndefined();
+    expect(screen.toJSON()).toHaveStyle({ borderRadius: CARD_RADIUS, padding: 16, gap: 8 });
+  });
+
+  it("turns a caller's background into the glass tint so warnings stay visible", () => {
+    const screen = render(
+      <SurfaceCard
+        style={{ borderColor: colors.warningBorder, backgroundColor: colors.warningSurface }}
+      >
+        <Text>Possible duplicate</Text>
+      </SurfaceCard>,
+    );
+
+    expect(screen.toJSON()).toHaveStyle({ borderColor: colors.warningBorder });
+    expect(screen.toJSON()).not.toHaveStyle({ backgroundColor: colors.warningSurface });
+    expect(backgrounds(screen)).toContain(colors.warningSurface);
+  });
+
+  it('renders the flat SurfaceCard when GLASS_UI is off', () => {
+    mockGlassUi.enabled = false;
+    const screen = render(
+      <SurfaceCard style={{ backgroundColor: colors.warningSurface }}>
+        <Text>Plan</Text>
+      </SurfaceCard>,
+    );
+
+    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
+    expect(screen.toJSON()).toHaveStyle({
+      borderRadius: radii.md,
+      backgroundColor: colors.warningSurface,
+    });
+  });
+
+  it('draws status chips as tone pills at 0.8 alpha or more with text of 10pt or more', () => {
+    const tones = {
+      neutral: [glass.fillNeutral, colors.text],
+      active: [glass.fillSuccess, colors.successText],
+      warning: [glass.fillWarning, colors.warningText],
+      danger: [glass.fillDanger, colors.dangerText],
+    } as const;
+    for (const [tone, [fill, text]] of Object.entries(tones)) {
+      const screen = render(<StatusChip label={tone} tone={tone as keyof typeof tones} />);
+      expect(screen.toJSON()).toHaveStyle({ borderRadius: radii.pill, backgroundColor: fill });
+      expect(parseColor(fill)[3]).toBeGreaterThanOrEqual(0.8);
+      const label = StyleSheet.flatten(screen.getByText(tone).props.style);
+      expect(label.color).toBe(text);
+      expect(label.fontSize).toBeGreaterThanOrEqual(10);
+      screen.unmount();
+    }
+  });
+
+  it('draws the local data badge as a neutral glass chip', () => {
+    const screen = render(<LocalDataBadge />);
+
+    expect(screen.toJSON()).toHaveStyle({
+      borderColor: glass.rimAccent,
+      borderRadius: radii.pill,
+      backgroundColor: glass.fillNeutral,
+    });
+    expect(
+      StyleSheet.flatten(screen.getByText('SAVED ON THIS DEVICE').props.style).fontSize,
+    ).toBeGreaterThanOrEqual(10);
+  });
+
+  it('renders the flat chips when GLASS_UI is off', () => {
+    mockGlassUi.enabled = false;
+    const chip = render(<StatusChip label="Active" tone="active" />);
+    const badge = render(<LocalDataBadge />);
+
+    expect(chip.toJSON()).toHaveStyle({
+      borderRadius: radii.sm,
+      backgroundColor: colors.successSurface,
+    });
+    expect(badge.toJSON()).toHaveStyle({ borderRadius: radii.sm, backgroundColor: '#ebf3f1' });
   });
 });

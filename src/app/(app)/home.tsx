@@ -11,6 +11,7 @@ import { useAppSession } from '@/features/session/app-session-context';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
 import { AppButton } from '@/ui/components/core-controls';
+import { ActionTile, GlassIconButton, GlassListRow } from '@/ui/components/glass-controls';
 import { GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
 import {
   LocalDataBadge,
@@ -126,26 +127,16 @@ export default function HomeRoute() {
           </Text>
         </View>
         <View style={styles.welcomeActions}>
-          <Pressable
+          <GlassIconButton
             accessibilityLabel={showSensitive ? t('hideAmounts') : t('showAmounts')}
-            accessibilityRole="button"
+            icon={showSensitive ? 'visibility' : 'visibility_off'}
             onPress={() => setShowSensitive((visible) => !visible)}
-            style={({ pressed }) => [styles.iconButton, pressed && actionPressed]}
-          >
-            <MaterialSymbol
-              color={colors.primaryDark}
-              name={showSensitive ? 'visibility' : 'visibility_off'}
-              size={22}
-            />
-          </Pressable>
-          <Pressable
+          />
+          <GlassIconButton
             accessibilityLabel={t('lockNow')}
-            accessibilityRole="button"
+            icon="lock"
             onPress={() => void lock('manual')}
-            style={({ pressed }) => [styles.iconButton, pressed && actionPressed]}
-          >
-            <MaterialSymbol color={colors.primaryDark} name="lock" size={22} />
-          </Pressable>
+          />
         </View>
       </View>
       <View style={styles.localRow}>
@@ -159,18 +150,18 @@ export default function HomeRoute() {
 
   const actions = (
     <View style={styles.actionDeck}>
-      <CounterAction
+      <ActionTile
         icon="person_add"
         label={t('addMember')}
         onPress={() => router.push('/member/new' as Href)}
         primary
       />
-      <CounterAction
+      <ActionTile
         icon="autorenew"
         label={t('renewMembership')}
         onPress={() => router.push('/members' as Href)}
       />
-      <CounterAction
+      <ActionTile
         icon="payments"
         label={t('recordPay')}
         onPress={() => router.push('/payments' as Href)}
@@ -214,12 +205,17 @@ export default function HomeRoute() {
           </Pressable>
         </View>
         {shownInvoices.map((invoice) => (
-          <UrgentTaskCard
-            actionIcon="receipt_long"
-            actionLabel={t('recordPayment')}
+          <GlassListRow
+            action={{
+              icon: 'receipt_long',
+              label: t('recordPayment'),
+              accessibilityLabel: `${t('recordPayment')}: ${invoice.memberName}`,
+              onPress: () => router.push(`/invoice/${invoice.id}` as Href),
+            }}
             amount={
               showSensitive ? formatMoneyMinor(invoice.balanceMinor, regionalSettings) : '••••'
             }
+            avatarText={initialsFor(invoice.memberName)}
             key={`invoice-${invoice.id}`}
             meta={`${invoice.planName}${
               invoice.dueDate
@@ -228,9 +224,8 @@ export default function HomeRoute() {
                   })}`
                 : ''
             }`}
-            name={invoice.memberName}
-            onPress={() => router.push(`/invoice/${invoice.id}` as Href)}
             status={t('overdue')}
+            title={invoice.memberName}
             tone="danger"
           />
         ))}
@@ -238,19 +233,23 @@ export default function HomeRoute() {
           const membership = member.current;
           if (!membership) return null;
           return (
-            <UrgentTaskCard
-              actionIcon="autorenew"
-              actionLabel={t('renewMembership')}
+            <GlassListRow
+              action={{
+                icon: 'autorenew',
+                label: t('renewMembership'),
+                accessibilityLabel: `${t('renewMembership')}: ${member.name}`,
+                onPress: () => router.push(`/member/${member.id}/membership` as Href),
+              }}
               amount={
                 showSensitive ? formatMoneyMinor(membership.totalMinor, regionalSettings) : '••••'
               }
+              avatarText={initialsFor(member.name)}
               key={`membership-${member.id}`}
               meta={`${membership.planName} • ${t('expiresOn', {
                 date: formatDateOnly(membership.endDate, regionalSettings),
               })}`}
-              name={member.name}
-              onPress={() => router.push(`/member/${member.id}/membership` as Href)}
               status={t('expiringSoon')}
+              title={member.name}
               tone="warning"
             />
           );
@@ -419,123 +418,6 @@ export default function HomeRoute() {
   );
 }
 
-function CounterAction({
-  icon,
-  label,
-  onPress,
-  primary = false,
-}: {
-  icon: string;
-  label: string;
-  onPress(): void;
-  primary?: boolean;
-}) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.counterAction,
-        primary && styles.counterActionPrimary,
-        pressed && actionPressed,
-      ]}
-    >
-      <View style={[styles.counterActionIcon, primary && styles.counterActionIconPrimary]}>
-        <MaterialSymbol
-          color={primary ? colors.onPrimary : colors.primaryDark}
-          name={icon}
-          size={22}
-        />
-      </View>
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={0.8}
-        numberOfLines={1}
-        style={[styles.counterActionText, primary && styles.counterActionTextPrimary]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function UrgentTaskCard({
-  name,
-  meta,
-  status,
-  amount,
-  tone,
-  actionIcon,
-  actionLabel,
-  onPress,
-}: {
-  name: string;
-  meta: string;
-  status: string;
-  amount: string;
-  tone: 'warning' | 'danger';
-  actionIcon: string;
-  actionLabel: string;
-  onPress(): void;
-}) {
-  return (
-    <GlassSurface radius={CARD_RADIUS} style={styles.taskCard}>
-      <View style={styles.taskTop}>
-        <View style={styles.taskIdentity}>
-          <View style={[styles.taskAvatar, tone === 'danger' && styles.taskAvatarDanger]}>
-            <GlassSheen />
-            <Text style={[styles.taskAvatarText, tone === 'danger' && styles.taskAvatarTextDanger]}>
-              {initialsFor(name)}
-            </Text>
-          </View>
-          <View style={styles.taskCopy}>
-            <Text numberOfLines={1} style={styles.taskName}>
-              {name}
-            </Text>
-            <Text numberOfLines={2} style={styles.taskMeta}>
-              {meta}
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.taskStatus, tone === 'danger' && styles.taskStatusDanger]}>
-          <Text
-            numberOfLines={1}
-            style={[styles.taskStatusText, tone === 'danger' && styles.taskStatusTextDanger]}
-          >
-            {status}
-          </Text>
-        </View>
-      </View>
-      <View style={styles.taskActionRow}>
-        <Text
-          adjustsFontSizeToFit
-          minimumFontScale={0.72}
-          numberOfLines={1}
-          style={[styles.taskAmount, tone === 'danger' && styles.taskAmountDanger]}
-        >
-          {amount}
-        </Text>
-        <Pressable
-          accessibilityLabel={`${actionLabel}: ${name}`}
-          accessibilityRole="button"
-          onPress={onPress}
-          style={({ pressed }) => [
-            styles.taskAction,
-            tone === 'danger' && styles.taskActionDanger,
-            pressed && actionPressed,
-          ]}
-        >
-          <MaterialSymbol color={colors.onPrimary} name={actionIcon} size={18} />
-          <Text numberOfLines={1} style={styles.taskActionText}>
-            {actionLabel}
-          </Text>
-        </Pressable>
-      </View>
-    </GlassSurface>
-  );
-}
-
 function MetricCard({
   label,
   value,
@@ -611,17 +493,6 @@ const styles = StyleSheet.create({
   welcome: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 24 },
   gym: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 12, lineHeight: 16 },
   welcomeActions: { flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  iconButton: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: glass.rimAccent,
-    backgroundColor: glass.fillAccent,
-  },
   localRow: {
     minWidth: 0,
     flexDirection: 'row',
@@ -642,39 +513,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   actionDeck: { width: '100%', flexDirection: 'row', gap: spacing.sm },
-  counterAction: {
-    minWidth: 0,
-    minHeight: 84,
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: glass.rimAccent,
-    borderRadius: 20,
-    backgroundColor: glass.fillOpaque,
-  },
-  counterActionPrimary: { borderColor: colors.primaryDark, backgroundColor: colors.primary },
-  counterActionIcon: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 18,
-    backgroundColor: glass.fillAccent,
-  },
-  counterActionIconPrimary: { backgroundColor: glass.fillOnPrimary },
-  counterActionText: {
-    maxWidth: '100%',
-    color: colors.primaryDark,
-    fontFamily: fonts.semibold,
-    fontSize: 12,
-    lineHeight: 16,
-    textAlign: 'center',
-  },
-  counterActionTextPrimary: { color: colors.onPrimary },
   firstPlanCard: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -741,93 +579,6 @@ const styles = StyleSheet.create({
     backgroundColor: glass.fillAccent,
   },
   linkButtonText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
-  taskCard: { gap: spacing.sm, padding: spacing.md },
-  taskTop: {
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  taskIdentity: {
-    minWidth: 0,
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  taskAvatar: {
-    width: 40,
-    height: 40,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: glass.rim,
-    backgroundColor: glass.fillMuted,
-  },
-  taskAvatarDanger: { borderColor: glass.rimDangerStrong, backgroundColor: glass.fillDanger },
-  taskAvatarText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 14 },
-  taskAvatarTextDanger: { color: colors.dangerText },
-  taskCopy: { minWidth: 0, flex: 1, gap: 2 },
-  taskName: {
-    color: colors.text,
-    fontFamily: fonts.semibold,
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  taskStatus: {
-    maxWidth: 120,
-    flexShrink: 0,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: glass.rimWarning,
-    backgroundColor: glass.fillWarning,
-  },
-  taskStatusDanger: { borderColor: glass.rimDanger, backgroundColor: glass.fillDanger },
-  taskStatusText: {
-    color: colors.warningText,
-    fontFamily: fonts.bold,
-    fontSize: 10,
-    lineHeight: 14,
-  },
-  taskStatusTextDanger: { color: colors.dangerText },
-  taskMeta: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 12, lineHeight: 16 },
-  taskAmount: {
-    minWidth: 0,
-    flex: 1,
-    color: colors.text,
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    lineHeight: 24,
-    fontVariant: ['tabular-nums'],
-  },
-  taskAmountDanger: { color: colors.danger },
-  taskActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: glass.divider,
-  },
-  taskAction: {
-    minHeight: 44,
-    flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.pill,
-    backgroundColor: colors.primary,
-  },
-  taskActionDanger: { backgroundColor: colors.danger },
-  taskActionText: { color: colors.onPrimary, fontFamily: fonts.semibold, fontSize: 13 },
   reviewRow: {
     minHeight: 64,
     flexDirection: 'row',

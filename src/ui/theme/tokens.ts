@@ -61,6 +61,10 @@ export const glass = Object.freeze({
   fillWarning: 'rgba(255, 244, 214, 0.8)',
   fillWarningStrong: 'rgba(97, 90, 67, 0.9)',
   rimWarning: 'rgba(241, 211, 138, 0.8)',
+  fillSuccess: 'rgba(230, 245, 240, 0.85)',
+  rimSuccess: 'rgba(190, 229, 214, 0.9)',
+  /** Neutral chips and badges: tinted so they stay visible on white glass. */
+  fillNeutral: 'rgba(235, 243, 241, 0.9)',
   /** Near-opaque white for controls and fields that must stand out from white glass. */
   fillOpaque: 'rgba(255, 255, 255, 0.9)',
   fillMuted: 'rgba(206, 232, 225, 0.7)',
@@ -70,6 +74,7 @@ export const glass = Object.freeze({
   /** Panel tints; keep at ≥ 0.85 alpha so text stays legible over the backdrop. */
   tintSuccess: 'rgba(230, 245, 240, 0.88)',
   tintWarning: 'rgba(250, 242, 220, 0.92)',
+  tintDanger: 'rgba(253, 232, 232, 0.92)',
   /** Frost layer of a panel. Do not lower: in-flow panels on Android get no real blur. */
   frost: 'rgba(255, 255, 255, 0.62)',
   frostSolid: 'rgba(255, 255, 255, 0.86)',

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/ui/components/core-controls';
-import { GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
+import { GlassSurface } from '@/ui/components/glass-surface';
 import { MaterialSymbol, StatusChip } from '@/ui/components/operational-shell';
 import {
   actionPressed,
@@ -108,7 +108,6 @@ export function GlassListRow({
       <View style={styles.rowTop}>
         <View style={styles.identity}>
           <View style={[styles.avatar, danger && styles.avatarDanger]}>
-            <GlassSheen />
             <Text style={[styles.avatarText, danger && styles.avatarTextDanger]}>{avatarText}</Text>
           </View>
           <View style={styles.copy}>

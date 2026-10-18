@@ -25,7 +25,7 @@ export default function BackupIntroRoute() {
   };
 
   return (
-    <AppScreen glass title={t('localDataTitle')} subtitle={t('localDataSubtitle')}>
+    <AppScreen title={t('localDataTitle')} subtitle={t('localDataSubtitle')}>
       <Notice danger>{t('localDataLossNotice')}</Notice>
       <View style={styles.list}>
         <Text style={styles.item}>• {t('privacyStoredLocally')}</Text>

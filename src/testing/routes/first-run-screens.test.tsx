@@ -11,16 +11,7 @@ import SecuritySetupRoute from '@/app/(setup)/security';
 import i18n from '@/i18n';
 import { pickGymVitoBackup } from '@/platform/files/document-files';
 import { GlassSurface } from '@/ui/components/glass-surface';
-import { colors, glass } from '@/ui/theme/tokens';
-
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
+import { glass } from '@/ui/theme/tokens';
 
 jest.mock('expo-router', () => ({
   Redirect: () => null,
@@ -72,13 +63,9 @@ const screens: [string, ComponentType, string, number][] = [
   ['Backup intro', BackupIntroRoute, 'backup-intro', 0],
 ];
 
-describe.each([true, false])('first-run screens surface (GLASS_UI %s)', (enabled) => {
+describe('first-run screens surface', () => {
   beforeEach(async () => {
-    mockGlassUi.enabled = enabled;
     await act(async () => i18n.changeLanguage('en'));
-  });
-  afterAll(() => {
-    mockGlassUi.enabled = true;
   });
 
   describe.each(screens)('%s', (_, Route, step, radioCount) => {
@@ -115,9 +102,9 @@ describe.each([true, false])('first-run screens surface (GLASS_UI %s)', (enabled
         screen
           .UNSAFE_queryAllByType(GlassSurface)
           .some((panel) => panel.findAll((node) => node === title).length > 0),
-      ).toBe(enabled);
+      ).toBe(true);
 
-      expect(blurs.length > 0).toBe(enabled);
+      expect(blurs.length).toBeGreaterThan(0);
       for (const blur of blurs) {
         expect(blur.props.blurTarget).toBeUndefined();
         expect(blur.props.blurMethod).toBe('none');
@@ -135,8 +122,19 @@ describe.each([true, false])('first-run screens surface (GLASS_UI %s)', (enabled
 
     const well = screen.getByText('Iron Den').parent?.parent;
     const style = StyleSheet.flatten(well?.props.style);
-    expect(style.backgroundColor).toBe(enabled ? glass.fillAccent : colors.surfaceLow);
-    expect(style.borderColor).toBe(enabled ? glass.rimPrimary : colors.primary);
+    expect(style.backgroundColor).toBe(glass.fillAccent);
+    expect(style.borderColor).toBe(glass.rimPrimary);
     expect(screen.getByRole('checkbox')).toBeTruthy();
+  });
+
+  it('turns biometric unlock on by default in security setup', async () => {
+    mockSession.state.step = 'security';
+    const screen = render(<SecuritySetupRoute />);
+
+    fireEvent.changeText(screen.getByLabelText('Owner PIN'), '123456');
+    fireEvent.changeText(screen.getByLabelText('Confirm owner PIN'), '123456');
+    await act(async () => fireEvent.press(screen.getByText('Continue')));
+
+    expect(mockSession.saveSecurity).toHaveBeenCalledWith('123456', true);
   });
 });

@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { type EdgeInsets, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,7 +12,7 @@ import {
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppButton } from '@/ui/components/core-controls';
 import { GlassBlurTarget, GlassProvider, useGlassBlurTarget } from '@/ui/components/glass-context';
-import { GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
+import { GlassSurface } from '@/ui/components/glass-surface';
 import { MaterialSymbol } from '@/ui/components/operational-shell';
 import {
   actionPressed,
@@ -58,10 +58,32 @@ export default function UnlockRoute() {
     return () => clearInterval(timer);
   }, [remaining]);
 
-  if (state.status !== 'locked') return <Redirect href="/" />;
-  const settings = state.snapshot.settings;
-  const language = settings?.language ?? 'en';
+  const settings = state.status === 'locked' ? state.snapshot.settings : undefined;
   const biometricsEnabled = Boolean(settings?.biometricsEnabled);
+
+  // Offer biometrics as soon as the screen is in the foreground, once per visit. A cancel
+  // falls back to the keypad quietly; the Scan key stays available to retry.
+  const autoPrompted = useRef(false);
+  useEffect(() => {
+    if (!biometricsEnabled) return;
+    const prompt = () => {
+      if (autoPrompted.current) return;
+      autoPrompted.current = true;
+      void unlockWithBiometrics().catch(() => undefined);
+    };
+    // iOS can report 'unknown' at cold start, before the first change event.
+    if (AppState.currentState !== 'background' && AppState.currentState !== 'inactive') {
+      prompt();
+      return;
+    }
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active') prompt();
+    });
+    return () => subscription.remove();
+  }, [biometricsEnabled, unlockWithBiometrics]);
+
+  if (state.status !== 'locked') return <Redirect href="/" />;
+  const language = settings?.language ?? 'en';
   const lockedOut = remaining > 0;
   const keypadDisabled = busy || lockedOut;
   const slotCount = Math.max(MIN_PIN_LENGTH, pin.length);
@@ -122,7 +144,6 @@ export default function UnlockRoute() {
           >
             <GlassSurface radius={CARD_RADIUS} style={styles.prompt}>
               <View style={styles.promptIcon}>
-                <GlassSheen />
                 <MaterialSymbol color={colors.primaryDark} name="pin" size={26} />
               </View>
               <Text accessibilityRole="header" style={styles.promptTitle}>
@@ -201,7 +222,6 @@ export default function UnlockRoute() {
                     >
                       {({ pressed }) => (
                         <>
-                          <GlassSheen />
                           <View style={styles.keyIcons}>
                             <MaterialSymbol
                               color={pressed ? colors.onPrimary : colors.primaryDark}
@@ -237,7 +257,6 @@ export default function UnlockRoute() {
                       pressed && styles.keyDeletePressed,
                     ]}
                   >
-                    <GlassSheen />
                     <MaterialSymbol color={colors.text} name="backspace" size={22} />
                     <Text style={styles.keyAction}>{t('unlockClear')}</Text>
                   </Pressable>
@@ -303,7 +322,6 @@ function UnlockHeader({
     >
       <View style={styles.headerIdentity}>
         <View style={styles.brandMark}>
-          <GlassSheen radius={radii.md} />
           <MaterialSymbol color={colors.onPrimary} name="fitness_center" size={20} />
         </View>
         <View style={styles.headerTitles}>
@@ -362,7 +380,6 @@ function DigitKey({
     >
       {({ pressed }) => (
         <>
-          <GlassSheen />
           <Text style={[styles.keyDigitText, pressed && styles.keyTextPressed]}>{digit}</Text>
           <Text style={[styles.keyLetters, pressed && styles.keyTextPressed]}>
             {letters || ' '}

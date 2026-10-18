@@ -3,7 +3,6 @@ import { createContext, type ReactNode, type RefObject, useContext, useRef } fro
 import { type StyleProp, View, type ViewStyle } from 'react-native';
 
 import { GlassBackdrop } from '@/ui/components/glass-surface';
-import { GLASS_UI } from '@/ui/theme/tokens';
 
 const GlassContext = createContext<RefObject<View | null> | undefined>(undefined);
 
@@ -30,7 +29,7 @@ export function GlassBlurTarget({
   style?: StyleProp<ViewStyle>;
 }) {
   const blurTargetRef = useGlassBlurTarget();
-  if (!GLASS_UI || !blurTargetRef) return <View style={style}>{children}</View>;
+  if (!blurTargetRef) return <View style={style}>{children}</View>;
   return (
     <BlurTargetView ref={blurTargetRef} style={style}>
       <GlassBackdrop />

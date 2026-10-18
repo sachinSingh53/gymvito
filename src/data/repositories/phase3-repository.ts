@@ -430,7 +430,7 @@ export class Phase3Repository {
 
   async dashboardCounts(
     today: DateOnly,
-    expiryWindowDays = 30,
+    expiryWindowDays = 10,
   ): Promise<MembershipDashboardCounts> {
     const expiryEnd = addDays(today, expiryWindowDays);
     const row = await this.database.getFirstAsync<{

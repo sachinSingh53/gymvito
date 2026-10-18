@@ -1,6 +1,6 @@
 import { router, type Href, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type {
@@ -16,20 +16,23 @@ import type { MemberMembershipStatus } from '@/domain/memberships/membership';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { useAppSession } from '@/features/session/app-session-context';
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
+import { logLocalDiagnostic } from '@/platform/diagnostics/local-diagnostic-logger';
 import {
   createReportPdf,
   deleteTemporaryReport,
   shareReportPdf,
 } from '@/platform/export/report-pdf';
+import { pdfShareFailureCode } from '@/platform/printing/share-pdf';
+import { AppButton, AppField, LoadingState, Notice } from '@/ui/components/core-controls';
 import {
-  AppButton,
-  AppChoice,
-  AppField,
-  LoadingState,
-  Notice,
-} from '@/ui/components/core-controls';
+  DateRangeFilter,
+  FilterBar,
+  FilterChip,
+  FilterSelect,
+  type DateRangePreset,
+} from '@/ui/components/filter-controls';
 import { OperationalShell, StatusChip, SurfaceCard } from '@/ui/components/operational-shell';
-import { actionPressed, colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
+import { actionPressed, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 const CATEGORIES: readonly MemberReportCategory[] = [
   'all',
@@ -41,6 +44,8 @@ const CATEGORIES: readonly MemberReportCategory[] = [
   'expiring',
   'new-joins',
 ];
+const DEFAULT_CATEGORY: MemberReportCategory = 'active';
+const FINANCE_STATUSES = ['active', 'upcoming', 'expired', 'no-membership'] as const;
 const CATEGORY_KEYS = {
   all: 'reportAll',
   active: 'reportActive',
@@ -53,8 +58,6 @@ const CATEGORY_KEYS = {
 } as const;
 
 export default function ReportsRoute() {
-  const { width } = useWindowDimensions();
-  const wide = width >= 960;
   const { t, i18n } = useTranslation();
   const {
     state,
@@ -67,8 +70,8 @@ export default function ReportsRoute() {
     state.status === 'unlocked' ? state.deviceLocale.timeZone : 'UTC',
   );
   const [tab, setTab] = useState<'members' | 'finance'>('members');
-  const [category, setCategory] = useState<MemberReportCategory>('active');
-  const [fromDate, setFromDate] = useState<DateOnly>(addDays(today, -30));
+  const [category, setCategory] = useState<MemberReportCategory>(DEFAULT_CATEGORY);
+  const [fromDate, setFromDate] = useState<DateOnly>(addDays(today, -29));
   const [toDate, setToDate] = useState<DateOnly>(today);
   const [planId, setPlanId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodOption['code'] | null>(null);
@@ -81,7 +84,9 @@ export default function ReportsRoute() {
   const [message, setMessage] = useState('');
   const [ownerPin, setOwnerPin] = useState('');
   const [exporting, setExporting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [exportMessage, setExportMessage] = useState<{ text: string; danger: boolean } | null>(
+    null,
+  );
 
   const filters = useMemo<ReportFilters>(
     () => ({
@@ -104,9 +109,33 @@ export default function ReportsRoute() {
     }
   }, [fromDate, toDate]);
 
+  const datePresets = useMemo<readonly DateRangePreset[]>(
+    () => [
+      { key: 'last7', label: t('last7Days'), from: addDays(today, -6), to: today },
+      { key: 'last30', label: t('last30Days'), from: addDays(today, -29), to: today },
+      { key: 'thisMonth', label: t('thisMonth'), from: `${today.slice(0, 8)}01`, to: today },
+      { key: 'last90', label: t('last90Days'), from: addDays(today, -89), to: today },
+    ],
+    [t, today],
+  );
+  const filtersChanged =
+    category !== DEFAULT_CATEGORY ||
+    planId !== null ||
+    paymentMethod !== null ||
+    membershipStatus !== null ||
+    fromDate !== addDays(today, -29) ||
+    toDate !== today;
+  const resetFilters = () => {
+    setCategory(DEFAULT_CATEGORY);
+    setPlanId(null);
+    setPaymentMethod(null);
+    setMembershipStatus(null);
+    setFromDate(addDays(today, -29));
+    setToDate(today);
+  };
+
   useFocusEffect(
     useCallback(() => {
-      void refreshKey;
       let active = true;
       setLoading(true);
       setMessage('');
@@ -142,7 +171,6 @@ export default function ReportsRoute() {
       getPhase2Repository,
       getPhase4Repository,
       getPhase6Repository,
-      refreshKey,
       t,
       today,
     ]),
@@ -154,15 +182,18 @@ export default function ReportsRoute() {
     currencyCode: state.snapshot.settings?.currencyCode ?? 'INR',
     dateFormat: state.snapshot.settings?.dateFormat ?? ('day-month-year' as const),
   };
+  const rangeLabel = datesValid
+    ? `${formatDateOnly(fromDate, regional)} – ${formatDateOnly(toDate, regional)}`
+    : `${fromDate} – ${toDate}`;
 
   const exportPdf = async () => {
     if (!finance || exporting) return;
     if (!(await reauthenticateOwner(ownerPin))) {
-      setMessage(t('ownerPinIncorrect'));
+      setExportMessage({ text: t('ownerPinIncorrect'), danger: true });
       return;
     }
     setExporting(true);
-    setMessage('');
+    setExportMessage(null);
     let file: Awaited<ReturnType<typeof createReportPdf>> | null = null;
     try {
       const rows =
@@ -212,14 +243,32 @@ export default function ReportsRoute() {
               ],
         rows,
       });
-      setMessage(
-        (await shareReportPdf(file, t('exportSummaryPdf')))
-          ? t('exportReady')
-          : t('exportUnavailable'),
-      );
-      setOwnerPin('');
     } catch {
-      setMessage(t('exportFailed'));
+      logLocalDiagnostic('error', 'REPORT.PDF_CREATE_FAILED');
+      setExportMessage({ text: t('exportFailed'), danger: true });
+      setExporting(false);
+      return;
+    }
+    try {
+      const shared = await shareReportPdf(file, t('exportSummaryPdf'));
+      setExportMessage({
+        text:
+          shared === 'shared'
+            ? t('exportReady')
+            : shared === 'opened'
+              ? t('exportOpenedForSharing')
+              : shared === 'saved'
+                ? t('exportSavedForSharing')
+                : t('exportUnavailable'),
+        danger: shared === 'unavailable',
+      });
+      setOwnerPin('');
+    } catch (error) {
+      logLocalDiagnostic('error', 'REPORT.PDF_SHARE_FAILED');
+      setExportMessage({
+        text: t('exportShareFailedWithCode', { code: pdfShareFailureCode(error) }),
+        danger: true,
+      });
     } finally {
       if (file) deleteTemporaryReport(file);
       setExporting(false);
@@ -234,7 +283,7 @@ export default function ReportsRoute() {
       subtitle={t('reportsSubtitle')}
       title={t('reports')}
     >
-      <View style={[styles.tabs, GLASS_UI && styles.glassTabs]}>
+      <View style={[styles.tabs, styles.glassTabs]}>
         <Tab
           label={t('memberReports')}
           selected={tab === 'members'}
@@ -246,162 +295,110 @@ export default function ReportsRoute() {
           onPress={() => setTab('finance')}
         />
       </View>
-      <View style={[styles.columns, wide && styles.columnsWide]}>
-        <SurfaceCard style={[styles.filters, wide && styles.filterPane]}>
-          <Text style={styles.title}>{t('reportFilters')}</Text>
-          <View style={styles.dateRow}>
+      <FilterBar>
+        <DateRangeFilter
+          defaultPresetKey="last30"
+          from={fromDate}
+          fromLabel={t('fromDate')}
+          onChange={(from, to) => {
+            setFromDate(from as DateOnly);
+            setToDate(to as DateOnly);
+          }}
+          presets={datePresets}
+          rangeLabel={rangeLabel}
+          title={t('dateRange')}
+          to={toDate}
+          toLabel={t('toDate')}
+        />
+        {tab === 'members' ? (
+          <FilterSelect
+            defaultValue={DEFAULT_CATEGORY}
+            onChange={setCategory}
+            options={CATEGORIES.map((value) => ({ value, label: t(CATEGORY_KEYS[value]) }))}
+            title={t('reportStatus')}
+            value={category}
+          />
+        ) : null}
+        <FilterSelect
+          defaultValue={null}
+          onChange={setPlanId}
+          options={[
+            { value: null, label: t('allPlans') },
+            ...plans.map((plan) => ({ value: plan.id, label: plan.name })),
+          ]}
+          title={t('reportPlan')}
+          value={planId}
+        />
+        {tab === 'finance' ? (
+          <>
+            <FilterSelect
+              defaultValue={null}
+              onChange={setPaymentMethod}
+              options={[
+                { value: null, label: t('allPaymentMethods') },
+                ...methods.map((method) => ({ value: method.code, label: method.label })),
+              ]}
+              title={t('paymentMethod')}
+              value={paymentMethod}
+            />
+            <FilterSelect
+              defaultValue={null}
+              onChange={setMembershipStatus}
+              options={[
+                { value: null, label: t('allStatuses') },
+                ...FINANCE_STATUSES.map((value) => ({ value, label: t(CATEGORY_KEYS[value]) })),
+              ]}
+              title={t('reportStatus')}
+              value={membershipStatus}
+            />
+          </>
+        ) : null}
+        {filtersChanged ? (
+          <FilterChip
+            icon={{ name: 'restart_alt' }}
+            kind="action"
+            label={t('resetFilters')}
+            onPress={resetFilters}
+            selected={false}
+          />
+        ) : null}
+      </FilterBar>
+      <View style={styles.results}>
+        {loading ? <LoadingState label={t('loading')} /> : null}
+        {message ? (
+          <Notice danger={message === t('reportLoadFailed') || message === t('invalidDateRange')}>
+            {message}
+          </Notice>
+        ) : null}
+        {!loading && tab === 'members' ? <MemberResults rows={members} /> : null}
+        {!loading && tab === 'finance' && finance ? (
+          <FinanceResults report={finance} regional={regional} />
+        ) : null}
+        <SurfaceCard style={styles.exportCard}>
+          <Notice>{t('exportPrivacyWarning')}</Notice>
+          <AppField
+            label={t('exportOwnerPin')}
+            value={ownerPin}
+            onChangeText={setOwnerPin}
+            keyboardType="number-pad"
+            secureTextEntry
+          />
+          {exportMessage ? (
+            <Notice danger={exportMessage.danger}>{exportMessage.text}</Notice>
+          ) : null}
+          <View style={styles.exportActions}>
             <View style={styles.flex}>
-              <AppField
-                label={t('fromDate')}
-                value={fromDate}
-                onChangeText={(value) => setFromDate(value as DateOnly)}
-                autoCapitalize="none"
-              />
+              <AppButton disabled={exporting || !ownerPin} onPress={() => void exportPdf()}>
+                {exporting ? t('loading') : t('exportSummaryPdf')}
+              </AppButton>
             </View>
             <View style={styles.flex}>
-              <AppField
-                label={t('toDate')}
-                value={toDate}
-                onChangeText={(value) => setToDate(value as DateOnly)}
-                autoCapitalize="none"
-              />
+              <AppButton variant="secondary" onPress={() => router.push('/data-export' as Href)}>
+                {t('dataExport')}
+              </AppButton>
             </View>
           </View>
-          {tab === 'members' ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.choiceRow}
-            >
-              {CATEGORIES.map((value) => (
-                <View style={styles.choice} key={value}>
-                  <AppChoice
-                    label={t(CATEGORY_KEYS[value])}
-                    selected={category === value}
-                    onPress={() => setCategory(value)}
-                  />
-                </View>
-              ))}
-            </ScrollView>
-          ) : null}
-          <Text style={styles.label}>{t('reportPlan')}</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.choiceRow}
-          >
-            <View style={styles.choice}>
-              <AppChoice label={t('allPlans')} selected={!planId} onPress={() => setPlanId(null)} />
-            </View>
-            {plans.map((plan) => (
-              <View style={styles.choice} key={plan.id}>
-                <AppChoice
-                  label={plan.name}
-                  selected={planId === plan.id}
-                  onPress={() => setPlanId(plan.id)}
-                />
-              </View>
-            ))}
-          </ScrollView>
-          {tab === 'finance' ? (
-            <>
-              <Text style={styles.label}>{t('paymentMethod')}</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.choiceRow}
-              >
-                <View style={styles.choice}>
-                  <AppChoice
-                    label={t('allPaymentMethods')}
-                    selected={!paymentMethod}
-                    onPress={() => setPaymentMethod(null)}
-                  />
-                </View>
-                {methods.map((method) => (
-                  <View style={styles.choice} key={method.code}>
-                    <AppChoice
-                      label={method.label}
-                      selected={paymentMethod === method.code}
-                      onPress={() => setPaymentMethod(method.code)}
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            </>
-          ) : null}
-          {tab === 'finance' ? (
-            <>
-              <Text style={styles.label}>{t('reportStatus')}</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.choiceRow}
-              >
-                <View style={styles.choice}>
-                  <AppChoice
-                    label={t('allStatuses')}
-                    selected={!membershipStatus}
-                    onPress={() => setMembershipStatus(null)}
-                  />
-                </View>
-                {(['active', 'upcoming', 'expired', 'no-membership'] as const).map((status) => (
-                  <View style={styles.choice} key={status}>
-                    <AppChoice
-                      label={t(CATEGORY_KEYS[status])}
-                      selected={membershipStatus === status}
-                      onPress={() => setMembershipStatus(status)}
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            </>
-          ) : null}
-          <AppButton onPress={() => setRefreshKey((value) => value + 1)}>
-            {t('applyFilters')}
-          </AppButton>
         </SurfaceCard>
-        <View style={styles.results}>
-          {loading ? <LoadingState label={t('loading')} /> : null}
-          {message ? (
-            <Notice
-              danger={
-                message === t('reportLoadFailed') ||
-                message === t('invalidDateRange') ||
-                message === t('ownerPinIncorrect') ||
-                message === t('exportFailed')
-              }
-            >
-              {message}
-            </Notice>
-          ) : null}
-          {!loading && tab === 'members' ? <MemberResults rows={members} /> : null}
-          {!loading && tab === 'finance' && finance ? (
-            <FinanceResults report={finance} regional={regional} />
-          ) : null}
-          <SurfaceCard style={styles.exportCard}>
-            <Notice>{t('exportPrivacyWarning')}</Notice>
-            <AppField
-              label={t('exportOwnerPin')}
-              value={ownerPin}
-              onChangeText={setOwnerPin}
-              keyboardType="number-pad"
-              secureTextEntry
-            />
-            <View style={styles.exportActions}>
-              <View style={styles.flex}>
-                <AppButton disabled={exporting || !ownerPin} onPress={() => void exportPdf()}>
-                  {exporting ? t('loading') : t('exportSummaryPdf')}
-                </AppButton>
-              </View>
-              <View style={styles.flex}>
-                <AppButton variant="secondary" onPress={() => router.push('/data-export' as Href)}>
-                  {t('dataExport')}
-                </AppButton>
-              </View>
-            </View>
-          </SurfaceCard>
-        </View>
       </View>
     </OperationalShell>
   );
@@ -413,23 +410,19 @@ function Tab({ label, selected, onPress }: { label: string; selected: boolean; o
       accessibilityRole="tab"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) =>
-        GLASS_UI
-          ? [
-              styles.tab,
-              styles.glassTab,
-              selected && styles.glassTabSelected,
-              pressed && actionPressed,
-            ]
-          : [styles.tab, selected && styles.tabSelected]
-      }
+      style={({ pressed }) => [
+        styles.tab,
+        styles.glassTab,
+        selected && styles.glassTabSelected,
+        pressed && actionPressed,
+      ]}
     >
       <Text
         style={[
           styles.tabText,
-          GLASS_UI && styles.glassTabText,
+          styles.glassTabText,
           selected && styles.tabTextSelected,
-          GLASS_UI && selected && styles.glassTabTextSelected,
+          selected && styles.glassTabTextSelected,
         ]}
       >
         {label}
@@ -439,15 +432,14 @@ function Tab({ label, selected, onPress }: { label: string; selected: boolean; o
 }
 
 function rowStyle({ pressed }: { pressed: boolean }) {
-  if (GLASS_UI) return [styles.row, styles.glassRow, pressed && actionPressed];
-  return styles.row;
+  return [styles.row, styles.glassRow, pressed && actionPressed];
 }
 
 function MemberResults({ rows }: { rows: readonly MemberReportRow[] }) {
   const { t } = useTranslation();
   return (
     <SurfaceCard style={styles.list}>
-      <Text style={[styles.title, GLASS_UI && styles.glassListTitle]}>
+      <Text style={[styles.title, styles.glassListTitle]}>
         {t('reportResults')} · {rows.length}
       </Text>
       {!rows.length ? (
@@ -511,7 +503,7 @@ function FinanceResults({
         ))}
       </View>
       <SurfaceCard style={styles.list}>
-        <Text style={[styles.title, GLASS_UI && styles.glassListTitle]}>
+        <Text style={[styles.title, styles.glassListTitle]}>
           {t('invoicesCount', { count: report.summary.invoiceCount })} ·{' '}
           {t('paymentsCount', { count: report.summary.paymentCount })}
         </Text>
@@ -549,20 +541,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   tab: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
-  tabSelected: { backgroundColor: colors.surface },
   tabText: { color: colors.textMuted, fontFamily: fonts.medium },
   tabTextSelected: { color: colors.primaryDark, fontFamily: fonts.semibold },
-  columns: { gap: spacing.md },
-  columnsWide: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.lg },
-  filterPane: { width: 390 },
-  filters: { gap: spacing.md },
   results: { minWidth: 0, flex: 1, gap: spacing.md },
   title: { color: colors.text, fontFamily: fonts.semibold, fontSize: 18 },
-  label: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
-  dateRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   flex: { minWidth: 150, flex: 1 },
-  choiceRow: { gap: spacing.sm },
-  choice: { minWidth: 112 },
   metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   metric: { minWidth: 150, flex: 1, gap: spacing.xs },
   metricLabel: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 12 },

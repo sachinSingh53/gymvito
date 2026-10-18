@@ -7,15 +7,6 @@ import '@/i18n';
 import { planColors } from '@/ui/theme/tokens';
 
 import { PlanForm } from './plan-form';
-
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
 jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('@/features/session/app-session-context', () => ({
   useAppSession: (() => {
@@ -31,14 +22,7 @@ jest.mock('@/features/session/app-session-context', () => ({
   })(),
 }));
 
-describe.each([true, false])('PlanForm surface (GLASS_UI %s)', (enabled) => {
-  beforeEach(() => {
-    mockGlassUi.enabled = enabled;
-  });
-  afterAll(() => {
-    mockGlassUi.enabled = true;
-  });
-
+describe('PlanForm surface', () => {
   it('keeps 48dp colour swatches with their radio labels and selection state', () => {
     const screen = render(<PlanForm />);
 
@@ -62,14 +46,14 @@ describe.each([true, false])('PlanForm surface (GLASS_UI %s)', (enabled) => {
     expect(screen.getByLabelText(planColors[0]).props.accessibilityState).toEqual({
       selected: false,
     });
-    expect(screen.queryAllByText('check')).toHaveLength(enabled ? 1 : 0);
+    expect(screen.queryAllByText('check')).toHaveLength(1);
   });
 
   it('frosts the content panels without ever giving them a blur target', () => {
     const screen = render(<PlanForm />);
     const blurs = screen.UNSAFE_queryAllByType(BlurView);
 
-    expect(blurs).toHaveLength(enabled ? 4 : 0);
+    expect(blurs).toHaveLength(4);
     for (const blur of blurs) {
       expect(blur.props.blurTarget).toBeUndefined();
       expect(blur.props.blurMethod).toBe('none');

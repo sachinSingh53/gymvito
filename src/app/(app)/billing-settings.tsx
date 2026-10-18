@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 
 import type { BillingSettings } from '@/data/repositories/phase4-repository';
 import { useAppSession } from '@/features/session/app-session-context';
-import { AppButton, AppField, LoadingState, Notice } from '@/ui/components/core-controls';
-import { LocalDataBadge, OperationalShell, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, spacing } from '@/ui/theme/tokens';
+import { AppField, LoadingState, Notice } from '@/ui/components/core-controls';
+import { FormActions, FormRow, FormSection } from '@/ui/components/form-layout';
+import { LocalDataBadge, OperationalShell } from '@/ui/components/operational-shell';
+import { colors, fonts, glass, spacing } from '@/ui/theme/tokens';
 
 export default function BillingSettingsRoute() {
   const { t } = useTranslation();
@@ -56,24 +57,25 @@ export default function BillingSettingsRoute() {
         <View style={styles.page}>
           <LocalDataBadge />
           <Notice>{t('billingSettingsHistoryNotice')}</Notice>
-          <SurfaceCard style={styles.section}>
-            <Text style={styles.title}>{t('numberPrefixes')}</Text>
-            <AppField
-              label={t('invoicePrefix')}
-              maxLength={8}
-              onChangeText={(value) => setSettings({ ...settings, invoicePrefix: value })}
-              value={settings.invoicePrefix}
-            />
-            <AppField
-              label={t('receiptPrefix')}
-              maxLength={8}
-              onChangeText={(value) => setSettings({ ...settings, receiptPrefix: value })}
-              value={settings.receiptPrefix}
-            />
-            <Text style={styles.hint}>{t('numberPrefixHint')}</Text>
-          </SurfaceCard>
-          <SurfaceCard style={styles.section}>
-            <Text style={styles.title}>{t('paymentMethodLabels')}</Text>
+          <FormSection description={t('numberPrefixHint')} icon="tag" title={t('numberPrefixes')}>
+            <FormRow>
+              <AppField
+                icon="description"
+                label={t('invoicePrefix')}
+                maxLength={8}
+                onChangeText={(value) => setSettings({ ...settings, invoicePrefix: value })}
+                value={settings.invoicePrefix}
+              />
+              <AppField
+                icon="receipt_long"
+                label={t('receiptPrefix')}
+                maxLength={8}
+                onChangeText={(value) => setSettings({ ...settings, receiptPrefix: value })}
+                value={settings.receiptPrefix}
+              />
+            </FormRow>
+          </FormSection>
+          <FormSection icon="payments" title={t('paymentMethodLabels')}>
             {settings.paymentMethods.map((method, index) => (
               <View key={method.code} style={styles.methodRow}>
                 <View style={styles.methodField}>
@@ -103,19 +105,22 @@ export default function BillingSettingsRoute() {
                         ),
                       })
                     }
-                    trackColor={{ true: colors.primary }}
+                    thumbColor={colors.surface}
+                    trackColor={{ false: glass.rimPrimary, true: colors.primary }}
                     value={method.isActive}
                   />
                 </View>
               </View>
             ))}
-          </SurfaceCard>
+          </FormSection>
           {message ? (
             <Notice danger={message !== t('billingSettingsSaved')}>{message}</Notice>
           ) : null}
-          <AppButton disabled={saving} onPress={() => void save()}>
-            {saving ? t('saving') : t('saveBillingSettings')}
-          </AppButton>
+          <FormActions
+            onPrimary={() => void save()}
+            primaryDisabled={saving}
+            primaryLabel={saving ? t('saving') : t('saveBillingSettings')}
+          />
         </View>
       )}
     </OperationalShell>
@@ -124,11 +129,14 @@ export default function BillingSettingsRoute() {
 
 const styles = StyleSheet.create({
   page: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: spacing.md },
-  section: { gap: spacing.md },
-  title: { color: colors.text, fontFamily: fonts.semibold, fontSize: 18 },
-  hint: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 12, lineHeight: 18 },
   methodRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   methodField: { minWidth: 0, flex: 1 },
-  switchWrap: { minWidth: 76, minHeight: 52, alignItems: 'center', justifyContent: 'center' },
+  switchWrap: {
+    minWidth: 64,
+    minHeight: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
   switchLabel: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 11 },
 });

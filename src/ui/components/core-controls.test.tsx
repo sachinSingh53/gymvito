@@ -7,15 +7,6 @@ import { colors, glass } from '@/ui/theme/tokens';
 
 import { AppButton, AppCheckbox, AppChoice, AppField, LoadingState, Notice } from './core-controls';
 
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
-
 function backgrounds(screen: ReturnType<typeof render>) {
   return screen
     .UNSAFE_getAllByType(View)
@@ -23,15 +14,7 @@ function backgrounds(screen: ReturnType<typeof render>) {
     .filter(Boolean);
 }
 
-afterEach(() => {
-  mockGlassUi.enabled = true;
-});
-
-describe.each([true, false])('AppButton (GLASS_UI %s)', (enabled) => {
-  beforeEach(() => {
-    mockGlassUi.enabled = enabled;
-  });
-
+describe('AppButton', () => {
   it('keeps icon-only actions accessible and at least 48dp', () => {
     const onPress = jest.fn();
     const screen = render(
@@ -103,21 +86,15 @@ describe('AppButton glass styles', () => {
     });
     expect(tonal.getByText('Archive')).toHaveStyle({ color: colors.dangerText });
   });
-
-  it('renders the flat outline when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(
-      <AppButton onPress={jest.fn()} variant="secondary">
-        Cancel
-      </AppButton>,
-    );
-
-    expect(screen.getByRole('button')).toHaveStyle({
-      borderColor: colors.primary,
-      backgroundColor: 'transparent',
-    });
-  });
 });
+
+/** The bordered box a field's input sits in: the nearest ancestor that draws a rim. */
+function fieldBox(input: ReturnType<ReturnType<typeof render>['getByLabelText']>) {
+  let node = input.parent;
+  while (node && !StyleSheet.flatten(node.props.style)?.borderColor) node = node.parent;
+  if (!node) throw new Error('field box not found');
+  return node;
+}
 
 describe('AppField', () => {
   it('uses a near-opaque fill and accent rim, and rings the focused field', () => {
@@ -126,16 +103,18 @@ describe('AppField', () => {
     const screen = render(<AppField label="Phone" onBlur={onBlur} onFocus={onFocus} />);
     const input = screen.getByLabelText('Phone');
 
-    expect(input).toHaveStyle({
-      minHeight: 52,
+    expect(fieldBox(input)).toHaveStyle({
+      minHeight: 60,
       borderColor: glass.rimAccent,
       backgroundColor: glass.fillOpaque,
     });
     fireEvent(input, 'focus');
-    expect(screen.getByLabelText('Phone')).toHaveStyle({ borderColor: colors.focus });
+    expect(fieldBox(screen.getByLabelText('Phone'))).toHaveStyle({ borderColor: colors.focus });
     expect(onFocus).toHaveBeenCalledTimes(1);
     fireEvent(input, 'blur');
-    expect(screen.getByLabelText('Phone')).toHaveStyle({ borderColor: glass.rimAccent });
+    expect(fieldBox(screen.getByLabelText('Phone'))).toHaveStyle({
+      borderColor: glass.rimAccent,
+    });
     expect(onBlur).toHaveBeenCalledTimes(1);
   });
 
@@ -143,48 +122,43 @@ describe('AppField', () => {
     const screen = render(<AppField error="Required" label="Name" />);
 
     fireEvent(screen.getByLabelText('Name'), 'focus');
-    expect(screen.getByLabelText('Name')).toHaveStyle({ borderColor: colors.danger });
+    expect(fieldBox(screen.getByLabelText('Name'))).toHaveStyle({ borderColor: colors.danger });
     expect(screen.getByRole('alert')).toHaveTextContent('Required');
   });
 
-  it('renders the flat white field when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(<AppField label="Phone" />);
+  it('shows the label inside the box and fixed prefix and suffix text around the value', () => {
+    const screen = render(<AppField label="Price" prefix="₹" suffix="/ month" value="1500" />);
 
-    fireEvent(screen.getByLabelText('Phone'), 'focus');
-    expect(screen.getByLabelText('Phone')).toHaveStyle({
-      borderColor: colors.border,
-      backgroundColor: '#ffffff',
-    });
+    expect(screen.getByText('Price')).toBeTruthy();
+    expect(screen.getByText('₹')).toBeTruthy();
+    expect(screen.getByText('/ month')).toBeTruthy();
+    expect(screen.getByLabelText('Price').props.value).toBe('1500');
   });
 });
 
 describe('AppChoice and AppCheckbox', () => {
-  it('uses the accent fill unselected and solid primary selected, at least 48dp', () => {
+  it('draws a radio or check indicator and tints the selected row, at least 48dp', () => {
     const screen = render(
       <>
         <AppChoice label="Monthly" onPress={jest.fn()} selected={false} />
-        <AppChoice label="Yearly" onPress={jest.fn()} selected />
+        <AppChoice label="Yearly" onPress={jest.fn()} selected trailing="₹12,000" />
         <AppCheckbox label="Active" onPress={jest.fn()} selected />
       </>,
     );
     const [monthly, yearly] = screen.getAllByRole('radio');
     const checkbox = screen.getByRole('checkbox');
 
-    expect(monthly).toHaveStyle({ minHeight: 48, backgroundColor: glass.fillAccent });
-    expect(yearly).toHaveStyle({ minHeight: 48, backgroundColor: colors.primary });
+    expect(monthly).toHaveStyle({ minHeight: 52, backgroundColor: glass.fillOpaque });
+    expect(yearly).toHaveStyle({
+      minHeight: 52,
+      borderColor: colors.primary,
+      backgroundColor: glass.tintSelected,
+    });
     expect(yearly.props.accessibilityState).toEqual({ selected: true });
-    expect(screen.getByText('Yearly')).toHaveStyle({ color: colors.onPrimary });
-    expect(checkbox).toHaveStyle({ backgroundColor: colors.primary });
+    expect(yearly.props.accessibilityLabel).toBe('Yearly, ₹12,000');
+    expect(screen.getByText('Yearly')).toHaveStyle({ color: colors.primaryDark });
+    expect(checkbox).toHaveStyle({ backgroundColor: glass.tintSelected });
     expect(checkbox.props.accessibilityState).toEqual({ checked: true });
-  });
-
-  it('renders the flat choice when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(<AppChoice label="Yearly" onPress={jest.fn()} selected />);
-
-    expect(screen.getByRole('radio')).toHaveStyle({ backgroundColor: '#dcf4ed' });
-    expect(screen.getByText('Yearly')).toHaveStyle({ color: colors.primary });
   });
 });
 
@@ -202,15 +176,6 @@ describe('Notice', () => {
       expect(parseColor(tint)[3]).toBeGreaterThanOrEqual(0.85);
     }
   });
-
-  it('renders the flat banner when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(<Notice>Backup needed</Notice>);
-
-    expect(screen.toJSON()).toHaveProp('accessibilityRole', 'summary');
-    expect(screen.toJSON()).toHaveStyle({ backgroundColor: colors.warningSurface });
-    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
-  });
 });
 
 describe('LoadingState', () => {
@@ -220,13 +185,5 @@ describe('LoadingState', () => {
     expect(screen.getByText('Loading')).toBeTruthy();
     expect(screen.toJSON()).toHaveProp('accessibilityLiveRegion', 'polite');
     expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(1);
-  });
-
-  it('renders without a panel when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(<LoadingState label="Loading" />);
-
-    expect(screen.toJSON()).toHaveProp('accessibilityLiveRegion', 'polite');
-    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
   });
 });

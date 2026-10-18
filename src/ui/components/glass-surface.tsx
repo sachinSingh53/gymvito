@@ -9,16 +9,14 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { GLASS_RADIUS, GLASS_UI, colors, glass, radii } from '@/ui/theme/tokens';
+import { GLASS_RADIUS, colors, glass } from '@/ui/theme/tokens';
 
 /** Android 12; below it `blurTarget` cannot blur, so the panel takes the dense no-blur frost. */
 const ANDROID_BLUR_API = 31;
 
 /**
- * Frosted "liquid glass" panel: native blur, a milky tint, a specular top edge and a hairline
- * rim. On Android a real blur needs a `blurTarget` that is not an ancestor of the panel, so
- * in-flow panels fall back to the translucent tint there while floating chrome stays blurred.
- * With `GLASS_UI` off it renders a flat card instead.
+ * Frosted "liquid glass" panel: native blur, a milky tint and a hairline rim. On Android a real
+ * blur needs a `blurTarget` that is not an ancestor of the panel, so in-flow panels fall back to the translucent tint there while floating chrome stays blurred.
  */
 export function GlassSurface({
   children,
@@ -38,16 +36,6 @@ export function GlassSurface({
 }) {
   const handleLayout =
     onLayout && ((event: LayoutChangeEvent) => onLayout(event.nativeEvent.layout.height));
-  if (!GLASS_UI) {
-    return (
-      <View
-        onLayout={handleLayout}
-        style={[styles.flat, tint ? { backgroundColor: tint } : null, style]}
-      >
-        {children}
-      </View>
-    );
-  }
   const androidBlur =
     Platform.OS === 'android' && Platform.Version >= ANDROID_BLUR_API && blurTarget;
   return (
@@ -67,25 +55,13 @@ export function GlassSurface({
           tint ? { backgroundColor: tint } : null,
         ]}
       />
-      <View pointerEvents="none" style={styles.sheen} />
-      <View pointerEvents="none" style={[styles.highlight, { left: radius, right: radius }]} />
       {children}
     </View>
   );
 }
 
-/**
- * Curved specular rim along the top edge of a small glass bubble. A rim rather than a filled
- * band, so solid-coloured bubbles keep one even tone. `radius` should match the parent's.
- */
-export function GlassSheen({ radius = 999 }: { radius?: number }) {
-  if (!GLASS_UI) return null;
-  return <View pointerEvents="none" style={[styles.bubbleSheen, { borderRadius: radius }]} />;
-}
-
 /** Soft colour fields that give the glass something to refract. Place behind content. */
 export function GlassBackdrop() {
-  if (!GLASS_UI) return null;
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <View style={[styles.glow, styles.glowTopStart]} />
@@ -98,12 +74,6 @@ export function GlassBackdrop() {
 }
 
 const styles = StyleSheet.create({
-  flat: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    backgroundColor: colors.surface,
-  },
   glass: {
     overflow: 'hidden',
     borderWidth: 1,
@@ -115,25 +85,6 @@ const styles = StyleSheet.create({
   },
   tint: { ...StyleSheet.absoluteFill, backgroundColor: glass.frost },
   tintSolid: { backgroundColor: glass.frostSolid },
-  sheen: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '45%',
-    backgroundColor: glass.panelSheen,
-  },
-  highlight: {
-    position: 'absolute',
-    top: 0,
-    height: 1,
-    backgroundColor: glass.panelHighlight,
-  },
-  bubbleSheen: {
-    ...StyleSheet.absoluteFill,
-    borderTopWidth: 1,
-    borderColor: glass.sheen,
-  },
   glow: { position: 'absolute', borderRadius: 999 },
   glowTopStart: {
     top: -60,

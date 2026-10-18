@@ -8,12 +8,20 @@ import type {
   MemberPhotoInput,
   MemberRecord,
 } from '@/data/repositories/phase2-repository';
-import { validateMember, type MemberInput } from '@/domain/members/member';
+import { normalizeGender, validateMember, type MemberInput } from '@/domain/members/member';
+import { genderOptions } from '@/features/members/gender';
 import { useAppSession } from '@/features/session/app-session-context';
-import { memberPhotoDataUri, pickMemberPhoto } from '@/platform/images/member-photo';
+import {
+  CAMERA_PERMISSION_DENIED,
+  captureMemberPhoto,
+  memberPhotoDataUri,
+  pickMemberPhoto,
+} from '@/platform/images/member-photo';
 import { AppButton, AppField, LoadingState, Notice } from '@/ui/components/core-controls';
+import { AppDateField, localDateToDateOnly } from '@/ui/components/date-field';
+import { AppSelectField, FormActions, FormRow, FormSection } from '@/ui/components/form-layout';
 import { LocalDataBadge, MaterialSymbol, SurfaceCard } from '@/ui/components/operational-shell';
-import { actionPressed, colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
+import { actionPressed, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 const DUPLICATE_LABELS = {
   phone: 'duplicatePhone',
@@ -65,7 +73,7 @@ export function MemberForm({ memberId }: { memberId?: string }) {
           phone: member.phone,
           email: member.email,
           dateOfBirth: member.dateOfBirth,
-          gender: member.gender,
+          gender: normalizeGender(member.gender),
           address: member.address,
           emergencyContactName: member.emergencyContactName,
           emergencyContactPhone: member.emergencyContactPhone,
@@ -89,12 +97,15 @@ export function MemberForm({ memberId }: { memberId?: string }) {
   const errorFor = (key: string) => (errors[key] ? t('fieldInvalid') : undefined);
   const displayedPhoto = photo === undefined ? existing?.photo : photo;
 
-  const choosePhoto = async () => {
+  const choosePhoto = async (source: 'camera' | 'library') => {
+    const { photo: _previous, ...otherErrors } = errors;
+    setErrors(otherErrors);
     try {
-      const selected = await pickMemberPhoto();
+      const selected = await (source === 'camera' ? captureMemberPhoto() : pickMemberPhoto());
       if (selected) setPhoto(selected);
-    } catch {
-      setErrors({ ...errors, photo: 'invalid' });
+    } catch (error) {
+      const denied = error instanceof Error && error.message === CAMERA_PERMISSION_DENIED;
+      setErrors({ ...otherErrors, photo: denied ? 'camera' : 'invalid' });
     }
   };
 
@@ -114,10 +125,11 @@ export function MemberForm({ memberId }: { memberId?: string }) {
       }
       if (memberId) {
         await repository.updateMember(memberId, form, state.ownerId, photo);
+        router.back();
       } else {
         await repository.createMember(form, state.ownerId, photo);
+        router.replace('/members');
       }
-      router.back();
     } catch {
       setErrors({ form: 'save' });
     } finally {
@@ -142,132 +154,163 @@ export function MemberForm({ memberId }: { memberId?: string }) {
     <View style={styles.form}>
       <LocalDataBadge />
       {errors.form ? <Notice danger>{t('memberSaveFailed')}</Notice> : null}
-      <SurfaceCard style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('memberIdentity')}</Text>
+      <FormSection icon="badge" title={t('memberIdentity')}>
         <View style={styles.photoRow}>
-          {displayedPhoto ? (
-            <Image
-              source={{ uri: memberPhotoDataUri(displayedPhoto) }}
-              style={[styles.photo, GLASS_UI && styles.glassPhoto]}
-            />
-          ) : (
-            <View style={[styles.photoPlaceholder, GLASS_UI && styles.glassPhotoPlaceholder]}>
-              {GLASS_UI ? (
-                <MaterialSymbol color={colors.primaryDark} name="add_a_photo" size={30} />
-              ) : (
-                <Text style={styles.photoGlyph}>＋</Text>
-              )}
-            </View>
-          )}
-          <View style={styles.photoActions}>
-            <AppButton onPress={() => void choosePhoto()} variant="secondary">
-              {t('choosePhoto')}
-            </AppButton>
+          <Pressable
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            onPress={() => void choosePhoto('camera')}
+            style={({ pressed }) => [styles.avatar, pressed && actionPressed]}
+          >
             {displayedPhoto ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setPhoto(null)}
-                style={({ pressed }) =>
-                  GLASS_UI
-                    ? [styles.removePhoto, styles.glassRemovePhoto, pressed && actionPressed]
-                    : styles.removePhoto
-                }
+              <Image source={{ uri: memberPhotoDataUri(displayedPhoto) }} style={styles.photo} />
+            ) : (
+              <View style={styles.photoPlaceholder}>
+                <MaterialSymbol color={colors.primaryDark} name="person" size={40} />
+              </View>
+            )}
+            <View style={styles.cameraBadge}>
+              <MaterialSymbol color={colors.onPrimary} name="photo_camera" size={16} />
+            </View>
+          </Pressable>
+          <View style={styles.photoActions}>
+            <AppButton
+              icon={<MaterialSymbol color={colors.primaryDark} name="photo_camera" size={20} />}
+              onPress={() => void choosePhoto('camera')}
+              variant="secondary"
+            >
+              {t('takePhoto')}
+            </AppButton>
+            <View style={styles.photoSecondaryRow}>
+              <AppButton
+                icon={<MaterialSymbol color={colors.primaryDark} name="photo_library" size={20} />}
+                onPress={() => void choosePhoto('library')}
+                style={styles.photoChoose}
+                variant="secondary"
               >
-                <Text
-                  adjustsFontSizeToFit={GLASS_UI}
-                  minimumFontScale={0.8}
-                  numberOfLines={GLASS_UI ? 1 : undefined}
-                  style={[styles.removePhotoText, GLASS_UI && styles.glassRemovePhotoText]}
-                >
-                  {t('removePhoto')}
-                </Text>
-              </Pressable>
-            ) : null}
+                {t('choosePhoto')}
+              </AppButton>
+              {displayedPhoto ? (
+                <AppButton
+                  accessibilityLabel={t('removePhoto')}
+                  icon={<MaterialSymbol color={colors.dangerText} name="delete" size={22} />}
+                  iconOnly
+                  onPress={() => setPhoto(null)}
+                  variant="dangerTonal"
+                />
+              ) : null}
+            </View>
           </View>
         </View>
-        {errors.photo ? <Notice danger>{t('photoFailed')}</Notice> : null}
+        {errors.photo ? (
+          <Notice danger>
+            {errors.photo === 'camera' ? t('cameraPermissionDenied') : t('photoFailed')}
+          </Notice>
+        ) : null}
         <AppField
           autoCapitalize="words"
           error={errorFor('name')}
+          icon="person"
           label={t('memberName')}
           onChangeText={(value) => update('name', value)}
           value={form.name}
         />
-        <AppField
-          keyboardType="phone-pad"
-          error={errorFor('phone')}
-          hint={t('indiaPhoneHint')}
-          label={t('phoneOptional')}
-          onChangeText={(value) => update('phone', value)}
-          value={form.phone}
-        />
-        <AppField
-          autoCapitalize="none"
-          error={errorFor('email')}
-          keyboardType="email-address"
-          label={t('emailOptional')}
-          onChangeText={(value) => update('email', value)}
-          value={form.email}
-        />
+        <FormRow minItemWidth={220}>
+          <AppField
+            error={errorFor('phone')}
+            hint={t('indiaPhoneHint')}
+            icon="call"
+            keyboardType="phone-pad"
+            label={t('phoneOptional')}
+            onChangeText={(value) => update('phone', value)}
+            value={form.phone}
+          />
+          <AppField
+            autoCapitalize="none"
+            error={errorFor('email')}
+            icon="mail"
+            keyboardType="email-address"
+            label={t('emailOptional')}
+            onChangeText={(value) => update('email', value)}
+            value={form.email}
+          />
+        </FormRow>
         {existing ? (
-          <View style={[styles.codeReadOnly, GLASS_UI && styles.glassCodeReadOnly]}>
+          <View style={styles.codeReadOnly}>
+            <MaterialSymbol color={colors.primaryDark} name="qr_code_2" size={22} />
             <Text style={styles.codeLabel}>{t('memberCode')}</Text>
             <Text style={styles.codeValue}>{existing.memberCode}</Text>
           </View>
         ) : (
-          <Notice>{t('memberCodeGenerated')}</Notice>
+          <View style={styles.codeReadOnly}>
+            <MaterialSymbol color={colors.primaryDark} name="qr_code_2" size={22} />
+            <Text style={styles.codeHint}>{t('memberCodeGenerated')}</Text>
+          </View>
         )}
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('personalDetails')}</Text>
+      </FormSection>
+      <FormSection icon="person_book" title={t('personalDetails')}>
+        <FormRow minItemWidth={200}>
+          <AppDateField
+            error={errorFor('dateOfBirth')}
+            label={t('dateOfBirth')}
+            maximumDate={localDateToDateOnly(new Date())}
+            onChangeText={(value) => update('dateOfBirth', value)}
+            value={form.dateOfBirth}
+          />
+          <AppSelectField
+            icon="wc"
+            label={t('genderOptional')}
+            onChange={(value) => update('gender', value)}
+            options={genderOptions(form.gender, t)}
+            placeholder={t('genderNotSpecified')}
+            value={form.gender}
+          />
+        </FormRow>
         <AppField
-          error={errorFor('dateOfBirth')}
-          hint="YYYY-MM-DD"
-          label={t('dateOfBirth')}
-          onChangeText={(value) => update('dateOfBirth', value)}
-          value={form.dateOfBirth}
-        />
-        <AppField
-          label={t('genderOptional')}
-          onChangeText={(value) => update('gender', value)}
-          value={form.gender}
-        />
-        <AppField
+          icon="home"
           label={t('addressOptional')}
           multiline
           onChangeText={(value) => update('address', value)}
           value={form.address}
         />
         <AppField
+          icon="campaign"
           label={t('joiningSource')}
           onChangeText={(value) => update('joiningSource', value)}
           value={form.joiningSource}
         />
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('emergencyAndNotes')}</Text>
-        <AppField
-          label={t('emergencyContactName')}
-          onChangeText={(value) => update('emergencyContactName', value)}
-          value={form.emergencyContactName}
-        />
-        <AppField
-          keyboardType="phone-pad"
-          label={t('emergencyContactPhone')}
-          onChangeText={(value) => update('emergencyContactPhone', value)}
-          value={form.emergencyContactPhone}
-        />
+      </FormSection>
+      <FormSection icon="emergency" title={t('emergencyAndNotes')}>
+        <FormRow minItemWidth={220}>
+          <AppField
+            icon="contact_emergency"
+            label={t('emergencyContactName')}
+            onChangeText={(value) => update('emergencyContactName', value)}
+            value={form.emergencyContactName}
+          />
+          <AppField
+            icon="call"
+            keyboardType="phone-pad"
+            label={t('emergencyContactPhone')}
+            onChangeText={(value) => update('emergencyContactPhone', value)}
+            value={form.emergencyContactPhone}
+          />
+        </FormRow>
         <AppField
           hint={memberId ? t('noteAppendHint') : undefined}
+          icon="sticky_note_2"
           label={t('memberNote')}
           multiline
           onChangeText={(value) => update('note', value)}
           value={form.note}
         />
-      </SurfaceCard>
+      </FormSection>
       {duplicates.length ? (
-        <SurfaceCard style={[styles.duplicateCard, GLASS_UI && styles.glassDuplicateCard]}>
-          <Text style={styles.duplicateTitle}>{t('duplicateWarningTitle')}</Text>
+        <SurfaceCard style={styles.duplicateCard}>
+          <View style={styles.duplicateHeader}>
+            <MaterialSymbol color={colors.warningText} name="group" size={22} />
+            <Text style={styles.duplicateTitle}>{t('duplicateWarningTitle')}</Text>
+          </View>
           <Text style={styles.duplicateText}>{t('duplicateWarningMessage')}</Text>
           {duplicates.map((match) => (
             <Text key={match.id} style={styles.duplicateMatch}>
@@ -279,61 +322,105 @@ export function MemberForm({ memberId }: { memberId?: string }) {
           </AppButton>
         </SurfaceCard>
       ) : null}
-      <View style={styles.actions}>
-        <AppButton
-          disabled={busy || (duplicates.length > 0 && !duplicatesAcknowledged)}
-          onPress={() => void save()}
-        >
-          {busy ? t('saving') : memberId ? t('saveChanges') : t('addMember')}
-        </AppButton>
-        <AppButton onPress={() => router.back()} variant="secondary">
-          {t('cancel')}
-        </AppButton>
-      </View>
+      <FormActions
+        onPrimary={() => void save()}
+        onSecondary={() => router.back()}
+        primaryDisabled={busy || (duplicates.length > 0 && !duplicatesAcknowledged)}
+        primaryIcon={memberId ? 'save' : 'person_add'}
+        primaryLabel={busy ? t('saving') : memberId ? t('saveChanges') : t('addMember')}
+        secondaryLabel={t('cancel')}
+      />
     </View>
   );
 }
 
+const AVATAR = 88;
+
 const styles = StyleSheet.create({
   form: { width: '100%', maxWidth: 820, alignSelf: 'center', gap: spacing.md },
-  section: { gap: spacing.md },
-  sectionTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 18 },
   photoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  photo: { width: 80, height: 80, borderRadius: 40 },
+  avatar: { width: AVATAR, height: AVATAR },
+  photo: {
+    width: AVATAR,
+    height: AVATAR,
+    borderWidth: 2,
+    borderColor: glass.rim,
+    borderRadius: AVATAR / 2,
+  },
   photoPlaceholder: {
-    width: 80,
-    height: 80,
+    width: AVATAR,
+    height: AVATAR,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 40,
-    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: glass.rimPrimary,
+    borderRadius: AVATAR / 2,
+    backgroundColor: glass.fillAccent,
   },
-  photoGlyph: { color: colors.primaryDark, fontFamily: fonts.regular, fontSize: 32 },
-  photoActions: { flex: 1, gap: spacing.sm },
-  removePhoto: { minHeight: 48, alignItems: 'center', justifyContent: 'center' },
-  removePhotoText: { color: colors.danger, fontFamily: fonts.semibold, fontSize: 13 },
+  cameraBadge: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.surface,
+    borderRadius: 15,
+    backgroundColor: colors.primary,
+  },
+  photoActions: { minWidth: 0, flex: 1, gap: spacing.sm },
+  photoSecondaryRow: { minWidth: 0, flexDirection: 'row', gap: spacing.sm },
+  photoChoose: { minWidth: 0, flex: 1 },
   codeReadOnly: {
     minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.sm,
-    backgroundColor: colors.surfaceLow,
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: glass.rimPrimary,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillAccent,
   },
-  codeLabel: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 13 },
+  codeLabel: {
+    minWidth: 0,
+    flex: 1,
+    color: colors.textMuted,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+  },
+  codeHint: {
+    minWidth: 0,
+    flex: 1,
+    color: colors.textMuted,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 19,
+  },
   codeValue: {
     color: colors.primaryDark,
     fontFamily: fonts.bold,
-    fontSize: 14,
+    fontSize: 15,
     letterSpacing: 0.8,
   },
   duplicateCard: {
     gap: spacing.sm,
-    borderColor: colors.warningBorder,
-    backgroundColor: colors.warningSurface,
+    borderColor: glass.rimWarning,
+    backgroundColor: glass.tintWarning,
   },
-  duplicateTitle: { color: colors.warningText, fontFamily: fonts.bold, fontSize: 16 },
+  duplicateHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  duplicateTitle: {
+    minWidth: 0,
+    flex: 1,
+    color: colors.warningText,
+    fontFamily: fonts.bold,
+    fontSize: 16,
+  },
   duplicateText: {
     color: colors.warningText,
     fontFamily: fonts.regular,
@@ -341,26 +428,4 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   duplicateMatch: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13 },
-  actions: { gap: spacing.sm },
-  glassPhoto: { borderWidth: 2, borderColor: glass.rim },
-  glassPhotoPlaceholder: {
-    borderWidth: 1,
-    borderColor: glass.rimAccent,
-    backgroundColor: glass.fillAccent,
-  },
-  glassRemovePhoto: {
-    paddingHorizontal: spacing.md,
-    borderWidth: 1,
-    borderColor: glass.rimDanger,
-    borderRadius: radii.pill,
-    backgroundColor: glass.fillDanger,
-  },
-  glassRemovePhotoText: { color: colors.dangerText },
-  glassCodeReadOnly: {
-    borderWidth: 1,
-    borderColor: glass.rimAccent,
-    borderRadius: radii.lg,
-    backgroundColor: glass.fillAccent,
-  },
-  glassDuplicateCard: { borderColor: glass.rimWarning, backgroundColor: glass.tintWarning },
 });

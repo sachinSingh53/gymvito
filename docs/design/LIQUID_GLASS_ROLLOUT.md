@@ -23,13 +23,12 @@ added or removed. The feature specification and implementation plan stay unchang
 
 ### 2.1 What already exists
 
-| Piece                    | Location                                  | Notes                                                                                                            |
-| ------------------------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `GlassSurface`           | `src/ui/components/glass-surface.tsx`     | Blurred, tinted panel with rim and sheen. Real blur on iOS, and on Android only when it is given a `blurTarget`. |
-| `GlassSheen`             | same                                      | Thin specular rim for small bubbles. It replaced the old top-half band, which made solid buttons look two-tone.  |
-| `GlassBackdrop`          | same                                      | The soft colour blobs the glass sits on.                                                                         |
-| `glass` fills and rims   | same                                      | `fill`, `fillMint`, `fillPrimary`, `fillAccent`, `rimAccent`, and others.                                        |
-| `OperationalShell glass` | `src/ui/components/operational-shell.tsx` | Floating blurred header over a backdrop. Only `home` turns it on.                                                |
+| Piece                    | Location                                  | Notes                                                                                                                                             |
+| ------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GlassSurface`           | `src/ui/components/glass-surface.tsx`     | Blurred, tinted panel with a hairline rim; no top sheen or highlight line. Real blur on iOS, and on Android only when it is given a `blurTarget`. |
+| `GlassBackdrop`          | same                                      | The soft colour blobs the glass sits on.                                                                                                          |
+| `glass` fills and rims   | same                                      | `fill`, `fillMint`, `fillPrimary`, `fillAccent`, `rimAccent`, and others.                                                                         |
+| `OperationalShell glass` | `src/ui/components/operational-shell.tsx` | Floating blurred header over a backdrop. Only `home` turns it on.                                                                                 |
 
 ### 2.2 What still uses the old design
 
@@ -53,8 +52,8 @@ These problems showed up on a real Android device. Each one becomes a rule in §
    through behind the text and made it hard to read.
 2. **No blur at all below Android 12 (API 31).** The app's `minSdkVersion` is 28, so
    devices on Android 9–11 always get the tint-only fallback.
-3. **A white band over half a solid button splits it into two tones.** Highlights must be
-   thin rims, never fills.
+3. **A white band over half a solid button splits it into two tones.** Do not add top
+   highlights at all: a 1px white rim along the top edge reads as a gap in the fill.
 4. **White buttons on white glass disappear.** Secondary controls need a brand-tinted fill
    and border to show where they start and end.
 5. **Three equal-width pill buttons truncate their labels**, especially in Hindi.
@@ -90,15 +89,15 @@ Glass is for **surfaces**, not for **controls**. A button never blurs.
 
 ### 3.3 Controls
 
-| Control                          | Fill                     | Border                                         | Text and icon                 |
-| -------------------------------- | ------------------------ | ---------------------------------------------- | ----------------------------- |
-| Primary button                   | `colors.primary` (solid) | none                                           | `#fff`                        |
-| Danger button                    | `colors.danger` (solid)  | none                                           | `#fff`                        |
-| Secondary button and link button | `glass.fillAccent`       | `glass.rimAccent`                              | `colors.primaryDark`          |
-| Icon bubble                      | `glass.fillAccent`       | `glass.rimAccent`                              | `colors.primaryDark`          |
-| Brand bubble (logo, avatar)      | solid brand colour       | `glass.rimSoft`                                | `#fff`, with `GlassSheen` rim |
-| Status chip                      | tone surface ≥ 0.8 alpha | tone border                                    | tone text, **≥ 10pt**         |
-| Text field                       | `rgba(255,255,255,0.9)`  | `glass.rimAccent`, `colors.focus` when focused | `colors.text`                 |
+| Control                          | Fill                     | Border                                         | Text and icon            |
+| -------------------------------- | ------------------------ | ---------------------------------------------- | ------------------------ |
+| Primary button                   | `colors.primary` (solid) | none                                           | `#fff`                   |
+| Danger button                    | `colors.danger` (solid)  | none                                           | `#fff`                   |
+| Secondary button and link button | `glass.fillAccent`       | `glass.rimAccent`                              | `colors.primaryDark`     |
+| Icon bubble                      | `glass.fillAccent`       | `glass.rimAccent`                              | `colors.primaryDark`     |
+| Brand bubble (logo, avatar)      | solid brand colour       | `glass.rimSoft`                                | `#fff`, no top highlight |
+| Status chip                      | tone surface ≥ 0.8 alpha | tone border                                    | tone text, **≥ 10pt**    |
+| Text field                       | `rgba(255,255,255,0.9)`  | `glass.rimAccent`, `colors.focus` when focused | `colors.text`            |
 
 - Touch targets stay at least 48dp. A compact in-card action may be 44dp tall only if the
   card itself is also tappable.
@@ -177,6 +176,10 @@ Add `GLASS_UI` (a boolean in `src/ui/theme/tokens.ts`) that the shells, `Surface
 core controls read. When it is `false`, everything renders the current flat styles. This
 keeps a one-line rollback available until the cleanup phase. The app has no remote config,
 so it is a build-time switch. A hotfix build flips it if needed.
+
+- _As built (G4):_ the switch and every flat branch are removed. Rolling back now means
+  reverting the G4 commit; there is no one-line rollback any more. `AppScreen` lost its
+  `glass` prop, since every caller passed it.
 
 ## 5. Rollout phases
 
@@ -278,29 +281,37 @@ Each wave's exit gate:
 
 ## 8. Tracking
 
-| Phase                       | Owner | Status      |
-| --------------------------- | ----- | ----------- |
-| Pilot: Dashboard and Unlock | —     | Done        |
-| G0 Foundations              | —     | Done        |
-| G1 Shell and navigation     | —     | Done        |
-| G2 Shared components        | —     | Done        |
-| G3-A Daily desk             | —     | Done        |
-| G3-B Catalogue and records  | —     | Done        |
-| G3-C Admin                  | —     | Done        |
-| G3-D First run and access   | —     | In review   |
-| G4 Cleanup                  | —     | Not started |
+| Phase                       | Owner | Status    |
+| --------------------------- | ----- | --------- |
+| Pilot: Dashboard and Unlock | —     | Done      |
+| G0 Foundations              | —     | Done      |
+| G1 Shell and navigation     | —     | Done      |
+| G2 Shared components        | —     | Done      |
+| G3-A Daily desk             | —     | Done      |
+| G3-B Catalogue and records  | —     | Done      |
+| G3-C Admin                  | —     | Done      |
+| G3-D First run and access   | —     | Done      |
+| G4 Cleanup                  | —     | In review |
 
 ### 8.1 Open items
 
-- **G3-D exit gate:** phone and tablet screenshots in English and Hindi, and the font scale
-  1.3 check, still need a device. All other gates pass: no hard-coded colours, contrast
-  tests, unit tests and `pnpm validate`.
+- **G3-D exit gate:** closed by the owner on 2026-10-17 with two device gates waived, not
+  met: phone and tablet screenshots in English and Hindi, and the font scale 1.3 check.
+  Both still need a device. All other gates pass: no hard-coded colours, contrast tests,
+  unit tests and `pnpm validate`.
 - **Screenshots for G3-A to G3-D:** `docs/design/screens/<screen>_glass/` has not been
   filled for any wave. The waves were checked on a device in Expo Go.
 - **G3-D deviations:** keypad keys keep a solid dark fill as the pressed echo and use only
   the 0.98 scale from `actionPressed`, since 0.72 opacity would wash out the fill. The
   unlock offline footer moved inside the notice panel so no text sits on the backdrop.
-- **For G4:** `operational-shell.tsx` still uses `#fff` for the brand mark and avatar, the
-  flat branch of `core-controls.tsx` still uses hex values, and `src/app/index.tsx`
-  (startup and recovery error) is in no wave and still flat.
+- **G4 exit gate:** the code half is met. `GLASS_UI` and the flat branches are gone from
+  `src`, the hard-coded colour grep is clean on every changed file, and `pnpm validate`
+  passes. Still open: the production build has not been checked on devices. Mark this plan
+  _Complete_ once that is done.
+- **G4 changes beyond §5:** `src/app/index.tsx` (startup and recovery error) now draws
+  glass panels over the backdrop, and `operational-shell.tsx` uses `colors.onPrimary`
+  instead of `#fff`.
+- **After G4:** screen files still pair a base style with a `glass*` override that always
+  applies (e.g. `styles.row, styles.glassRow`). Merging each pair is cosmetic and was left
+  out to keep G4 small.
 - **Not built yet:** the §3.2 reduce-transparency fallback.

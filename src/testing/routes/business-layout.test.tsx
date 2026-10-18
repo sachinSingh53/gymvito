@@ -6,15 +6,6 @@ import type { ReactNode } from 'react';
 import BusinessLayout from '@/app/(app)/_layout';
 import { BusinessNavigation, FloatingHeaderHost } from '@/ui/components/operational-shell';
 
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
-
 jest.mock('expo-router', () => ({
   Redirect: jest.fn(() => null),
   Stack: jest.fn(() => null),
@@ -46,10 +37,6 @@ describe('BusinessLayout', () => {
     (FloatingHeaderHost as jest.Mock).mockClear();
   });
 
-  afterEach(() => {
-    mockGlassUi.enabled = true;
-  });
-
   it('keeps navigation and the floating header outside the blurred route stack', () => {
     const screen = render(<BusinessLayout />);
 
@@ -62,16 +49,5 @@ describe('BusinessLayout', () => {
     expect(screen.UNSAFE_queryAllByType(BlurTargetView)).toHaveLength(1);
     expect(BusinessNavigation).toHaveBeenCalledTimes(1);
     expect(FloatingHeaderHost).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the flat layout when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(<BusinessLayout />);
-
-    const stackProps = mockStack.mock.calls[0][0];
-    expect(stackProps.screenOptions).toEqual({ animation: 'none', headerShown: false });
-    expect(screen.UNSAFE_queryAllByType(BlurTargetView)).toHaveLength(0);
-    expect(FloatingHeaderHost).not.toHaveBeenCalled();
-    expect(BusinessNavigation).toHaveBeenCalledTimes(1);
   });
 });

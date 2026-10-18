@@ -1,8 +1,5 @@
 import type { ViewStyle } from 'react-native';
 
-/** Build-time kill switch for the liquid glass design. `false` renders the flat surfaces. */
-export const GLASS_UI = true;
-
 export const colors = Object.freeze({
   background: '#e5fff8',
   canvas: '#f4fbf8',
@@ -82,9 +79,16 @@ export const glass = Object.freeze({
   /** Near-opaque white for controls and fields that must stand out from white glass. */
   fillOpaque: 'rgba(255, 255, 255, 0.9)',
   fillMuted: 'rgba(206, 232, 225, 0.7)',
+  /** Wash behind a field that has an error, so it reads before the message below it. */
+  fillDangerSoft: 'rgba(253, 240, 240, 0.95)',
+  /** Soft ring around a focused field, outside its rim. */
+  focusHalo: 'rgba(47, 143, 128, 0.2)',
+  selection: 'rgba(13, 102, 89, 0.25)',
+  placeholder: 'rgba(82, 105, 99, 0.6)',
+  /** Track behind a segmented control's options. */
+  segmentTrack: 'rgba(13, 102, 89, 0.07)',
   fillOnPrimary: 'rgba(255, 255, 255, 0.18)',
   divider: 'rgba(13, 102, 89, 0.12)',
-  sheen: 'rgba(255, 255, 255, 0.45)',
   /** Panel tints; keep at ≥ 0.85 alpha so text stays legible over the backdrop. */
   tintSuccess: 'rgba(230, 245, 240, 0.88)',
   tintWarning: 'rgba(250, 242, 220, 0.92)',
@@ -95,8 +99,8 @@ export const glass = Object.freeze({
   frost: 'rgba(255, 255, 255, 0.62)',
   frostSolid: 'rgba(255, 255, 255, 0.86)',
   panelRim: 'rgba(255, 255, 255, 0.75)',
-  panelSheen: 'rgba(255, 255, 255, 0.12)',
-  panelHighlight: 'rgba(255, 255, 255, 0.95)',
+  /** Lift under floating chrome (header, navigation). */
+  chromeShadow: '0px 8px 24px rgba(7, 26, 24, 0.12)',
   backdrop: Object.freeze({
     topStart: 'rgba(137, 213, 196, 0.6)',
     topEnd: 'rgba(165, 241, 224, 0.75)',

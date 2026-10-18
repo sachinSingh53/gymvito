@@ -22,6 +22,22 @@ export function formatMoneyMinor(
   }).format(minor / 100);
 }
 
+/** The short symbol for a currency, e.g. `₹` for INR, for use as an input prefix. */
+export function currencySymbol(currencyCode: string): string {
+  try {
+    const symbol = new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: currencyCode,
+      currencyDisplay: 'narrowSymbol',
+    })
+      .format(0)
+      .replace(/[\d.,\s ]/g, '');
+    return symbol || currencyCode;
+  } catch {
+    return currencyCode;
+  }
+}
+
 export function formatInstant(
   instant: Date,
   settings: Pick<RegionalSettings, 'language' | 'dateFormat' | 'timeFormat'>,

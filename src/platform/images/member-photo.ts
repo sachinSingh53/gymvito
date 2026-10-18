@@ -1,6 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
 
 import {
@@ -14,6 +15,9 @@ function imageSize(uri: string): Promise<{ width: number; height: number }> {
   );
 }
 
+/** Thrown when the owner declines camera access; the form offers the file picker instead. */
+export const CAMERA_PERMISSION_DENIED = 'CAMERA_PERMISSION_DENIED';
+
 export async function pickMemberPhoto(): Promise<MemberPhotoInput | null> {
   const result = await DocumentPicker.getDocumentAsync({
     type: 'image/*',
@@ -21,7 +25,31 @@ export async function pickMemberPhoto(): Promise<MemberPhotoInput | null> {
     multiple: false,
   });
   if (result.canceled) return null;
-  const source = new File(result.assets[0].uri);
+  return processMemberPhoto(result.assets[0].uri);
+}
+
+/** Opens the camera, asking for permission only now that the owner has asked for it. */
+export async function captureMemberPhoto(): Promise<MemberPhotoInput | null> {
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+  if (!permission.granted) throw new Error(CAMERA_PERMISSION_DENIED);
+  // No in-picker editing: its crop can leave the full-size original in the cache. The shot is
+  // centre-cropped below instead, so the one file the camera writes is the one we delete.
+  const result = await ImagePicker.launchCameraAsync({
+    mediaTypes: ['images'],
+    allowsEditing: false,
+    quality: 0.9,
+    exif: false,
+  });
+  if (result.canceled) return null;
+  return processMemberPhoto(result.assets[0].uri);
+}
+
+/**
+ * Centre-crops the image to a square 256px JPEG and returns its bytes. The picked or captured
+ * file and the intermediate JPEG are deleted, so no plaintext copy stays on disk.
+ */
+async function processMemberPhoto(uri: string): Promise<MemberPhotoInput> {
+  const source = new File(uri);
   let processed: File | null = null;
   try {
     const dimensions = await imageSize(source.uri);

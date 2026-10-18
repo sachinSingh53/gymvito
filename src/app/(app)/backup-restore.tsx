@@ -17,7 +17,7 @@ import {
   Notice,
 } from '@/ui/components/core-controls';
 import { OperationalShell, StatusChip, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 type Mode = 'overview' | 'create' | 'restore' | 'delete';
 
@@ -227,7 +227,7 @@ export default function BackupRestoreRoute() {
               <Text style={styles.muted}>{t('noBackupHistory')}</Text>
             ) : null}
             {history.map((record) => (
-              <View key={record.id} style={[styles.historyRow, GLASS_UI && styles.glassHistoryRow]}>
+              <View key={record.id} style={[styles.historyRow, styles.glassHistoryRow]}>
                 <View style={styles.flexCopy}>
                   <Text style={styles.historyTitle}>
                     {record.operationType === 'backup' ? t('historyBackup') : t('historyRestore')}
@@ -240,27 +240,16 @@ export default function BackupRestoreRoute() {
                     {record.targetDescriptor ? ` • ${record.targetDescriptor}` : ''}
                   </Text>
                 </View>
-                {GLASS_UI ? (
-                  <View style={styles.glassStatus}>
-                    <StatusChip
-                      label={t(`backupResult_${record.result}`)}
-                      tone={record.result === 'success' ? 'active' : 'danger'}
-                    />
-                  </View>
-                ) : (
-                  <Text
-                    style={[
-                      styles.status,
-                      record.result === 'success' ? styles.statusSuccess : styles.statusDanger,
-                    ]}
-                  >
-                    {t(`backupResult_${record.result}`)}
-                  </Text>
-                )}
+                <View style={styles.glassStatus}>
+                  <StatusChip
+                    label={t(`backupResult_${record.result}`)}
+                    tone={record.result === 'success' ? 'active' : 'danger'}
+                  />
+                </View>
               </View>
             ))}
           </SurfaceCard>
-          <SurfaceCard style={[styles.dangerCard, GLASS_UI && styles.glassDangerCard]}>
+          <SurfaceCard style={[styles.dangerCard, styles.glassDangerCard]}>
             <Text style={styles.dangerTitle}>{t('deleteAllTitle')}</Text>
             <Text style={styles.muted}>{t('deleteAllCardBody')}</Text>
             <AppButton onPress={() => resetSensitive('delete')} variant="danger">
@@ -446,10 +435,7 @@ function ActionCard({
 function RestorePreview({ manifest }: { manifest: BackupManifest }) {
   const { t, i18n } = useTranslation();
   return (
-    <View
-      accessibilityLabel={t('restorePreview')}
-      style={[styles.preview, GLASS_UI && styles.glassPreview]}
-    >
+    <View accessibilityLabel={t('restorePreview')} style={[styles.preview, styles.glassPreview]}>
       <Text style={styles.previewTitle}>{manifest.gymName}</Text>
       <Text style={styles.muted}>
         {new Intl.DateTimeFormat(i18n.language, {
@@ -478,7 +464,7 @@ function RestorePreview({ manifest }: { manifest: BackupManifest }) {
 
 function PreviewMetric({ label, value }: { label: string; value: number }) {
   return (
-    <View style={[styles.previewMetric, GLASS_UI && styles.glassPreviewMetric]}>
+    <View style={[styles.previewMetric, styles.glassPreviewMetric]}>
       <Text style={styles.metricValue}>{value}</Text>
       <Text style={styles.metricLabel}>{label}</Text>
     </View>
@@ -512,17 +498,6 @@ const styles = StyleSheet.create({
   },
   flexCopy: { minWidth: 0, flex: 1, gap: spacing.xs },
   historyTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15 },
-  status: {
-    flexShrink: 0,
-    overflow: 'hidden',
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    fontFamily: fonts.semibold,
-    fontSize: 12,
-  },
-  statusSuccess: { color: colors.successText, backgroundColor: colors.successSurface },
-  statusDanger: { color: colors.dangerText, backgroundColor: colors.dangerSurface },
   dangerCard: { gap: spacing.md, borderColor: colors.warningBorder },
   deleteCard: { width: '100%', maxWidth: 720, alignSelf: 'center', gap: spacing.md },
   dangerTitle: { color: colors.danger, fontFamily: fonts.bold, fontSize: 20, lineHeight: 28 },

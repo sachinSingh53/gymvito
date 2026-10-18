@@ -1,13 +1,12 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { validateGymSetup, type GymSetupInput } from '@/domain/onboarding/onboarding';
+import { GymProfileFields } from '@/features/gym/gym-profile-fields';
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppScreen } from '@/ui/components/app-screen';
-import { AppButton, AppChoice, AppField } from '@/ui/components/core-controls';
-import { colors, fonts, spacing } from '@/ui/theme/tokens';
+import { FormActions } from '@/ui/components/form-layout';
 
 export default function GymSetupRoute() {
   const { state, saveGym } = useAppSession();
@@ -34,7 +33,6 @@ export default function GymSetupRoute() {
   if (state.status !== 'setup-required' || state.step !== 'gym') return <Redirect href="/" />;
   const update = <K extends keyof GymSetupInput>(key: K, value: GymSetupInput[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
-  const errorFor = (key: string) => (errors[key] ? t('fieldInvalid') : undefined);
 
   const submit = async () => {
     const validation = validateGymSetup(form);
@@ -49,125 +47,14 @@ export default function GymSetupRoute() {
   };
 
   return (
-    <AppScreen glass title={t('gymSetupTitle')} subtitle={t('gymSetupSubtitle')}>
-      <AppField
-        autoCapitalize="words"
-        error={errorFor('gymName')}
-        label={t('gymName')}
-        onChangeText={(value) => update('gymName', value)}
-        value={form.gymName}
+    <AppScreen title={t('gymSetupTitle')} subtitle={t('gymSetupSubtitle')}>
+      <GymProfileFields errors={errors} form={form} onChange={update} />
+      <FormActions
+        onPrimary={() => void submit()}
+        primaryDisabled={saving}
+        primaryIcon="arrow_forward"
+        primaryLabel={saving ? t('saving') : t('continue')}
       />
-      <AppField
-        autoCapitalize="words"
-        error={errorFor('ownerName')}
-        label={t('ownerName')}
-        onChangeText={(value) => update('ownerName', value)}
-        value={form.ownerName}
-      />
-      <AppField
-        keyboardType="phone-pad"
-        label={t('phoneOptional')}
-        onChangeText={(value) => update('phone', value)}
-        value={form.phone}
-      />
-      <AppField
-        autoCapitalize="none"
-        error={errorFor('email')}
-        keyboardType="email-address"
-        label={t('emailOptional')}
-        onChangeText={(value) => update('email', value)}
-        value={form.email}
-      />
-      <AppField
-        label={t('addressOptional')}
-        multiline
-        onChangeText={(value) => update('address', value)}
-        value={form.address}
-      />
-      <AppField
-        label={t('receiptFooterOptional')}
-        onChangeText={(value) => update('receiptFooter', value)}
-        value={form.receiptFooter}
-      />
-      <Text style={styles.sectionTitle}>{t('regionalSettings')}</Text>
-      <AppField
-        autoCapitalize="characters"
-        error={errorFor('currencyCode')}
-        label={t('currencyCode')}
-        maxLength={3}
-        onChangeText={(value) => update('currencyCode', value.toUpperCase())}
-        value={form.currencyCode}
-      />
-      <Text style={styles.groupLabel}>{t('dateFormat')}</Text>
-      <View accessibilityRole="radiogroup" style={styles.choices}>
-        {(['day-month-year', 'month-day-year', 'year-month-day'] as const).map((value) => (
-          <AppChoice
-            key={value}
-            label={t(value)}
-            onPress={() => update('dateFormat', value)}
-            selected={form.dateFormat === value}
-          />
-        ))}
-      </View>
-      <Text style={styles.groupLabel}>{t('timeFormat')}</Text>
-      <View accessibilityRole="radiogroup" style={styles.choices}>
-        <AppChoice
-          label={t('time12')}
-          onPress={() => update('timeFormat', '12-hour')}
-          selected={form.timeFormat === '12-hour'}
-        />
-        <AppChoice
-          label={t('time24')}
-          onPress={() => update('timeFormat', '24-hour')}
-          selected={form.timeFormat === '24-hour'}
-        />
-      </View>
-      <Text style={styles.groupLabel}>{t('weekStartsOn')}</Text>
-      <View accessibilityRole="radiogroup" style={styles.choices}>
-        <AppChoice
-          label={t('monday')}
-          onPress={() => update('weekStartsOn', 1)}
-          selected={form.weekStartsOn === 1}
-        />
-        <AppChoice
-          label={t('sunday')}
-          onPress={() => update('weekStartsOn', 0)}
-          selected={form.weekStartsOn === 0}
-        />
-      </View>
-      <View style={styles.fieldRow}>
-        <View style={styles.rowField}>
-          <AppField
-            error={errorFor('financialYearStartMonth')}
-            keyboardType="number-pad"
-            label={t('financialYearMonth')}
-            onChangeText={(value) => update('financialYearStartMonth', Number(value))}
-            value={String(form.financialYearStartMonth)}
-          />
-        </View>
-        <View style={styles.rowField}>
-          <AppField
-            error={errorFor('financialYearStartDay')}
-            keyboardType="number-pad"
-            label={t('financialYearDay')}
-            onChangeText={(value) => update('financialYearStartDay', Number(value))}
-            value={String(form.financialYearStartDay)}
-          />
-        </View>
-      </View>
-      <Text style={styles.hint}>{t('deviceTimezoneNotice')}</Text>
-      <AppButton disabled={saving} onPress={() => void submit()}>
-        {saving ? t('saving') : t('continue')}
-      </AppButton>
     </AppScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 26 },
-  groupLabel: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 21 },
-  choices: { gap: spacing.sm },
-  fieldRow: { flexDirection: 'row', gap: spacing.sm },
-  rowField: { minWidth: 0, flex: 1 },
-  hint: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 13, lineHeight: 19 },
-});

@@ -12,7 +12,7 @@ import { useLocalBusinessDate } from '@/features/memberships/use-local-business-
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
 import { AppButton } from '@/ui/components/core-controls';
 import { ActionTile, GlassIconButton, GlassListRow } from '@/ui/components/glass-controls';
-import { GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
+import { GlassSurface } from '@/ui/components/glass-surface';
 import {
   LocalDataBadge,
   MaterialSymbol,
@@ -99,7 +99,7 @@ export default function HomeRoute() {
     dateFormat: state.snapshot.settings?.dateFormat ?? ('day-month-year' as const),
   };
   const overdueInvoices = outstandingInvoices.filter((invoice) => invoice.dueStatus === 'overdue');
-  const expiryEnd = addDays(today, 30);
+  const expiryEnd = addDays(today, 10);
   const expiringMembers = members
     .filter(
       (member) =>
@@ -260,7 +260,6 @@ export default function HomeRoute() {
             onPress={() => router.push('/members?filter=expiring' as Href)}
             style={({ pressed }) => [styles.reviewRow, pressed && actionPressed]}
           >
-            <GlassSheen />
             <MaterialSymbol color={colors.textMuted} name="date_range" size={22} />
             <View style={styles.reviewCopy}>
               <Text style={styles.reviewTitle}>{t('expiringSoon')}</Text>
@@ -286,7 +285,7 @@ export default function HomeRoute() {
         value={String(counts.active)}
       />
       <MetricCard
-        detail={t('nextThirtyDays')}
+        detail={t('nextTenDays')}
         label={t('expiringSoon')}
         onPress={() => router.push('/members?filter=expiring' as Href)}
         tone="warning"
@@ -344,7 +343,6 @@ export default function HomeRoute() {
       tint={lastBackup ? glass.tintSuccess : glass.tintWarning}
     >
       <View style={[styles.backupIcon, !lastBackup && styles.backupIconWarning]}>
-        <GlassSheen />
         <MaterialSymbol
           color={lastBackup ? colors.successText : colors.warningSurface}
           name={lastBackup ? 'cloud_done' : 'warning'}

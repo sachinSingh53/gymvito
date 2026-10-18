@@ -243,3 +243,24 @@ The shape system employs an intentional three-tier curvature model that feels fr
 
 - **Dual-Script Language Switcher:** A compact, accessible toggle pinned in the top navigation allowing front-desk personnel to switch on-the-fly between English and Hindi (`EN | हिन्दी`).
 - **Direct WhatsApp Action Trigger:** Specialized action button `#25D366` background or outline with standard icon to trigger pre-formatted automated fee reminders directly to Indian mobile numbers.
+
+## Liquid Glass
+
+Since rollout phase G4 every screen uses the liquid glass surfaces, and the flat surfaces
+are gone. The palette above is still the source for every colour. The glass rules are in
+[`LIQUID_GLASS_ROLLOUT.md` §3](LIQUID_GLASS_ROLLOUT.md#3-design-rules): layers,
+legibility, controls, shape and spacing. Where a rule there differs from an older flat spec
+in this document, §3 wins. That applies to these sections:
+
+- **Elevation & Depth:** panels are frosted `GlassSurface`s over the `GlassBackdrop`.
+  Only floating chrome (header, navigation, sticky footers) gets real blur.
+- **Shapes:** panels use radius 24 (`CARD_RADIUS`), floating chrome 28 (`GLASS_RADIUS`),
+  and controls, chips and fields are pills or rounded 16.
+- **Buttons, Status Chips, Text Input Fields, Checkboxes & Radio Controls:** these follow
+  the control table in §3.3. Secondary controls use the brand-tinted accent fill and rim
+  instead of an outline.
+- **Cards and Lists:** panels separate their rows with the `glass.divider` tint, not white
+  hairlines.
+
+All glass fills, rims, frost alphas and tints live in the `glass` export of
+`src/ui/theme/tokens.ts`. Screens take their colours from there and from `colors`.

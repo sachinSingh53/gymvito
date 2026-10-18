@@ -8,15 +8,6 @@ import { GlassSurface } from '@/ui/components/glass-surface';
 
 type ReactTestInstance = ReturnType<RenderAPI['getByText']>;
 
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
-
 jest.mock('expo-router', () => ({ Redirect: () => null }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -52,14 +43,10 @@ function buttonSize(button: ReactTestInstance) {
   };
 }
 
-describe.each([true, false])('unlock surface (GLASS_UI %s)', (enabled) => {
+describe('unlock surface', () => {
   beforeEach(async () => {
-    mockGlassUi.enabled = enabled;
     jest.clearAllMocks();
     await act(async () => i18n.changeLanguage('en'));
-  });
-  afterAll(() => {
-    mockGlassUi.enabled = true;
   });
 
   it('keeps the button labels and roles', () => {
@@ -123,7 +110,7 @@ describe.each([true, false])('unlock surface (GLASS_UI %s)', (enabled) => {
 
     expect(surfaces).toHaveLength(4);
     expect(blurred).toEqual([surfaces[surfaces.length - 1]]);
-    expect(screen.UNSAFE_queryAllByType(BlurView).length > 0).toBe(enabled);
+    expect(screen.UNSAFE_queryAllByType(BlurView).length).toBeGreaterThan(0);
   });
 
   it('still enters and submits the PIN from the keypad', async () => {
@@ -137,6 +124,25 @@ describe.each([true, false])('unlock surface (GLASS_UI %s)', (enabled) => {
 
     expect(mockSession.unlockWithPin).toHaveBeenCalledWith('123456');
     expect(await screen.findByRole('alert')).toBeTruthy();
+  });
+
+  it('prompts for biometrics on open without pressing Scan', async () => {
+    render(<UnlockRoute />);
+    await act(async () => undefined);
+
+    expect(mockSession.unlockWithBiometrics).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not prompt for biometrics when they are off', async () => {
+    mockSession.state.snapshot.settings.biometricsEnabled = false;
+    try {
+      render(<UnlockRoute />);
+      await act(async () => undefined);
+
+      expect(mockSession.unlockWithBiometrics).not.toHaveBeenCalled();
+    } finally {
+      mockSession.state.snapshot.settings.biometricsEnabled = true;
+    }
   });
 
   it('switches language from the header toggle', () => {

@@ -19,21 +19,12 @@ import {
   StatusChip,
   SurfaceCard,
 } from './operational-shell';
-
-const mockGlassUi = { enabled: true };
 const mockWindow = { width: 390, height: 844, scale: 2, fontScale: 1 };
 
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
   default: () => mockWindow,
 }));
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
 
 jest.mock('expo-router', () => ({
   router: {
@@ -130,7 +121,6 @@ describe('OperationalShell navigation', () => {
 
 describe('OperationalShell glass chrome', () => {
   afterEach(() => {
-    mockGlassUi.enabled = true;
     mockWindow.width = 390;
     mockUseIsFocused.mockClear().mockReturnValue(true);
   });
@@ -233,29 +223,9 @@ describe('OperationalShell glass chrome', () => {
     expect(screen.getByText('Dashboard content')).toBeTruthy();
     expect(mockUseIsFocused).not.toHaveBeenCalled();
   });
-
-  it('renders the flat shell and solid navigation when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const shell = render(
-      <OperationalShell active="home" title="Dashboard">
-        <Text>Dashboard content</Text>
-      </OperationalShell>,
-    );
-    const navigation = render(<BusinessNavigation />);
-
-    expect(shell.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
-    expect(shell.UNSAFE_queryAllByType(BlurTargetView)).toHaveLength(0);
-    expect(shell.getByText('Dashboard')).toBeTruthy();
-    expect(navigation.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
-    expect(navigation.toJSON()).toHaveStyle({ backgroundColor: colors.background });
-  });
 });
 
 describe('shared glass surfaces', () => {
-  afterEach(() => {
-    mockGlassUi.enabled = true;
-  });
-
   function backgrounds(screen: ReturnType<typeof render>) {
     return screen
       .UNSAFE_getAllByType(View)
@@ -288,21 +258,6 @@ describe('shared glass surfaces', () => {
     expect(backgrounds(screen)).toContain(colors.warningSurface);
   });
 
-  it('renders the flat SurfaceCard when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(
-      <SurfaceCard style={{ backgroundColor: colors.warningSurface }}>
-        <Text>Plan</Text>
-      </SurfaceCard>,
-    );
-
-    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
-    expect(screen.toJSON()).toHaveStyle({
-      borderRadius: radii.md,
-      backgroundColor: colors.warningSurface,
-    });
-  });
-
   it('draws status chips as tone pills at 0.8 alpha or more with text of 10pt or more', () => {
     const tones = {
       neutral: [glass.fillNeutral, colors.text],
@@ -332,17 +287,5 @@ describe('shared glass surfaces', () => {
     expect(
       StyleSheet.flatten(screen.getByText('SAVED ON THIS DEVICE').props.style).fontSize,
     ).toBeGreaterThanOrEqual(10);
-  });
-
-  it('renders the flat chips when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const chip = render(<StatusChip label="Active" tone="active" />);
-    const badge = render(<LocalDataBadge />);
-
-    expect(chip.toJSON()).toHaveStyle({
-      borderRadius: radii.sm,
-      backgroundColor: colors.successSurface,
-    });
-    expect(badge.toJSON()).toHaveStyle({ borderRadius: radii.sm, backgroundColor: '#ebf3f1' });
   });
 });

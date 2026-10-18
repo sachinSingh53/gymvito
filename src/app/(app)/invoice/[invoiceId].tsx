@@ -28,7 +28,7 @@ import {
   StatusChip,
   SurfaceCard,
 } from '@/ui/components/operational-shell';
-import { colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 export default function InvoiceDetailRoute() {
   const { invoiceId, receipt, issued } = useLocalSearchParams<{
@@ -261,18 +261,11 @@ export default function InvoiceDetailRoute() {
                 detail.payments.map((payment) => (
                   <View
                     key={payment.id}
-                    style={
-                      GLASS_UI
-                        ? [
-                            styles.payment,
-                            styles.glassPayment,
-                            selectedPayment?.id === payment.id && styles.glassPaymentSelected,
-                          ]
-                        : [
-                            styles.payment,
-                            selectedPayment?.id === payment.id && styles.paymentSelected,
-                          ]
-                    }
+                    style={[
+                      styles.payment,
+                      styles.glassPayment,
+                      selectedPayment?.id === payment.id && styles.glassPaymentSelected,
+                    ]}
                   >
                     <View style={styles.paymentTop}>
                       <View>
@@ -339,7 +332,7 @@ export default function InvoiceDetailRoute() {
                       ) : null}
                     </View>
                     {correctionPaymentId === payment.id ? (
-                      <View style={[styles.correction, GLASS_UI && styles.glassCorrection]}>
+                      <View style={[styles.correction, styles.glassCorrection]}>
                         <Notice danger>{t('correctionAppendsEvent')}</Notice>
                         <AppField
                           label={t('correctionReason')}
@@ -389,13 +382,7 @@ function Metric({
   danger?: boolean;
 }) {
   return (
-    <View
-      style={
-        GLASS_UI
-          ? [styles.metric, styles.glassMetric, danger && styles.glassMetricDanger]
-          : [styles.metric, danger && styles.metricDanger]
-      }
-    >
+    <View style={[styles.metric, styles.glassMetric, danger && styles.glassMetricDanger]}>
       <Text style={styles.metricLabel}>{label}</Text>
       <Text style={[styles.metricValue, danger && styles.metricValueDanger]}>{value}</Text>
     </View>
@@ -411,7 +398,7 @@ function Line({
   emphasized?: boolean;
 }) {
   return (
-    <View style={[styles.line, GLASS_UI && styles.glassLine, emphasized && styles.lineEmphasized]}>
+    <View style={[styles.line, styles.glassLine, emphasized && styles.lineEmphasized]}>
       <Text style={[styles.lineText, emphasized && styles.lineStrong]}>{label}</Text>
       <Text style={[styles.lineValue, emphasized && styles.lineStrong]}>{value}</Text>
     </View>
@@ -462,7 +449,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     backgroundColor: colors.surfaceContainer,
   },
-  metricDanger: { backgroundColor: colors.dangerSurface },
   metricLabel: {
     color: colors.textMuted,
     fontFamily: fonts.bold,
@@ -510,11 +496,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radii.sm,
     backgroundColor: colors.canvas,
-  },
-  paymentSelected: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: colors.successSurface,
   },
   paymentTop: {
     flexDirection: 'row',

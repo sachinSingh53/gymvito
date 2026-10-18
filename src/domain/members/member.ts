@@ -13,6 +13,39 @@ export type MemberInput = Readonly<{
   note: string;
 }>;
 
+/** Stored gender codes. An empty string means not specified. */
+export const MEMBER_GENDERS = ['male', 'female', 'other'] as const;
+export type MemberGender = (typeof MEMBER_GENDERS)[number];
+
+export function isMemberGender(value: string): value is MemberGender {
+  return (MEMBER_GENDERS as readonly string[]).includes(value);
+}
+
+/** Free-text values typed before gender became a fixed choice, in English and Hindi. */
+const LEGACY_GENDER_TEXT: Readonly<Record<string, MemberGender>> = {
+  m: 'male',
+  male: 'male',
+  man: 'male',
+  पुरुष: 'male',
+  f: 'female',
+  female: 'female',
+  woman: 'female',
+  महिला: 'female',
+  स्त्री: 'female',
+  other: 'other',
+  अन्य: 'other',
+};
+
+/**
+ * Maps a stored gender to its code. Older free-text values are matched where the meaning is
+ * clear; anything else is returned trimmed and unchanged, so it is never silently lost.
+ */
+export function normalizeGender(value: string): MemberGender | string {
+  const trimmed = value.trim();
+  if (isMemberGender(trimmed)) return trimmed;
+  return LEGACY_GENDER_TEXT[trimmed.normalize('NFKC').toLocaleLowerCase('en-US')] ?? trimmed;
+}
+
 export function normalizeSearchText(value: string): string {
   return value
     .normalize('NFKC')

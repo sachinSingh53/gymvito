@@ -47,13 +47,7 @@ export default function SettingsRoute() {
   };
 
   return (
-    <AppScreen
-      backHref="/more"
-      canGoBack
-      glass
-      title={t('settings')}
-      subtitle={t('settingsSubtitle')}
-    >
+    <AppScreen backHref="/more" canGoBack title={t('settings')} subtitle={t('settingsSubtitle')}>
       <Text style={styles.sectionTitle}>{t('languageLabel')}</Text>
       <View accessibilityRole="radiogroup" style={styles.choices}>
         <AppChoice

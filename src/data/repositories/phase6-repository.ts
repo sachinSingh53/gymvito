@@ -74,7 +74,7 @@ export class Phase6Repository {
     filters: ReportFilters,
   ): Promise<readonly MemberReportRow[]> {
     const members = await this.phase3.listMembers(today, '', 'all', 100_000);
-    const expiryEnd = filters.toDate || addDays(today, 30);
+    const expiryEnd = filters.toDate || addDays(today, 10);
     return members
       .map((member) => {
         const membership = member.current ?? member.upcoming ?? member.latest;

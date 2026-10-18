@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PlanRecord } from '@/data/repositories/phase2-repository';
@@ -14,24 +14,18 @@ import {
   type RenewalBehavior,
 } from '@/domain/plans/plan';
 import { useAppSession } from '@/features/session/app-session-context';
+import { currencySymbol } from '@/i18n/formatters/regional-formatters';
+import { AppButton, AppField, LoadingState, Notice } from '@/ui/components/core-controls';
 import {
-  AppButton,
-  AppChoice,
-  AppField,
-  LoadingState,
-  Notice,
-} from '@/ui/components/core-controls';
-import { GlassSheen } from '@/ui/components/glass-surface';
-import { LocalDataBadge, MaterialSymbol, SurfaceCard } from '@/ui/components/operational-shell';
-import {
-  actionPressed,
-  colors,
-  fonts,
-  GLASS_UI,
-  glass,
-  planColors,
-  spacing,
-} from '@/ui/theme/tokens';
+  AppSegmented,
+  AppSwitchRow,
+  FormActions,
+  FormLabel,
+  FormRow,
+  FormSection,
+} from '@/ui/components/form-layout';
+import { LocalDataBadge, MaterialSymbol } from '@/ui/components/operational-shell';
+import { actionPressed, colors, glass, planColors, spacing } from '@/ui/theme/tokens';
 
 const DURATION_LABELS = {
   day: 'durationDay',
@@ -182,6 +176,10 @@ export function PlanForm({ planId }: { planId?: string }) {
     );
   }
 
+  const symbol = currencySymbol(currency);
+  const segments = <T extends string>(values: readonly T[], labels: Record<T, string>) =>
+    values.map((value) => ({ value, label: t(labels[value]) }));
+
   return (
     <View style={styles.form}>
       <LocalDataBadge />
@@ -190,8 +188,7 @@ export function PlanForm({ planId }: { planId?: string }) {
           {errors.form === 'duplicate' ? t('planNameDuplicate') : t('saveFailed')}
         </Notice>
       ) : null}
-      <SurfaceCard style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('planBasics')}</Text>
+      <FormSection icon="sell" title={t('planBasics')}>
         <AppField
           error={errors.name ? t('fieldInvalid') : undefined}
           label={t('planName')}
@@ -204,172 +201,132 @@ export function PlanForm({ planId }: { planId?: string }) {
           onChangeText={setDescription}
           value={description}
         />
-        <Text style={styles.label}>{t('planColor')}</Text>
-        <View style={styles.colorRow}>
-          {planColors.map((color) => {
-            const selected = colorHex === color;
-            return (
-              <Pressable
-                accessibilityLabel={color}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                key={color}
-                onPress={() => setColorHex(color)}
-                style={({ pressed }) =>
-                  GLASS_UI
-                    ? [
-                        styles.colorChoice,
-                        styles.glassColorChoice,
-                        { backgroundColor: color },
-                        selected && styles.glassColorSelected,
-                        pressed && actionPressed,
-                      ]
-                    : [
-                        styles.colorChoice,
-                        { backgroundColor: color },
-                        selected && styles.colorSelected,
-                      ]
-                }
-              >
-                {GLASS_UI ? <GlassSheen /> : null}
-                {GLASS_UI && selected ? (
-                  <MaterialSymbol color={colors.onPrimary} name="check" size={22} />
-                ) : null}
-              </Pressable>
-            );
-          })}
+        <View style={styles.colorGroup}>
+          <FormLabel>{t('planColor')}</FormLabel>
+          <View accessibilityRole="radiogroup" style={styles.colorRow}>
+            {planColors.map((color) => {
+              const selected = colorHex === color;
+              return (
+                <Pressable
+                  accessibilityLabel={color}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  key={color}
+                  onPress={() => setColorHex(color)}
+                  style={({ pressed }) => [
+                    styles.colorRing,
+                    selected && { borderColor: color },
+                    pressed && actionPressed,
+                  ]}
+                >
+                  <View style={[styles.colorChoice, { backgroundColor: color }]}>
+                    {selected ? (
+                      <MaterialSymbol color={colors.onPrimary} name="check" size={20} />
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('durationAndPrice')}</Text>
+      </FormSection>
+      <FormSection icon="schedule" title={t('durationAndPrice')}>
         <AppField
           error={errors.durationValue ? t('fieldInvalid') : undefined}
           keyboardType="number-pad"
           label={t('durationValue')}
           onChangeText={setDurationValue}
+          suffix={t(DURATION_LABELS[durationUnit])}
           value={durationValue}
         />
-        <View accessibilityRole="radiogroup" style={styles.choiceGrid}>
-          {(['day', 'week', 'month', 'year'] as const).map((unit) => (
-            <AppChoice
-              key={unit}
-              label={t(DURATION_LABELS[unit])}
-              onPress={() => setDurationUnit(unit)}
-              selected={durationUnit === unit}
-            />
-          ))}
-        </View>
-        <AppField
-          error={errors.priceMinor ? t('moneyInvalid') : undefined}
-          keyboardType="decimal-pad"
-          label={t('planPrice', { currency })}
-          onChangeText={setPrice}
-          value={price}
+        <AppSegmented
+          onChange={setDurationUnit}
+          options={segments(['day', 'week', 'month', 'year'] as const, DURATION_LABELS)}
+          value={durationUnit}
         />
-        <AppField
-          error={errors.admissionFeeMinor ? t('moneyInvalid') : undefined}
-          keyboardType="decimal-pad"
-          label={t('admissionFee', { currency })}
-          onChangeText={setAdmissionFee}
-          value={admissionFee}
+        <FormRow>
+          <AppField
+            error={errors.priceMinor ? t('moneyInvalid') : undefined}
+            keyboardType="decimal-pad"
+            label={t('planPrice', { currency })}
+            onChangeText={setPrice}
+            prefix={symbol}
+            value={price}
+          />
+          <AppField
+            error={errors.admissionFeeMinor ? t('moneyInvalid') : undefined}
+            keyboardType="decimal-pad"
+            label={t('admissionFee', { currency })}
+            onChangeText={setAdmissionFee}
+            prefix={symbol}
+            value={admissionFee}
+          />
+        </FormRow>
+      </FormSection>
+      <FormSection icon="percent" title={t('taxAndDiscount')}>
+        <FormRow minItemWidth={130}>
+          <AppField label={t('taxLabel')} onChangeText={setTaxLabel} value={taxLabel} />
+          <AppField
+            error={errors.taxRateBasisPoints ? t('fieldInvalid') : undefined}
+            keyboardType="decimal-pad"
+            label={t('taxRatePercent')}
+            onChangeText={setTaxRate}
+            suffix="%"
+            value={taxRate}
+          />
+        </FormRow>
+        <AppSegmented
+          label={t('discountPolicy')}
+          onChange={setDiscountType}
+          options={segments(['none', 'fixed', 'percentage'] as const, DISCOUNT_LABELS)}
+          value={discountType}
         />
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('taxAndDiscount')}</Text>
-        <AppField label={t('taxLabel')} onChangeText={setTaxLabel} value={taxLabel} />
-        <AppField
-          error={errors.taxRateBasisPoints ? t('fieldInvalid') : undefined}
-          keyboardType="decimal-pad"
-          label={t('taxRatePercent')}
-          onChangeText={setTaxRate}
-          value={taxRate}
-        />
-        <Text style={styles.label}>{t('discountPolicy')}</Text>
-        <View accessibilityRole="radiogroup" style={styles.choiceGrid}>
-          {(['none', 'fixed', 'percentage'] as const).map((type) => (
-            <AppChoice
-              key={type}
-              label={t(DISCOUNT_LABELS[type])}
-              onPress={() => setDiscountType(type)}
-              selected={discountType === type}
-            />
-          ))}
-        </View>
         {discountType !== 'none' ? (
           <AppField
             error={errors.discountValue ? t('fieldInvalid') : undefined}
             keyboardType="decimal-pad"
             label={discountType === 'fixed' ? t('discountAmount') : t('discountPercent')}
             onChangeText={setDiscountValue}
+            prefix={discountType === 'fixed' ? symbol : undefined}
+            suffix={discountType === 'percentage' ? '%' : undefined}
             value={discountValue}
           />
         ) : null}
-      </SurfaceCard>
-      <SurfaceCard style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('futurePolicies')}</Text>
-        <ToggleRow
+      </FormSection>
+      <FormSection icon="tune" title={t('futurePolicies')}>
+        <AppSwitchRow
+          icon="ac_unit"
           label={t('allowFreeze')}
           onValueChange={setFreezeAllowed}
           value={freezeAllowed}
+        >
+          <AppField
+            error={errors.maxFreezeDays ? t('fieldInvalid') : undefined}
+            keyboardType="number-pad"
+            label={t('maxFreezeDays')}
+            onChangeText={setMaxFreezeDays}
+            value={maxFreezeDays}
+          />
+          <AppSwitchRow
+            label={t('freezeExtendsEnd')}
+            onValueChange={setFreezeExtends}
+            value={freezeExtends}
+          />
+        </AppSwitchRow>
+        <AppSegmented
+          label={t('renewalBehavior')}
+          onChange={setRenewalBehavior}
+          options={segments(['immediate', 'after-expiry', 'ask'] as const, RENEWAL_LABELS)}
+          value={renewalBehavior}
         />
-        {freezeAllowed ? (
-          <>
-            <AppField
-              error={errors.maxFreezeDays ? t('fieldInvalid') : undefined}
-              keyboardType="number-pad"
-              label={t('maxFreezeDays')}
-              onChangeText={setMaxFreezeDays}
-              value={maxFreezeDays}
-            />
-            <ToggleRow
-              label={t('freezeExtendsEnd')}
-              onValueChange={setFreezeExtends}
-              value={freezeExtends}
-            />
-          </>
-        ) : null}
-        <Text style={styles.label}>{t('renewalBehavior')}</Text>
-        <View accessibilityRole="radiogroup" style={styles.choiceGrid}>
-          {(['immediate', 'after-expiry', 'ask'] as const).map((behavior) => (
-            <AppChoice
-              key={behavior}
-              label={t(RENEWAL_LABELS[behavior])}
-              onPress={() => setRenewalBehavior(behavior)}
-              selected={renewalBehavior === behavior}
-            />
-          ))}
-        </View>
-      </SurfaceCard>
+      </FormSection>
       {existing ? <Notice>{t('planHistoryNotice')}</Notice> : null}
-      <View style={styles.actions}>
-        <AppButton disabled={busy} onPress={() => void save()}>
-          {busy ? t('saving') : t('savePlan')}
-        </AppButton>
-        <AppButton onPress={() => router.back()} variant="secondary">
-          {t('cancel')}
-        </AppButton>
-      </View>
-    </View>
-  );
-}
-
-function ToggleRow({
-  label,
-  value,
-  onValueChange,
-}: {
-  label: string;
-  value: boolean;
-  onValueChange(value: boolean): void;
-}) {
-  return (
-    <View style={styles.toggleRow}>
-      <Text style={styles.toggleLabel}>{label}</Text>
-      <Switch
-        accessibilityLabel={label}
-        onValueChange={onValueChange}
-        trackColor={{ true: colors.primary }}
-        value={value}
+      <FormActions
+        onPrimary={() => void save()}
+        onSecondary={() => router.back()}
+        primaryDisabled={busy}
+        primaryLabel={busy ? t('saving') : t('savePlan')}
+        secondaryLabel={t('cancel')}
       />
     </View>
   );
@@ -377,28 +334,25 @@ function ToggleRow({
 
 const styles = StyleSheet.create({
   form: { width: '100%', maxWidth: 820, alignSelf: 'center', gap: spacing.md },
-  section: { gap: spacing.md },
-  sectionTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 18 },
-  label: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
+  colorGroup: { gap: 6 },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  colorChoice: { width: 48, height: 48, borderRadius: 24 },
-  colorSelected: { borderWidth: 4, borderColor: colors.brandHeader },
-  glassColorChoice: {
+  colorRing: {
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    borderRadius: 26,
+  },
+  colorChoice: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: glass.rimSoft,
+    borderRadius: 20,
   },
-  glassColorSelected: { borderWidth: 3, borderColor: colors.onPrimary },
-  choiceGrid: { gap: spacing.sm },
-  toggleRow: {
-    minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  toggleLabel: { flex: 1, color: colors.text, fontFamily: fonts.medium, fontSize: 14 },
-  actions: { gap: spacing.sm },
 });

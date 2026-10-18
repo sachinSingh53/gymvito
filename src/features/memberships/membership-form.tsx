@@ -1,7 +1,7 @@
 import { randomUUID } from 'expo-crypto';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { MembershipPreview, MembershipRecord } from '@/data/repositories/phase3-repository';
@@ -11,7 +11,11 @@ import { parseDateOnly, renewalStartAfterExpiry, type DateOnly } from '@/domain/
 import { validateMembershipOverride } from '@/domain/memberships/membership';
 import { formatMoneyInput, parseMoneyInput } from '@/domain/plans/plan';
 import { useAppSession } from '@/features/session/app-session-context';
-import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
+import {
+  currencySymbol,
+  formatDateOnly,
+  formatMoneyMinor,
+} from '@/i18n/formatters/regional-formatters';
 import {
   AppButton,
   AppChoice,
@@ -19,10 +23,31 @@ import {
   LoadingState,
   Notice,
 } from '@/ui/components/core-controls';
-import { LocalDataBadge, StatusChip, SurfaceCard } from '@/ui/components/operational-shell';
-import { colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
+import { AppDateField } from '@/ui/components/date-field';
+import {
+  AppSegmented,
+  AppSwitchRow,
+  FormActions,
+  FormLabel,
+  FormRow,
+  FormSection,
+} from '@/ui/components/form-layout';
+import {
+  LocalDataBadge,
+  MaterialSymbol,
+  StatusChip,
+  SurfaceCard,
+} from '@/ui/components/operational-shell';
+import { colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 import { useLocalBusinessDate } from './use-local-business-date';
+
+const DURATION_LABELS = {
+  day: 'durationDay',
+  week: 'durationWeek',
+  month: 'durationMonth',
+  year: 'durationYear',
+} as const;
 
 const STATUS_LABELS = {
   draft: 'membershipStatusDraft',
@@ -296,6 +321,7 @@ export function MembershipForm({
 
   if (loading) return <LoadingState label={t('loading')} />;
 
+  const symbol = currencySymbol(settings.currencyCode);
   const intro = (
     <>
       <Text style={styles.title}>{t('membershipSetupTitle')}</Text>
@@ -306,88 +332,89 @@ export function MembershipForm({
   return (
     <View style={styles.form}>
       <LocalDataBadge />
-      {GLASS_UI ? <SurfaceCard>{intro}</SurfaceCard> : <View>{intro}</View>}
+      <SurfaceCard style={styles.intro}>{intro}</SurfaceCard>
       {errors.form === 'load' ? <Notice danger>{t('memberLoadFailed')}</Notice> : null}
       {errors.form === 'save' ? <Notice danger>{t('membershipSaveFailed')}</Notice> : null}
       {!plans.length ? (
         <SurfaceCard style={styles.empty}>
+          <MaterialSymbol color={colors.primaryDark} name="playlist_add" size={36} />
           <Text style={styles.sectionTitle}>{t('noActivePlans')}</Text>
           <AppButton onPress={() => router.push('/plan/new')}>{t('createFirstPlan')}</AppButton>
         </SurfaceCard>
       ) : (
         <>
-          <SurfaceCard style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('choosePlan')}</Text>
+          <FormSection icon="card_membership" title={t('choosePlan')}>
             <View accessibilityRole="radiogroup" style={styles.planChoices}>
               {plans.map((plan) => (
                 <AppChoice
+                  description={t('planDurationSummary', {
+                    count: plan.durationValue,
+                    unit: t(DURATION_LABELS[plan.durationUnit]),
+                  })}
                   key={plan.id}
-                  label={`${plan.name} • ${formatMoneyMinor(plan.priceMinor, settings)}`}
+                  label={plan.name}
                   onPress={() => choosePlan(plan.id)}
                   selected={planId === plan.id}
+                  trailing={formatMoneyMinor(plan.priceMinor, settings)}
                 />
               ))}
             </View>
             {prior ? (
-              <>
-                <Text style={styles.label}>{t('renewalTiming')}</Text>
-                <View accessibilityRole="radiogroup" style={styles.timingRow}>
-                  <View style={styles.timingChoice}>
-                    <AppChoice
-                      label={t('afterCurrentExpiry')}
-                      onPress={() => chooseTiming('after-expiry')}
-                      selected={renewalTiming === 'after-expiry'}
-                    />
-                  </View>
-                  <View style={styles.timingChoice}>
-                    <AppChoice
-                      label={t('startImmediately')}
-                      onPress={() => chooseTiming('immediate')}
-                      selected={renewalTiming === 'immediate'}
-                    />
-                  </View>
-                </View>
-              </>
+              <AppSegmented
+                label={t('renewalTiming')}
+                onChange={chooseTiming}
+                options={[
+                  { value: 'after-expiry', label: t('afterCurrentExpiry') },
+                  { value: 'immediate', label: t('startImmediately') },
+                ]}
+                value={renewalTiming}
+              />
             ) : null}
-            <AppField
-              error={errors.startDate ? t('fieldInvalid') : undefined}
-              label={t('membershipStartDate')}
-              onChangeText={(value) => {
-                setStartDate(value as DateOnly);
-                setAcknowledgeOverlap(false);
-              }}
-              value={startDate}
-            />
-            <AppField
-              error={errors.dueDate ? t('fieldInvalid') : undefined}
-              hint={t('invoiceDueDateHint')}
-              label={t('invoiceDueDate')}
-              onChangeText={(value) => setDueDate(value as DateOnly)}
-              value={dueDate}
-            />
-          </SurfaceCard>
-          <SurfaceCard style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('planTermsSnapshot')}</Text>
-            <AppField
-              error={errors.priceMinor ? t('moneyInvalid') : undefined}
-              keyboardType="decimal-pad"
-              label={t('customPriceOptional')}
-              onChangeText={setCustomPrice}
-              placeholder={formatMoneyInput(
-                plans.find((plan) => plan.id === planId)?.priceMinor ?? 0,
-              )}
-              value={customPrice}
-            />
-            <AppField
-              error={errors.discountMinor ? t('moneyInvalid') : undefined}
-              keyboardType="decimal-pad"
-              label={t('customDiscountOptional')}
-              onChangeText={setCustomDiscount}
-              value={customDiscount}
-            />
-            <AppField
+            <FormRow minItemWidth={200}>
+              <AppDateField
+                error={errors.startDate ? t('fieldInvalid') : undefined}
+                label={t('membershipStartDate')}
+                onChangeText={(value) => {
+                  setStartDate(value as DateOnly);
+                  setAcknowledgeOverlap(false);
+                }}
+                value={startDate}
+              />
+              <AppDateField
+                error={errors.dueDate ? t('fieldInvalid') : undefined}
+                hint={t('invoiceDueDateHint')}
+                label={t('invoiceDueDate')}
+                onChangeText={(value) => setDueDate(value as DateOnly)}
+                value={dueDate}
+              />
+            </FormRow>
+          </FormSection>
+          <FormSection icon="edit_note" title={t('planTermsSnapshot')}>
+            <FormRow>
+              <AppField
+                error={errors.priceMinor ? t('moneyInvalid') : undefined}
+                keyboardType="decimal-pad"
+                label={t('customPriceOptional')}
+                onChangeText={setCustomPrice}
+                placeholder={formatMoneyInput(
+                  plans.find((plan) => plan.id === planId)?.priceMinor ?? 0,
+                )}
+                prefix={symbol}
+                value={customPrice}
+              />
+              <AppField
+                error={errors.discountMinor ? t('moneyInvalid') : undefined}
+                keyboardType="decimal-pad"
+                label={t('customDiscountOptional')}
+                onChangeText={setCustomDiscount}
+                prefix={symbol}
+                value={customDiscount}
+              />
+            </FormRow>
+            <AppDateField
               error={errors.overrideEndDate ? t('fieldInvalid') : undefined}
               label={t('membershipEndDateOptional')}
+              minimumDate={startDate}
               onChangeText={setCustomEndDate}
               value={customEndDate}
             />
@@ -399,7 +426,7 @@ export function MembershipForm({
               onChangeText={setOverrideReason}
               value={overrideReason}
             />
-          </SurfaceCard>
+          </FormSection>
           {preview ? (
             <SurfaceCard style={styles.preview}>
               <View style={styles.previewHeader}>
@@ -433,7 +460,7 @@ export function MembershipForm({
                 label={t('tax')}
                 value={formatMoneyMinor(preview.charges.taxMinor, settings)}
               />
-              <View style={[styles.totalRow, GLASS_UI && styles.glassWell]}>
+              <View style={[styles.totalRow, styles.glassWell]}>
                 <Text style={styles.totalLabel}>{t('projectedTotal')}</Text>
                 <Text style={styles.totalValue}>
                   {formatMoneyMinor(preview.charges.totalMinor, settings)}
@@ -443,78 +470,71 @@ export function MembershipForm({
             </SurfaceCard>
           ) : null}
           {preview ? (
-            <SurfaceCard style={styles.section}>
-              <View style={styles.switchRow}>
-                <View style={styles.switchCopy}>
-                  <Text style={styles.sectionTitle}>{t('recordPaymentNow')}</Text>
-                  <Text style={styles.switchHint}>{t('recordPaymentNowHint')}</Text>
-                </View>
-                <Switch
-                  accessibilityLabel={t('recordPaymentNow')}
-                  onValueChange={toggleInitialPayment}
-                  trackColor={{ true: colors.primary }}
-                  value={recordInitialPayment}
+            <FormSection icon="payments" title={t('recordPayment')}>
+              <AppSwitchRow
+                description={t('recordPaymentNowHint')}
+                icon="point_of_sale"
+                label={t('recordPaymentNow')}
+                onValueChange={toggleInitialPayment}
+                value={recordInitialPayment}
+              >
+                <AppField
+                  error={
+                    errors.initialPayment === 'overpayment'
+                      ? t('paymentExceedsOutstanding')
+                      : errors.initialPayment
+                        ? t('paymentAmountRequired')
+                        : undefined
+                  }
+                  keyboardType="decimal-pad"
+                  label={t('initialPaymentAmount')}
+                  onChangeText={setInitialPaymentAmount}
+                  prefix={symbol}
+                  value={initialPaymentAmount}
                 />
-              </View>
-              {recordInitialPayment ? (
-                <>
-                  <AppField
-                    error={
-                      errors.initialPayment === 'overpayment'
-                        ? t('paymentExceedsOutstanding')
-                        : errors.initialPayment
-                          ? t('paymentAmountRequired')
-                          : undefined
-                    }
-                    keyboardType="decimal-pad"
-                    label={t('initialPaymentAmount')}
-                    onChangeText={setInitialPaymentAmount}
-                    value={initialPaymentAmount}
-                  />
-                  <Text style={styles.label}>{t('paymentMethod')}</Text>
-                  <View accessibilityRole="radiogroup" style={styles.methodGrid}>
-                    {activePaymentMethods.map((method) => (
-                      <View key={method.code} style={styles.methodChoice}>
-                        <AppChoice
-                          label={method.label}
-                          onPress={() => setInitialPaymentMethod(method.code)}
-                          selected={initialPaymentMethod === method.code}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                  <AppField
-                    label={t('transactionReferenceOptional')}
-                    onChangeText={setInitialPaymentReference}
-                    value={initialPaymentReference}
-                  />
-                  <AppField
-                    label={t('paymentNoteOptional')}
-                    multiline
-                    onChangeText={setInitialPaymentNote}
-                    value={initialPaymentNote}
-                  />
-                  <View style={[styles.paymentBalance, GLASS_UI && styles.glassWell]}>
-                    <Text style={styles.paymentBalanceLabel}>
-                      {t('balanceAfterPayment', {
-                        amount: formatMoneyMinor(
-                          Math.max(
-                            0,
-                            preview.charges.totalMinor -
-                              (parseMoneyInput(initialPaymentAmount) ?? 0),
-                          ),
-                          settings,
+                <FormLabel>{t('paymentMethod')}</FormLabel>
+                <View accessibilityRole="radiogroup" style={styles.methodGrid}>
+                  {activePaymentMethods.map((method) => (
+                    <View key={method.code} style={styles.methodChoice}>
+                      <AppChoice
+                        label={method.label}
+                        onPress={() => setInitialPaymentMethod(method.code)}
+                        selected={initialPaymentMethod === method.code}
+                      />
+                    </View>
+                  ))}
+                </View>
+                <AppField
+                  icon="tag"
+                  label={t('transactionReferenceOptional')}
+                  onChangeText={setInitialPaymentReference}
+                  value={initialPaymentReference}
+                />
+                <AppField
+                  label={t('paymentNoteOptional')}
+                  multiline
+                  onChangeText={setInitialPaymentNote}
+                  value={initialPaymentNote}
+                />
+                <View style={[styles.paymentBalance, styles.glassWell]}>
+                  <Text style={styles.paymentBalanceLabel}>
+                    {t('balanceAfterPayment', {
+                      amount: formatMoneyMinor(
+                        Math.max(
+                          0,
+                          preview.charges.totalMinor - (parseMoneyInput(initialPaymentAmount) ?? 0),
                         ),
-                      })}
-                    </Text>
-                    <Text style={styles.paymentBalanceHint}>{t('recordedPaymentNotice')}</Text>
-                  </View>
-                </>
-              ) : null}
-            </SurfaceCard>
+                        settings,
+                      ),
+                    })}
+                  </Text>
+                  <Text style={styles.paymentBalanceHint}>{t('recordedPaymentNotice')}</Text>
+                </View>
+              </AppSwitchRow>
+            </FormSection>
           ) : null}
           {preview?.overlaps.length ? (
-            <SurfaceCard style={GLASS_UI ? styles.glassOverlapCard : styles.overlapCard}>
+            <SurfaceCard style={styles.glassOverlapCard}>
               <Text style={styles.overlapTitle}>{t('overlapTitle')}</Text>
               <Text style={styles.overlapText}>
                 {t('overlapMessage', { count: preview.overlaps.length })}
@@ -525,28 +545,25 @@ export function MembershipForm({
                   {formatDateOnly(item.endDate, settings)}
                 </Text>
               ))}
-              <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>{t('acknowledgeOverlap')}</Text>
-                <Switch
-                  accessibilityLabel={t('acknowledgeOverlap')}
-                  onValueChange={setAcknowledgeOverlap}
-                  trackColor={{ true: colors.primary }}
-                  value={acknowledgeOverlap}
-                />
-              </View>
+              <AppSwitchRow
+                label={t('acknowledgeOverlap')}
+                onValueChange={setAcknowledgeOverlap}
+                value={acknowledgeOverlap}
+              />
             </SurfaceCard>
           ) : null}
-          <View style={styles.actions}>
-            <AppButton
-              disabled={!preview || busy || Boolean(preview.overlaps.length && !acknowledgeOverlap)}
-              onPress={() => void finalize()}
-            >
-              {busy ? t('saving') : t(priorMembershipId ? 'finalizeRenewal' : 'finalizeEnrollment')}
-            </AppButton>
-            <AppButton onPress={() => router.back()} variant="secondary">
-              {t('cancel')}
-            </AppButton>
-          </View>
+          <FormActions
+            onPrimary={() => void finalize()}
+            onSecondary={() => router.back()}
+            primaryDisabled={
+              !preview || busy || Boolean(preview.overlaps.length && !acknowledgeOverlap)
+            }
+            primaryIcon="how_to_reg"
+            primaryLabel={
+              busy ? t('saving') : t(priorMembershipId ? 'finalizeRenewal' : 'finalizeEnrollment')
+            }
+            secondaryLabel={t('cancel')}
+          />
         </>
       )}
     </View>
@@ -555,7 +572,7 @@ export function MembershipForm({
 
 function ChargeRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={[styles.chargeRow, GLASS_UI && styles.glassChargeRow]}>
+    <View style={[styles.chargeRow, styles.glassChargeRow]}>
       <Text style={styles.chargeLabel}>{label}</Text>
       <Text style={styles.chargeValue}>{value}</Text>
     </View>
@@ -566,13 +583,10 @@ const styles = StyleSheet.create({
   form: { width: '100%', maxWidth: 820, alignSelf: 'center', gap: spacing.md },
   title: { color: colors.text, fontFamily: fonts.bold, fontSize: 24 },
   subtitle: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 14, lineHeight: 21 },
-  section: { gap: spacing.md },
+  intro: { gap: spacing.xs },
   empty: { alignItems: 'center', gap: spacing.md },
   sectionTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 18 },
-  label: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
   planChoices: { gap: spacing.sm },
-  timingRow: { flexDirection: 'row', gap: spacing.sm },
-  timingChoice: { minWidth: 0, flex: 1 },
   preview: { gap: spacing.sm },
   previewHeader: {
     minWidth: 0,
@@ -636,11 +650,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 22,
   },
-  overlapCard: {
-    gap: spacing.sm,
-    borderColor: colors.warningBorder,
-    backgroundColor: colors.warningSurface,
-  },
   overlapTitle: { color: colors.warningText, fontFamily: fonts.bold, fontSize: 17 },
   overlapText: {
     color: colors.warningText,
@@ -649,21 +658,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   overlapItem: { color: colors.text, fontFamily: fonts.medium, fontSize: 13 },
-  switchRow: {
-    minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  switchCopy: { minWidth: 0, flex: 1, gap: 3 },
-  switchHint: {
-    color: colors.textMuted,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  switchLabel: { flex: 1, color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
   methodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   methodChoice: { minWidth: 220, flexBasis: '48%', flexGrow: 1 },
   paymentBalance: {
@@ -683,7 +677,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
-  actions: { gap: spacing.sm },
   glassWell: {
     borderWidth: 1,
     borderColor: glass.rimAccent,

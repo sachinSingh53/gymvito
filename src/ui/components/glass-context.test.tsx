@@ -5,25 +5,12 @@ import { Text, type View } from 'react-native';
 
 import { GlassBlurTarget, GlassProvider, useGlassBlurTarget } from './glass-context';
 
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
-
 function CaptureTarget({ onTarget }: { onTarget(ref: RefObject<View | null> | undefined): void }) {
   onTarget(useGlassBlurTarget());
   return null;
 }
 
 describe('GlassContext', () => {
-  afterEach(() => {
-    mockGlassUi.enabled = true;
-  });
-
   it('shares one blur target between the content and the floating chrome', () => {
     const targets: (RefObject<View | null> | undefined)[] = [];
     const screen = render(
@@ -53,20 +40,6 @@ describe('GlassContext', () => {
     );
 
     expect(target).toBeUndefined();
-    expect(screen.getByText('Content')).toBeTruthy();
-    expect(screen.UNSAFE_queryAllByType(BlurTargetView)).toHaveLength(0);
-  });
-
-  it('renders a plain container when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(
-      <GlassProvider>
-        <GlassBlurTarget>
-          <Text>Content</Text>
-        </GlassBlurTarget>
-      </GlassProvider>,
-    );
-
     expect(screen.getByText('Content')).toBeTruthy();
     expect(screen.UNSAFE_queryAllByType(BlurTargetView)).toHaveLength(0);
   });

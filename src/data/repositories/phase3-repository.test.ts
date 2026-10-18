@@ -307,7 +307,7 @@ describe('Phase3Repository', () => {
       expired: 0,
       noMembership: 1,
       archived: 0,
-      expiringSoon: 1,
+      expiringSoon: 0,
     });
     await expect(repository.listMembers('2026-01-10', '', 'active')).resolves.toEqual(
       expect.arrayContaining([

@@ -24,10 +24,9 @@ import { type EdgeInsets, useSafeAreaInsets } from 'react-native-safe-area-conte
 
 import { useAppSession } from '@/features/session/app-session-context';
 import { useGlassBlurTarget } from '@/ui/components/glass-context';
-import { GlassBackdrop, GlassSheen, GlassSurface } from '@/ui/components/glass-surface';
+import { GlassBackdrop, GlassSurface } from '@/ui/components/glass-surface';
 import {
   CARD_RADIUS,
-  GLASS_UI,
   actionPressed,
   colors,
   fonts,
@@ -213,7 +212,6 @@ export function OperationalShell({
   contentStyle,
   children,
 }: Props) {
-  const glassChrome = GLASS_UI;
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const chrome = useContext(BusinessChromeContext);
@@ -236,8 +234,7 @@ export function OperationalShell({
   };
 
   const navigationInset = chrome?.navigationInset ?? NO_NAVIGATION_INSET;
-  const glassContentStyle = glassChrome && [
-    styles.glassContent,
+  const chromeContentStyle = [
     { paddingTop: insets.top + GLASS_CHROME_INSET + glassHeaderHeight + spacing.md },
     navigationInset.bottom > 0 &&
       (scroll
@@ -252,7 +249,7 @@ export function OperationalShell({
         tablet && styles.tabletContent,
         responsiveContentStyle,
         contentStyle,
-        glassContentStyle,
+        chromeContentStyle,
       ]}
       keyboardShouldPersistTaps="handled"
     >
@@ -266,7 +263,7 @@ export function OperationalShell({
         responsiveContentStyle,
         styles.flex,
         contentStyle,
-        glassContentStyle,
+        chromeContentStyle,
       ]}
     >
       {children}
@@ -286,9 +283,8 @@ export function OperationalShell({
             <MaterialSymbol color={colors.primaryDark} name="arrow_back" size={24} />
           </Pressable>
         ) : !tablet ? (
-          <View style={[styles.brandMark, glassChrome && styles.glassBubble]}>
-            {glassChrome ? <GlassSheen radius={12} /> : null}
-            <MaterialSymbol color="#fff" name="fitness_center" size={24} />
+          <View style={styles.brandMark}>
+            <MaterialSymbol color={colors.onPrimary} name="fitness_center" size={24} />
           </View>
         ) : null}
         <View style={styles.headerTitles}>
@@ -311,15 +307,14 @@ export function OperationalShell({
           accessibilityLabel={t('languageLabel')}
           accessibilityRole="button"
           onPress={() => void changeLanguage(language === 'en' ? 'hi' : 'en')}
-          style={[styles.languageToggle, glassChrome && styles.glassLanguageToggle]}
+          style={styles.languageToggle}
         >
           <Text numberOfLines={1} style={styles.languageText}>
             {language === 'en' ? 'EN|हिं' : 'हिन्दी|EN'}
           </Text>
         </Pressable>
         {headerAction}
-        <View style={[styles.ownerAvatar, glassChrome && styles.glassBubble]}>
-          {glassChrome ? <GlassSheen /> : null}
+        <View style={styles.ownerAvatar}>
           <Text style={styles.ownerAvatarText}>
             {state.ownerName.trim().charAt(0).toUpperCase()}
           </Text>
@@ -328,59 +323,35 @@ export function OperationalShell({
     </>
   );
 
-  if (glassChrome) {
-    const header = (
-      <GlassSurface
-        blurTarget={blurTargetRef}
-        onLayout={setGlassHeaderHeight}
-        style={[
-          styles.header,
-          styles.glassHeader,
-          {
-            top: insets.top + GLASS_CHROME_INSET,
-            left: GLASS_CHROME_INSET + (tablet ? navigationInset.left : insets.left),
-            right: GLASS_CHROME_INSET + insets.right,
-          },
-        ]}
-      >
-        {headerContent}
-      </GlassSurface>
-    );
-    if (chrome) {
-      return (
-        <View style={styles.flex}>
-          {body}
-          <FloatingHeaderPortal header={header} slot={chrome.header} />
-        </View>
-      );
-    }
+  const header = (
+    <GlassSurface
+      blurTarget={blurTargetRef}
+      onLayout={setGlassHeaderHeight}
+      style={[
+        styles.header,
+        {
+          top: insets.top + GLASS_CHROME_INSET,
+          left: GLASS_CHROME_INSET + (tablet ? navigationInset.left : insets.left),
+          right: GLASS_CHROME_INSET + insets.right,
+        },
+      ]}
+    >
+      {headerContent}
+    </GlassSurface>
+  );
+  if (chrome) {
     return (
-      <View style={styles.safeArea}>
-        <GlassBackdrop />
+      <View style={styles.flex}>
         {body}
-        {header}
+        <FloatingHeaderPortal header={header} slot={chrome.header} />
       </View>
     );
   }
-
   return (
     <View style={styles.safeArea}>
-      <View style={styles.appArea}>
-        <View
-          style={[
-            styles.header,
-            {
-              minHeight: 64 + insets.top,
-              paddingTop: insets.top + 8,
-              paddingLeft: spacing.md + (tablet ? 0 : insets.left),
-              paddingRight: spacing.md + insets.right,
-            },
-          ]}
-        >
-          {headerContent}
-        </View>
-        {body}
-      </View>
+      <GlassBackdrop />
+      {body}
+      {header}
     </View>
   );
 }
@@ -423,7 +394,6 @@ export function BusinessNavigation() {
   const blurTargetRef = useGlassBlurTarget();
   if (state.status !== 'unlocked') return null;
   const language = state.snapshot.settings?.language ?? 'en';
-  const glassNav = GLASS_UI;
   const chromeBottom = Math.max(insets.bottom, GLASS_CHROME_INSET);
 
   const navigate = (item: (typeof NAV_ITEMS)[number]) => {
@@ -432,21 +402,16 @@ export function BusinessNavigation() {
     router.navigate(item.route as Href);
   };
 
-  const iconColor = (selected: boolean) => {
-    if (glassNav) return selected ? colors.primaryDark : colors.textMuted;
-    if (tablet) return selected ? '#a5f1e0' : colors.border;
-    return selected ? colors.primaryDark : colors.textMuted;
-  };
+  const iconColor = (selected: boolean) => (selected ? colors.primaryDark : colors.textMuted);
 
   const content = (
     <>
       {tablet ? (
         <View style={styles.sideBrand}>
-          <View style={[styles.sideBrandMark, glassNav && styles.glassBubble]}>
-            {glassNav ? <GlassSheen radius={14} /> : null}
+          <View style={styles.sideBrandMark}>
             <MaterialSymbol color={colors.onDark} name="fitness_center" size={26} />
           </View>
-          <Text style={[styles.sideBrandText, glassNav && styles.glassSideBrandText]}>GYMVITO</Text>
+          <Text style={styles.sideBrandText}>GYMVITO</Text>
         </View>
       ) : null}
       <View style={tablet ? styles.sideNavItems : styles.bottomNavItems}>
@@ -458,25 +423,13 @@ export function BusinessNavigation() {
               accessibilityState={{ selected }}
               key={item.key}
               onPress={() => navigate(item)}
-              style={({ pressed }) =>
-                glassNav
-                  ? [
-                      styles.navItem,
-                      styles.glassNavItem,
-                      !tablet && styles.bottomNavItem,
-                      tablet && styles.sideNavItem,
-                      selected && styles.glassNavItemSelected,
-                      pressed && actionPressed,
-                    ]
-                  : [
-                      styles.navItem,
-                      !tablet && styles.bottomNavItem,
-                      tablet && styles.sideNavItem,
-                      !tablet && selected && styles.bottomNavItemSelected,
-                      tablet && selected && styles.sideNavItemSelected,
-                      pressed && styles.pressed,
-                    ]
-              }
+              style={({ pressed }) => [
+                styles.navItem,
+                !tablet && styles.bottomNavItem,
+                tablet && styles.sideNavItem,
+                selected && styles.navItemSelected,
+                pressed && actionPressed,
+              ]}
             >
               <MaterialSymbol
                 color={iconColor(selected)}
@@ -484,29 +437,19 @@ export function BusinessNavigation() {
                 size={tablet ? 22 : 24}
               />
               <Text
-                adjustsFontSizeToFit={glassNav}
+                adjustsFontSizeToFit
                 minimumFontScale={0.8}
                 numberOfLines={1}
-                style={[
-                  styles.navLabel,
-                  glassNav && styles.glassNavLabel,
-                  !glassNav && tablet && styles.sideNavLabel,
-                  selected && styles.navTextSelected,
-                  !glassNav && tablet && selected && styles.sideNavTextSelected,
-                ]}
+                style={[styles.navLabel, selected && styles.navTextSelected]}
               >
                 {t(item.labelKey)}
               </Text>
               {tablet ? (
                 <Text
-                  adjustsFontSizeToFit={glassNav}
+                  adjustsFontSizeToFit
                   minimumFontScale={0.8}
                   numberOfLines={1}
-                  style={
-                    glassNav
-                      ? [styles.navSecondaryLabel, styles.glassNavSecondaryLabel]
-                      : [styles.navSecondaryLabel, selected && styles.sideNavTextSelected]
-                  }
+                  style={styles.navSecondaryLabel}
                 >
                   {language === 'hi' ? t(item.labelKey, { lng: 'en' }) : item.hindiLabel}
                 </Text>
@@ -517,85 +460,47 @@ export function BusinessNavigation() {
       </View>
       {tablet ? (
         <View style={styles.sideUtilities}>
-          <View style={[styles.localBadgeCompact, glassNav && styles.glassAccent]}>
+          <View style={styles.localBadgeCompact}>
             <Text style={styles.localBadgeText}>{t('localDb')}</Text>
           </View>
           <Pressable
             accessibilityLabel={t('lockNow')}
             accessibilityRole="button"
             onPress={() => void lock('manual')}
-            style={({ pressed }) => [
-              styles.lockButton,
-              glassNav && styles.glassAccent,
-              glassNav && pressed && actionPressed,
-            ]}
+            style={({ pressed }) => [styles.lockButton, pressed && actionPressed]}
           >
-            <MaterialSymbol
-              color={glassNav ? colors.primaryDark : colors.onDark}
-              name="lock"
-              size={20}
-            />
+            <MaterialSymbol color={colors.primaryDark} name="lock" size={20} />
           </Pressable>
         </View>
       ) : null}
     </>
   );
 
-  if (glassNav) {
-    return (
-      <GlassSurface
-        blurTarget={blurTargetRef}
-        style={
-          tablet
-            ? [
-                styles.glassSideNavigation,
-                {
-                  top: insets.top + GLASS_CHROME_INSET,
-                  bottom: chromeBottom,
-                  left: GLASS_CHROME_INSET + insets.left,
-                },
-              ]
-            : [
-                styles.glassBottomNavigation,
-                {
-                  bottom: chromeBottom,
-                  left: GLASS_CHROME_INSET + insets.left,
-                  right: GLASS_CHROME_INSET + insets.right,
-                },
-              ]
-        }
-      >
-        {content}
-      </GlassSurface>
-    );
-  }
-
   return (
-    <View
+    <GlassSurface
+      blurTarget={blurTargetRef}
       style={
         tablet
           ? [
               styles.sideNavigation,
               {
-                width: BUSINESS_NAV_TABLET_WIDTH + insets.left,
-                paddingTop: insets.top + spacing.sm,
-                paddingBottom: insets.bottom + spacing.sm,
-                paddingLeft: insets.left,
+                top: insets.top + GLASS_CHROME_INSET,
+                bottom: chromeBottom,
+                left: GLASS_CHROME_INSET + insets.left,
               },
             ]
           : [
               styles.bottomNavigation,
               {
-                height: BUSINESS_NAV_PHONE_HEIGHT + insets.bottom,
-                paddingBottom: insets.bottom,
-                paddingLeft: insets.left,
-                paddingRight: insets.right,
+                bottom: chromeBottom,
+                left: GLASS_CHROME_INSET + insets.left,
+                right: GLASS_CHROME_INSET + insets.right,
               },
             ]
       }
     >
       {content}
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -619,17 +524,16 @@ export function MaterialSymbol({
 }
 
 /**
- * Content panel. In glass mode a caller's `backgroundColor` (e.g. a warning wash) becomes the
- * glass tint, since the frost would otherwise cover it.
+ * Content panel. A caller's `backgroundColor` (e.g. a warning wash) becomes the glass tint,
+ * since the frost would otherwise cover it.
  */
 export function SurfaceCard({ children, style }: PropsWithChildren<{ style?: object }>) {
-  if (!GLASS_UI) return <View style={[styles.surfaceCard, style]}>{children}</View>;
   const { backgroundColor, ...panelStyle } =
     StyleSheet.flatten(style as StyleProp<ViewStyle>) ?? {};
   return (
     <GlassSurface
       radius={CARD_RADIUS}
-      style={[styles.glassSurfaceCard, panelStyle]}
+      style={[styles.surfaceCard, panelStyle]}
       tint={typeof backgroundColor === 'string' ? backgroundColor : undefined}
     >
       {children}
@@ -640,7 +544,7 @@ export function SurfaceCard({ children, style }: PropsWithChildren<{ style?: obj
 export function LocalDataBadge() {
   const { t } = useTranslation();
   return (
-    <View style={[styles.localBadge, GLASS_UI && styles.glassChip]}>
+    <View style={styles.localBadge}>
       <View style={styles.localDot} />
       <Text style={styles.localBadgeText}>{t('savedOnDevice')}</Text>
     </View>
@@ -656,22 +560,12 @@ export function StatusChip({
 }) {
   return (
     <View
-      style={
-        GLASS_UI
-          ? [
-              styles.statusChip,
-              styles.glassChip,
-              tone === 'active' && styles.glassStatusActive,
-              tone === 'warning' && styles.glassStatusWarning,
-              tone === 'danger' && styles.glassStatusDanger,
-            ]
-          : [
-              styles.statusChip,
-              tone === 'active' && styles.statusActive,
-              tone === 'warning' && styles.statusWarning,
-              tone === 'danger' && styles.statusDanger,
-            ]
-      }
+      style={[
+        styles.statusChip,
+        tone === 'active' && styles.statusActive,
+        tone === 'warning' && styles.statusWarning,
+        tone === 'danger' && styles.statusDanger,
+      ]}
     >
       <Text
         style={[
@@ -690,18 +584,23 @@ export function StatusChip({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   safeArea: { flex: 1, backgroundColor: colors.background },
-  appArea: { flex: 1 },
   header: {
+    position: 'absolute',
     minHeight: 64,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingHorizontal: 12,
     paddingBottom: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: glass.panelRim,
+    backgroundColor: 'transparent',
+    // Android `elevation` paints its shadow through translucent glass as a gray smear; an
+    // outset box shadow is drawn only outside the border box.
+    shadowOpacity: 0,
+    boxShadow: glass.chromeShadow,
   },
   headerIdentity: {
     minWidth: 0,
@@ -715,6 +614,9 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: glass.rimSoft,
     borderRadius: 12,
     backgroundColor: colors.primary,
   },
@@ -747,8 +649,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
     borderRadius: radii.pill,
-    backgroundColor: colors.surfaceContainer,
+    backgroundColor: glass.fillAccent,
   },
   languageText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
   ownerAvatar: {
@@ -756,83 +660,27 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
-    backgroundColor: colors.primaryDark,
-  },
-  glassContent: { backgroundColor: 'transparent' },
-  glassHeader: {
-    position: 'absolute',
-    paddingTop: spacing.sm,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: glass.panelRim,
-    backgroundColor: 'transparent',
-    shadowOpacity: 0.12,
-    elevation: 6,
-  },
-  glassBottomNavigation: {
-    position: 'absolute',
-    zIndex: 20,
-    height: BUSINESS_NAV_PHONE_HEIGHT,
-    paddingHorizontal: spacing.xs,
-    shadowOpacity: 0.12,
-    elevation: 6,
-  },
-  glassSideNavigation: {
-    position: 'absolute',
-    zIndex: 30,
-    width: BUSINESS_NAV_TABLET_WIDTH,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    shadowOpacity: 0.12,
-    elevation: 6,
-  },
-  glassSideBrandText: { color: colors.primaryDark },
-  glassNavItem: {
-    borderWidth: 1,
-    borderColor: 'transparent',
-    borderRadius: radii.pill,
-  },
-  glassNavItemSelected: {
-    borderColor: glass.rimAccent,
-    backgroundColor: glass.fillAccent,
-  },
-  glassNavLabel: { lineHeight: 16 },
-  glassNavSecondaryLabel: { color: colors.textMuted, fontSize: 10, lineHeight: 15 },
-  glassAccent: {
-    borderWidth: 1,
-    borderColor: glass.rimAccent,
-    backgroundColor: glass.fillAccent,
-  },
-  glassBubble: {
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: glass.rimSoft,
+    borderRadius: 20,
+    backgroundColor: colors.primaryDark,
   },
-  glassLanguageToggle: {
-    borderWidth: 1,
-    borderColor: glass.rimAccent,
-    backgroundColor: glass.fillAccent,
-  },
-  ownerAvatarText: { color: '#fff', fontFamily: fonts.bold, fontSize: 16 },
+  ownerAvatarText: { color: colors.onPrimary, fontFamily: fonts.bold, fontSize: 16 },
   content: {
     flexGrow: 1,
     gap: spacing.md,
     padding: spacing.md,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   tabletContent: { padding: spacing.lg },
   bottomNavigation: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
     zIndex: 20,
-    minHeight: 68,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.background,
+    height: BUSINESS_NAV_PHONE_HEIGHT,
+    paddingHorizontal: spacing.xs,
+    shadowOpacity: 0,
+    boxShadow: glass.chromeShadow,
   },
   bottomNavItems: {
     flex: 1,
@@ -842,14 +690,13 @@ const styles = StyleSheet.create({
   },
   sideNavigation: {
     position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
     zIndex: 30,
     width: BUSINESS_NAV_TABLET_WIDTH,
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.brandHeader,
+    paddingVertical: spacing.sm,
+    shadowOpacity: 0,
+    boxShadow: glass.chromeShadow,
   },
   sideBrand: { alignItems: 'center', gap: spacing.xs },
   sideBrandMark: {
@@ -857,10 +704,18 @@ const styles = StyleSheet.create({
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: glass.rimSoft,
     borderRadius: 14,
     backgroundColor: colors.primary,
   },
-  sideBrandText: { color: '#a5f1e0', fontFamily: fonts.bold, fontSize: 10, letterSpacing: 1.2 },
+  sideBrandText: {
+    color: colors.primaryDark,
+    fontFamily: fonts.bold,
+    fontSize: 10,
+    letterSpacing: 1.2,
+  },
   sideNavItems: { width: '100%', gap: spacing.xs, paddingHorizontal: spacing.xs },
   navItem: {
     position: 'relative',
@@ -869,56 +724,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 1,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    borderRadius: radii.pill,
+  },
+  navItemSelected: {
+    borderColor: glass.rimAccent,
+    backgroundColor: glass.fillAccent,
   },
   bottomNavItem: { flex: 1, marginHorizontal: 2, marginVertical: 4 },
-  bottomNavItemSelected: { backgroundColor: 'transparent' },
   sideNavItem: { width: '100%' },
-  sideNavItemSelected: { backgroundColor: colors.primary },
   navLabel: {
     maxWidth: '100%',
     color: colors.textMuted,
     fontFamily: fonts.semibold,
     fontSize: 11,
-    lineHeight: 14,
+    lineHeight: 16,
     textAlign: 'center',
   },
-  sideNavLabel: { color: colors.border },
   navTextSelected: { color: colors.primaryDark, fontFamily: fonts.bold },
-  sideNavTextSelected: { color: '#a5f1e0' },
   navSecondaryLabel: {
     maxWidth: '100%',
-    color: colors.outline,
+    color: colors.textMuted,
     fontFamily: fonts.medium,
-    fontSize: 8,
-    lineHeight: 10,
+    fontSize: 10,
+    lineHeight: 15,
     textAlign: 'center',
   },
   sideUtilities: { alignItems: 'center', gap: spacing.sm },
   localBadgeCompact: {
     paddingHorizontal: 6,
     paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
     borderRadius: 8,
-    backgroundColor: '#1e3530',
+    backgroundColor: glass.fillAccent,
   },
   lockButton: {
     width: 48,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: glass.rimAccent,
     borderRadius: 24,
-    backgroundColor: '#1e3530',
+    backgroundColor: glass.fillAccent,
   },
   pressed: { opacity: 0.72 },
-  surfaceCard: {
-    minWidth: 0,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    backgroundColor: colors.surface,
-  },
-  glassSurfaceCard: { minWidth: 0, padding: spacing.md },
+  surfaceCard: { minWidth: 0, padding: spacing.md },
   localBadge: {
     minWidth: 0,
     minHeight: 28,
@@ -929,9 +782,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.sm,
-    backgroundColor: '#ebf3f1',
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillNeutral,
   },
   localDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.primary },
   localBadgeText: {
@@ -952,13 +805,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.sm,
-    backgroundColor: '#ebf3f1',
+    borderColor: glass.rimAccent,
+    borderRadius: radii.pill,
+    backgroundColor: glass.fillNeutral,
   },
-  statusActive: { borderColor: '#bee5d6', backgroundColor: colors.successSurface },
-  statusWarning: { borderColor: colors.warningBorder, backgroundColor: colors.warningSurface },
-  statusDanger: { borderColor: '#f5bebe', backgroundColor: colors.dangerSurface },
+  statusActive: { borderColor: glass.rimSuccess, backgroundColor: glass.fillSuccess },
+  statusWarning: { borderColor: glass.rimWarning, backgroundColor: glass.fillWarning },
+  statusDanger: { borderColor: glass.rimDanger, backgroundColor: glass.fillDanger },
   statusText: {
     minWidth: 0,
     flexShrink: 1,
@@ -968,14 +821,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: 'center',
   },
-  glassChip: {
-    borderColor: glass.rimAccent,
-    borderRadius: radii.pill,
-    backgroundColor: glass.fillNeutral,
-  },
-  glassStatusActive: { borderColor: glass.rimSuccess, backgroundColor: glass.fillSuccess },
-  glassStatusWarning: { borderColor: glass.rimWarning, backgroundColor: glass.fillWarning },
-  glassStatusDanger: { borderColor: glass.rimDanger, backgroundColor: glass.fillDanger },
   statusTextActive: { color: colors.successText },
   statusTextWarning: { color: colors.warningText },
   statusTextDanger: { color: colors.dangerText },

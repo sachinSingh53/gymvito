@@ -8,15 +8,6 @@ import type { MembershipDirectoryItem } from '@/data/repositories/phase3-reposit
 
 import { MemberCard } from './member-card';
 
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
-
 const MEMBER: MembershipDirectoryItem = {
   id: 'member-1',
   memberCode: 'GV-00001',
@@ -203,14 +194,7 @@ describe('MemberCard', () => {
   });
 });
 
-describe.each([true, false])('MemberCard surface (GLASS_UI %s)', (enabled) => {
-  beforeEach(() => {
-    mockGlassUi.enabled = enabled;
-  });
-  afterAll(() => {
-    mockGlassUi.enabled = true;
-  });
-
+describe('MemberCard surface', () => {
   it('keeps the profile label, 48dp contact actions and blurs only in glass mode', () => {
     const screen = render(<MemberCard member={MEMBER} onPress={jest.fn()} selected />);
 
@@ -220,6 +204,6 @@ describe.each([true, false])('MemberCard surface (GLASS_UI %s)', (enabled) => {
       expect(style.width).toBeGreaterThanOrEqual(48);
       expect(style.height).toBeGreaterThanOrEqual(48);
     }
-    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(enabled ? 1 : 0);
+    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(1);
   });
 });

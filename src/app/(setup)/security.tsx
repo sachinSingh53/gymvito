@@ -1,21 +1,20 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { isValidPin } from '@/domain/onboarding/onboarding';
 import { useAppSession } from '@/features/session/app-session-context';
 import { getRuntimeCapabilities } from '@/platform/runtime/runtime-capabilities';
 import { AppScreen } from '@/ui/components/app-screen';
-import { AppButton, AppField, Notice } from '@/ui/components/core-controls';
-import { colors, fonts, spacing } from '@/ui/theme/tokens';
+import { AppField, Notice } from '@/ui/components/core-controls';
+import { AppSwitchRow, FormActions } from '@/ui/components/form-layout';
 
 export default function SecuritySetupRoute() {
   const { state, saveSecurity } = useAppSession();
   const { t } = useTranslation();
   const [pin, setPin] = useState('');
   const [confirmation, setConfirmation] = useState('');
-  const [biometrics, setBiometrics] = useState(false);
+  const [biometrics, setBiometrics] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   if (state.status !== 'setup-required' || state.step !== 'security') return <Redirect href="/" />;
@@ -41,7 +40,7 @@ export default function SecuritySetupRoute() {
   };
 
   return (
-    <AppScreen glass title={t('securitySetupTitle')} subtitle={t('securitySetupSubtitle')}>
+    <AppScreen title={t('securitySetupTitle')} subtitle={t('securitySetupSubtitle')}>
       <Notice danger>{t('pinNoRecoveryNotice')}</Notice>
       {getRuntimeCapabilities().isExpoGo ? <Notice>{t('expoGoPinNotice')}</Notice> : null}
       <AppField
@@ -49,6 +48,7 @@ export default function SecuritySetupRoute() {
         error={error ?? undefined}
         hint={t('pinHint')}
         keyboardType="number-pad"
+        icon="pin"
         label={t('ownerPin')}
         maxLength={12}
         onChangeText={setPin}
@@ -58,39 +58,26 @@ export default function SecuritySetupRoute() {
       <AppField
         autoComplete="off"
         keyboardType="number-pad"
+        icon="lock"
         label={t('confirmPin')}
         maxLength={12}
         onChangeText={setConfirmation}
         secureTextEntry
         value={confirmation}
       />
-      <View style={styles.switchRow}>
-        <View style={styles.switchCopy}>
-          <Text style={styles.switchTitle}>{t('enableBiometrics')}</Text>
-          <Text style={styles.switchSubtitle}>{t('biometricsFallbackNotice')}</Text>
-        </View>
-        <Switch
-          accessibilityLabel={t('enableBiometrics')}
-          onValueChange={setBiometrics}
-          trackColor={{ true: colors.primary }}
-          value={biometrics}
-        />
-      </View>
-      <AppButton disabled={saving} onPress={() => void submit()}>
-        {saving ? t('securing') : t('continue')}
-      </AppButton>
+      <AppSwitchRow
+        description={t('biometricsFallbackNotice')}
+        icon="fingerprint"
+        label={t('enableBiometrics')}
+        onValueChange={setBiometrics}
+        value={biometrics}
+      />
+      <FormActions
+        onPrimary={() => void submit()}
+        primaryDisabled={saving}
+        primaryIcon="lock"
+        primaryLabel={saving ? t('securing') : t('continue')}
+      />
     </AppScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  switchRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  switchCopy: { minWidth: 0, flex: 1, gap: spacing.xs },
-  switchTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 16, lineHeight: 22 },
-  switchSubtitle: {
-    color: colors.textMuted,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-});

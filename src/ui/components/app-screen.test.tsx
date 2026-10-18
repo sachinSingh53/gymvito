@@ -10,15 +10,7 @@ import { colors } from '@/ui/theme/tokens';
 import { AppScreen } from './app-screen';
 import { GlassBlurTarget, GlassProvider } from './glass-context';
 
-const mockGlassUi = { enabled: true };
 const mockNavigationInset = { left: 0, bottom: 0 };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), canGoBack: jest.fn(() => true), replace: jest.fn() },
@@ -36,24 +28,12 @@ jest.mock('./operational-shell', () => ({
 
 describe('AppScreen', () => {
   afterEach(() => {
-    mockGlassUi.enabled = true;
     mockNavigationInset.bottom = 0;
   });
 
-  it('stays flat unless glass is requested', () => {
+  it('renders the header and content as frosted panels', () => {
     const screen = render(
-      <AppScreen title="Language">
-        <Text>Choose</Text>
-      </AppScreen>,
-    );
-
-    expect(screen.getByRole('header', { name: 'Language' })).toBeTruthy();
-    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
-  });
-
-  it('renders the header and content as frosted panels in glass mode', () => {
-    const screen = render(
-      <AppScreen canGoBack glass subtitle="Pick one" title="Language">
+      <AppScreen canGoBack subtitle="Pick one" title="Language">
         <Text>Choose</Text>
       </AppScreen>,
     );
@@ -67,14 +47,14 @@ describe('AppScreen', () => {
 
   it('uses the layout backdrop when a glass layout provides one', () => {
     const standalone = render(
-      <AppScreen glass title="Gym">
+      <AppScreen title="Gym">
         <Text>Form</Text>
       </AppScreen>,
     );
     const inLayout = render(
       <GlassProvider>
         <GlassBlurTarget>
-          <AppScreen glass title="Gym">
+          <AppScreen title="Gym">
             <Text>Form</Text>
           </AppScreen>
         </GlassBlurTarget>
@@ -100,17 +80,5 @@ describe('AppScreen', () => {
     expect(
       StyleSheet.flatten(screen.UNSAFE_getByType(ScrollView).props.contentContainerStyle),
     ).toMatchObject({ paddingBottom: 80 });
-  });
-
-  it('ignores glass when GLASS_UI is off', () => {
-    mockGlassUi.enabled = false;
-    const screen = render(
-      <AppScreen glass title="Language">
-        <Text>Choose</Text>
-      </AppScreen>,
-    );
-
-    expect(screen.UNSAFE_queryAllByType(BlurView)).toHaveLength(0);
-    expect(screen.getByText('Choose')).toBeTruthy();
   });
 });

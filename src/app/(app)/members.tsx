@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -21,6 +20,7 @@ import { MemberProfilePanel } from '@/features/members/member-profile-panel';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { useAppSession } from '@/features/session/app-session-context';
 import { AppButton, LoadingState, Notice } from '@/ui/components/core-controls';
+import { FilterBar, FilterChip } from '@/ui/components/filter-controls';
 import { GlassSurface } from '@/ui/components/glass-surface';
 import { MaterialSymbol, OperationalShell, SurfaceCard } from '@/ui/components/operational-shell';
 import {
@@ -28,7 +28,6 @@ import {
   CARD_RADIUS,
   colors,
   fonts,
-  GLASS_UI,
   glass,
   radii,
   spacing,
@@ -50,7 +49,7 @@ const FILTER_ICONS: Partial<Record<Filter, { name: string; color: string }>> = {
   expiring: { name: 'history_toggle_off', color: colors.warningText },
   overdue: { name: 'priority_high', color: colors.danger },
 };
-const EXPIRING_WINDOW_DAYS = 30;
+const EXPIRING_WINDOW_DAYS = 10;
 const FILTER_LABELS = {
   all: 'memberFilterAll',
   active: 'memberFilterActive',
@@ -212,22 +211,18 @@ export default function MembersRoute() {
         <View
           style={[
             styles.searchBox,
-            GLASS_UI && styles.glassSearchBox,
-            GLASS_UI && searchFocused && styles.glassSearchBoxFocused,
+            styles.glassSearchBox,
+            searchFocused && styles.glassSearchBoxFocused,
           ]}
         >
-          <MaterialSymbol
-            color={GLASS_UI ? colors.textMuted : colors.outline}
-            name="search"
-            size={22}
-          />
+          <MaterialSymbol color={colors.textMuted} name="search" size={22} />
           <TextInput
             accessibilityLabel={t('searchMembers')}
             onBlur={() => setSearchFocused(false)}
             onChangeText={setQuery}
             onFocus={() => setSearchFocused(true)}
             placeholder={t('memberSearchPlaceholder')}
-            placeholderTextColor={GLASS_UI ? colors.textMuted : colors.outline}
+            placeholderTextColor={colors.textMuted}
             style={styles.searchInput}
             value={query}
           />
@@ -237,66 +232,23 @@ export default function MembersRoute() {
               onPress={() => setQuery('')}
               style={styles.clear}
             >
-              <Text style={[styles.clearText, GLASS_UI && styles.glassClearText]}>×</Text>
+              <Text style={[styles.clearText, styles.glassClearText]}>×</Text>
             </Pressable>
           ) : null}
         </View>
       </View>
-      <ScrollView
-        contentContainerStyle={styles.filterRow}
-        horizontal
-        style={styles.filterScroll}
-        showsHorizontalScrollIndicator={false}
-      >
-        {FILTERS.map((value) => {
-          const icon = FILTER_ICONS[value];
-          const isSelected = filter === value;
-          return (
-            <Pressable
-              accessibilityRole="radio"
-              accessibilityState={{ selected: isSelected }}
-              key={value}
-              onPress={() => setFilter(value)}
-              style={({ pressed }) =>
-                GLASS_UI
-                  ? [
-                      styles.filterChip,
-                      styles.glassFilterChip,
-                      isSelected && styles.glassFilterChipSelected,
-                      pressed && actionPressed,
-                    ]
-                  : [styles.filterChip, isSelected && styles.filterChipSelected]
-              }
-            >
-              {icon ? (
-                <MaterialSymbol
-                  color={isSelected ? colors.onPrimary : icon.color}
-                  name={icon.name}
-                  size={16}
-                />
-              ) : null}
-              <Text
-                style={[
-                  styles.filterText,
-                  GLASS_UI && styles.glassFilterText,
-                  isSelected && styles.filterTextSelected,
-                ]}
-              >
-                {t(FILTER_LABELS[value])}
-              </Text>
-              <Text
-                style={[
-                  styles.filterCount,
-                  GLASS_UI && styles.glassFilterCount,
-                  isSelected && styles.filterCountSelected,
-                ]}
-              >
-                {counts[value]}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <FilterBar>
+        {FILTERS.map((value) => (
+          <FilterChip
+            count={counts[value]}
+            icon={FILTER_ICONS[value]}
+            key={value}
+            label={t(FILTER_LABELS[value])}
+            onPress={() => setFilter(value)}
+            selected={filter === value}
+          />
+        ))}
+      </FilterBar>
       <View style={styles.directoryMeta}>
         <View style={styles.rosterState}>
           <Text numberOfLines={1} style={styles.resultCount}>
@@ -306,10 +258,7 @@ export default function MembersRoute() {
             })}
           </Text>
           <View style={styles.localDot} />
-          <Text
-            numberOfLines={1}
-            style={[styles.localStateText, GLASS_UI && styles.glassLocalStateText]}
-          >
+          <Text numberOfLines={1} style={[styles.localStateText, styles.glassLocalStateText]}>
             {t('offlineCached')}
           </Text>
         </View>
@@ -323,13 +272,9 @@ export default function MembersRoute() {
 
   const directory = (
     <View style={styles.directoryPane}>
-      {GLASS_UI ? (
-        <GlassSurface radius={CARD_RADIUS} style={styles.glassToolbar}>
-          {toolbar}
-        </GlassSurface>
-      ) : (
-        toolbar
-      )}
+      <GlassSurface radius={CARD_RADIUS} style={styles.glassToolbar}>
+        {toolbar}
+      </GlassSurface>
       {error ? <Notice danger>{t('membersLoadFailed')}</Notice> : null}
       <FlatList
         contentContainerStyle={styles.list}
@@ -372,14 +317,9 @@ export default function MembersRoute() {
         accessibilityLabel={t('addMember')}
         accessibilityRole="button"
         onPress={() => router.push('/member/new' as Href)}
-        style={({ pressed }) =>
-          GLASS_UI
-            ? [styles.floatingAdd, styles.glassFloatingAdd, pressed && actionPressed]
-            : styles.floatingAdd
-        }
+        style={({ pressed }) => [styles.floatingAdd, pressed && actionPressed]}
       >
-        <MaterialSymbol color={colors.onPrimary} name="person_add" size={22} />
-        <Text style={styles.floatingAddText}>+ {t('member')}</Text>
+        <MaterialSymbol color={colors.onPrimary} name="person_add" size={28} />
       </Pressable>
     </View>
   );
@@ -458,39 +398,6 @@ const styles = StyleSheet.create({
   },
   clear: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   clearText: { color: colors.outline, fontSize: 22 },
-  filterScroll: { flexGrow: 0, flexShrink: 0 },
-  filterRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'center',
-    paddingVertical: 2,
-    paddingRight: spacing.md,
-  },
-  filterChip: {
-    minHeight: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-  },
-  filterChipSelected: { backgroundColor: colors.primaryDark },
-  filterText: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 14 },
-  filterTextSelected: { color: colors.onPrimary },
-  filterCount: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: radii.pill,
-    color: colors.text,
-    backgroundColor: colors.surfaceHigh,
-    fontFamily: fonts.bold,
-    fontSize: 12,
-  },
-  filterCountSelected: {
-    color: colors.onPrimary,
-    backgroundColor: glass.fillOnPrimary,
-  },
   directoryMeta: {
     minHeight: 48,
     flexDirection: 'row',
@@ -549,21 +456,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     bottom: spacing.md,
-    minHeight: 56,
-    flexDirection: 'row',
-    gap: spacing.sm,
+    width: 60,
+    height: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
+    borderWidth: 3,
+    borderColor: colors.surface,
     borderRadius: radii.pill,
     backgroundColor: colors.primaryDark,
     shadowColor: colors.brandHeader,
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
   },
-  floatingAddText: { color: colors.onPrimary, fontFamily: fonts.bold, fontSize: 15 },
   headerLocalState: {
     width: 48,
     height: 48,
@@ -582,15 +488,5 @@ const styles = StyleSheet.create({
   },
   glassSearchBoxFocused: { borderWidth: 2, borderColor: colors.focus, paddingHorizontal: 11 },
   glassClearText: { color: colors.textMuted },
-  glassFilterChip: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderColor: glass.rimAccent,
-    backgroundColor: glass.fillAccent,
-  },
-  glassFilterChipSelected: { borderColor: colors.primaryDark, backgroundColor: colors.primary },
-  glassFilterText: { color: colors.text },
-  glassFilterCount: { overflow: 'hidden', backgroundColor: glass.fillOpaque },
   glassLocalStateText: { color: colors.textMuted },
-  glassFloatingAdd: { backgroundColor: colors.primary },
 });

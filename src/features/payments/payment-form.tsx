@@ -10,21 +10,20 @@ import type { PaymentMethod } from '@/domain/billing/money';
 import { formatMoneyInput, parseMoneyInput } from '@/domain/plans/plan';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { useAppSession } from '@/features/session/app-session-context';
-import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
 import {
-  AppButton,
-  AppChoice,
-  AppField,
-  LoadingState,
-  Notice,
-} from '@/ui/components/core-controls';
+  currencySymbol,
+  formatDateOnly,
+  formatMoneyMinor,
+} from '@/i18n/formatters/regional-formatters';
+import { AppChoice, AppField, LoadingState, Notice } from '@/ui/components/core-controls';
 import {
   LocalDataBadge,
   MaterialSymbol,
   StatusChip,
   SurfaceCard,
 } from '@/ui/components/operational-shell';
-import { actionPressed, colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
+import { FormActions, FormLabel } from '@/ui/components/form-layout';
+import { actionPressed, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 const METHODS: readonly { code: PaymentMethod; icon: string; labelKey: string; hintKey: string }[] =
   [
@@ -199,7 +198,7 @@ export function PaymentForm({ memberId, invoiceId }: { memberId?: string; invoic
         <LocalDataBadge />
         <SurfaceCard style={styles.memberCard}>
           <View style={styles.memberIdentity}>
-            <View style={[styles.avatar, GLASS_UI && styles.glassAvatar]}>
+            <View style={[styles.avatar, styles.glassAvatar]}>
               <Text style={styles.avatarText}>
                 {member?.name.trim().charAt(0).toUpperCase() ?? '?'}
               </Text>
@@ -211,7 +210,7 @@ export function PaymentForm({ memberId, invoiceId }: { memberId?: string; invoic
             </View>
           </View>
           {selected ? (
-            <View style={[styles.balanceBanner, GLASS_UI && styles.glassBalanceBanner]}>
+            <View style={[styles.balanceBanner, styles.glassBalanceBanner]}>
               <View>
                 <Text style={styles.balanceLabel}>{t('outstandingBalance')}</Text>
                 <Text style={styles.balanceValue}>
@@ -247,10 +246,12 @@ export function PaymentForm({ memberId, invoiceId }: { memberId?: string; invoic
           <View accessibilityRole="radiogroup" style={styles.invoiceChoices}>
             {invoices.map((invoice) => (
               <AppChoice
+                description={invoice.memberName}
                 key={invoice.id}
-                label={`${invoice.invoiceNumber} • ${invoice.memberName} • ${formatMoneyMinor(invoice.balanceMinor, settings)}`}
+                label={invoice.invoiceNumber}
                 onPress={() => chooseInvoice(invoice)}
                 selected={invoice.id === selectedInvoiceId}
+                trailing={formatMoneyMinor(invoice.balanceMinor, settings)}
               />
             ))}
           </View>
@@ -269,6 +270,7 @@ export function PaymentForm({ memberId, invoiceId }: { memberId?: string; invoic
           keyboardType="decimal-pad"
           label={t('paymentAmount')}
           onChangeText={setAmount}
+          prefix={currencySymbol(settings.currencyCode)}
           value={amount}
         />
         {selected ? (
@@ -292,7 +294,7 @@ export function PaymentForm({ memberId, invoiceId }: { memberId?: string; invoic
               ))}
           </View>
         ) : null}
-        <Text style={styles.sectionLabel}>{t('paymentMethod')}</Text>
+        <FormLabel>{t('paymentMethod')}</FormLabel>
         <View accessibilityRole="radiogroup" style={styles.methods}>
           {availableMethods.map((item) => {
             const selectedMethodCard = method === item.code;
@@ -303,26 +305,20 @@ export function PaymentForm({ memberId, invoiceId }: { memberId?: string; invoic
                 accessibilityState={{ checked: selectedMethodCard }}
                 key={item.code}
                 onPress={() => setMethod(item.code)}
-                style={({ pressed }) =>
-                  GLASS_UI
-                    ? [
-                        styles.method,
-                        styles.glassMethod,
-                        selectedMethodCard && styles.glassMethodSelected,
-                        pressed && actionPressed,
-                      ]
-                    : [
-                        styles.method,
-                        selectedMethodCard && styles.methodSelected,
-                        pressed && styles.pressed,
-                      ]
-                }
+                style={({ pressed }) => [
+                  styles.method,
+                  styles.glassMethod,
+                  selectedMethodCard && styles.glassMethodSelected,
+                  pressed && actionPressed,
+                ]}
               >
-                <MaterialSymbol
-                  color={selectedMethodCard ? colors.onPrimary : colors.primaryDark}
-                  name={item.icon}
-                  size={24}
-                />
+                <View style={[styles.methodIcon, selectedMethodCard && styles.methodIconSelected]}>
+                  <MaterialSymbol
+                    color={selectedMethodCard ? colors.onPrimary : colors.primaryDark}
+                    name={item.icon}
+                    size={22}
+                  />
+                </View>
                 <View style={styles.methodCopy}>
                   <Text
                     style={[styles.methodLabel, selectedMethodCard && styles.methodLabelSelected]}
@@ -340,13 +336,14 @@ export function PaymentForm({ memberId, invoiceId }: { memberId?: string; invoic
           })}
         </View>
         <AppField
+          icon="tag"
           label={t('transactionReferenceOptional')}
           onChangeText={setReference}
           value={reference}
         />
         <AppField label={t('paymentNoteOptional')} multiline onChangeText={setNote} value={note} />
         {selected ? (
-          <View style={[styles.reconcile, GLASS_UI && styles.glassReconcile]}>
+          <View style={[styles.reconcile, styles.glassReconcile]}>
             <MaterialSymbol color={colors.primaryDark} name="check_circle" size={24} />
             <View style={styles.reconcileCopy}>
               <Text style={styles.reconcileTitle}>
@@ -365,9 +362,12 @@ export function PaymentForm({ memberId, invoiceId }: { memberId?: string; invoic
             </View>
           </View>
         ) : null}
-        <AppButton disabled={busy || !selected} onPress={() => void submit()}>
-          {busy ? t('saving') : t('recordAndIssueReceipt')}
-        </AppButton>
+        <FormActions
+          onPrimary={() => void submit()}
+          primaryDisabled={busy || !selected}
+          primaryIcon="receipt_long"
+          primaryLabel={busy ? t('saving') : t('recordAndIssueReceipt')}
+        />
         <Text style={styles.recordedNotice}>{t('recordedPaymentNotice')}</Text>
       </SurfaceCard>
     </View>
@@ -387,16 +387,12 @@ function AmountChip({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) =>
-        GLASS_UI
-          ? [
-              styles.amountChip,
-              styles.glassAmountChip,
-              selected && styles.glassAmountChipSelected,
-              pressed && actionPressed,
-            ]
-          : [styles.amountChip, selected && styles.amountChipSelected]
-      }
+      style={({ pressed }) => [
+        styles.amountChip,
+        styles.glassAmountChip,
+        selected && styles.glassAmountChipSelected,
+        pressed && actionPressed,
+      ]}
     >
       <Text style={[styles.amountChipText, selected && styles.amountChipTextSelected]}>
         {label}
@@ -473,10 +469,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     backgroundColor: colors.surfaceHigh,
   },
-  amountChipSelected: { backgroundColor: colors.primary },
   amountChipText: { color: colors.text, fontFamily: fonts.medium, fontSize: 13 },
   amountChipTextSelected: { color: colors.onPrimary, fontFamily: fonts.semibold },
-  sectionLabel: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15 },
   methods: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   method: {
     minHeight: 72,
@@ -490,13 +484,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     backgroundColor: colors.surfaceHigh,
   },
-  methodSelected: { backgroundColor: colors.primary },
   methodCopy: { minWidth: 0, flex: 1 },
   methodLabel: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
-  methodLabelSelected: { color: colors.onPrimary },
+  methodLabelSelected: { color: colors.primaryDark },
   methodHint: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: 11 },
-  methodHintSelected: { color: colors.onPrimaryMuted },
-  pressed: { opacity: 0.82 },
+  methodHintSelected: { color: colors.textMuted },
+  methodIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: glass.fillAccent,
+  },
+  methodIconSelected: { backgroundColor: colors.primary },
   reconcile: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -529,12 +530,12 @@ const styles = StyleSheet.create({
   },
   glassAmountChipSelected: { borderColor: colors.primaryDark, backgroundColor: colors.primary },
   glassMethod: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: glass.rimAccent,
-    borderRadius: 20,
-    backgroundColor: glass.fillAccent,
+    borderRadius: radii.lg,
+    backgroundColor: glass.fillOpaque,
   },
-  glassMethodSelected: { borderColor: colors.primaryDark, backgroundColor: colors.primary },
+  glassMethodSelected: { borderColor: colors.primary, backgroundColor: glass.tintSelected },
   glassReconcile: {
     borderWidth: 1,
     borderColor: glass.rimSuccess,

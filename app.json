@@ -21,7 +21,7 @@
         "foregroundImage": "./assets/images/gymvito-mark.png",
         "monochromeImage": "./assets/images/gymvito-mark.png"
       },
-      "predictiveBackGestureEnabled": true
+      "predictiveBackGestureEnabled": false
     },
     "ios": {
       "bundleIdentifier": "com.gymvito.app",
@@ -32,6 +32,44 @@
       "expo-router",
       "expo-localization",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera to take member profile photos. Photos stay on this device.",
+          "photosPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "@react-native-community/datetimepicker",
+        {
+          "android": {
+            "datePicker": {
+              "colorAccent": {
+                "light": "#0d6659"
+              },
+              "colorControlActivated": {
+                "light": "#0d6659"
+              },
+              "colorControlHighlight": {
+                "light": "#d4eee7"
+              },
+              "textColorPrimary": {
+                "light": "#162d29"
+              },
+              "textColorSecondary": {
+                "light": "#526963"
+              },
+              "textColorPrimaryInverse": {
+                "light": "#ffffff"
+              },
+              "textColorSecondaryInverse": {
+                "light": "#c9f2e8"
+              }
+            }
+          }
+        }
+      ],
       [
         "expo-build-properties",
         {

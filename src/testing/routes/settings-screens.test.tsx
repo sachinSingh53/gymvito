@@ -6,15 +6,6 @@ import GymSettingsRoute from '@/app/(app)/gym-settings';
 import SettingsRoute from '@/app/(app)/settings';
 import i18n from '@/i18n';
 
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
-
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), canGoBack: jest.fn(() => true), push: jest.fn() },
 }));
@@ -48,13 +39,9 @@ jest.mock('@/features/session/app-session-context', () => ({
   })(),
 }));
 
-describe.each([true, false])('settings screens surface (GLASS_UI %s)', (enabled) => {
+describe('settings screens surface', () => {
   beforeEach(async () => {
-    mockGlassUi.enabled = enabled;
     await act(async () => i18n.changeLanguage('en'));
-  });
-  afterAll(() => {
-    mockGlassUi.enabled = true;
   });
 
   it.each([
@@ -85,7 +72,7 @@ describe.each([true, false])('settings screens surface (GLASS_UI %s)', (enabled)
     const blurs = screen.UNSAFE_queryAllByType(BlurView);
 
     // Header panel, content panel and the notices inside it.
-    expect(blurs.length > 0).toBe(enabled);
+    expect(blurs.length).toBeGreaterThan(0);
     for (const blur of blurs) {
       expect(blur.props.blurTarget).toBeUndefined();
       expect(blur.props.blurMethod).toBe('none');

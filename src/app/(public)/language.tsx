@@ -26,7 +26,7 @@ export default function LanguageRoute() {
   };
 
   return (
-    <AppScreen glass title={t('chooseLanguageTitle')} subtitle={t('chooseLanguageSubtitle')}>
+    <AppScreen title={t('chooseLanguageTitle')} subtitle={t('chooseLanguageSubtitle')}>
       <View accessibilityRole="radiogroup" style={styles.choices}>
         <AppChoice label="English" selected={language === 'en'} onPress={() => setLanguage('en')} />
         <AppChoice label="हिन्दी" selected={language === 'hi'} onPress={() => setLanguage('hi')} />

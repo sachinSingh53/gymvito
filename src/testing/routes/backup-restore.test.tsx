@@ -6,15 +6,6 @@ import type { BackupHistoryRecord } from '@/data/repositories/phase5-repository'
 import i18n from '@/i18n';
 import { glass } from '@/ui/theme/tokens';
 
-const mockGlassUi = { enabled: true };
-
-jest.mock('@/ui/theme/tokens', () => {
-  const actual = jest.requireActual('@/ui/theme/tokens');
-  return Object.defineProperty({ ...actual }, 'GLASS_UI', {
-    get: () => mockGlassUi.enabled,
-  });
-});
-
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), canGoBack: jest.fn(() => true), replace: jest.fn() },
   useFocusEffect: (effect: () => void | (() => void)) => {
@@ -75,13 +66,9 @@ jest.mock('@/features/session/app-session-context', () => ({
   })(),
 }));
 
-describe.each([true, false])('BackupRestoreRoute surface (GLASS_UI %s)', (enabled) => {
+describe('BackupRestoreRoute surface', () => {
   beforeEach(async () => {
-    mockGlassUi.enabled = enabled;
     await act(async () => i18n.changeLanguage('en'));
-  });
-  afterAll(() => {
-    mockGlassUi.enabled = true;
   });
 
   it('shows each history result with its tone', async () => {
@@ -89,18 +76,12 @@ describe.each([true, false])('BackupRestoreRoute surface (GLASS_UI %s)', (enable
 
     const verified = await screen.findByText('Verified');
     const failed = screen.getByText('Failed');
-    if (enabled) {
-      expect(verified.parent?.parent?.props.style).toEqual(
-        expect.arrayContaining([expect.objectContaining({ backgroundColor: glass.fillSuccess })]),
-      );
-      expect(failed.parent?.parent?.props.style).toEqual(
-        expect.arrayContaining([expect.objectContaining({ backgroundColor: glass.fillDanger })]),
-      );
-    } else {
-      expect(verified.props.style).toEqual(
-        expect.arrayContaining([expect.objectContaining({ fontSize: 12 })]),
-      );
-    }
+    expect(verified.parent?.parent?.props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ backgroundColor: glass.fillSuccess })]),
+    );
+    expect(failed.parent?.parent?.props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ backgroundColor: glass.fillDanger })]),
+    );
   });
 
   it('frosts the content panels without ever giving them a blur target', async () => {
@@ -108,7 +89,7 @@ describe.each([true, false])('BackupRestoreRoute surface (GLASS_UI %s)', (enable
     await waitFor(() => expect(screen.getByText('Verified')).toBeTruthy());
     const blurs = screen.UNSAFE_queryAllByType(BlurView);
 
-    expect(blurs.length > 0).toBe(enabled);
+    expect(blurs.length).toBeGreaterThan(0);
     for (const blur of blurs) {
       expect(blur.props.blurTarget).toBeUndefined();
       expect(blur.props.blurMethod).toBe('none');

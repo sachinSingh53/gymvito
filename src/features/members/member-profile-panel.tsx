@@ -12,6 +12,7 @@ import type {
 import type { InvoiceRecord, MemberFinanceSummary } from '@/data/repositories/phase4-repository';
 import { memberInitials } from '@/domain/members/member';
 import { membershipProgress } from '@/domain/memberships/membership';
+import { genderLabel } from '@/features/members/gender';
 import { useLocalBusinessDate } from '@/features/memberships/use-local-business-date';
 import { useAppSession } from '@/features/session/app-session-context';
 import { formatDateOnly, formatMoneyMinor } from '@/i18n/formatters/regional-formatters';
@@ -23,7 +24,7 @@ import {
   StatusChip,
   SurfaceCard,
 } from '@/ui/components/operational-shell';
-import { actionPressed, colors, fonts, GLASS_UI, glass, radii, spacing } from '@/ui/theme/tokens';
+import { actionPressed, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 const AUDIT_LABELS: Record<string, string> = {
   member_created: 'auditMemberCreated',
@@ -155,17 +156,17 @@ export function MemberProfilePanel({
             <Image
               accessibilityLabel={t('memberPhoto', { name: member.name })}
               source={{ uri: memberPhotoDataUri(member.photo) }}
-              style={[styles.photo, GLASS_UI && styles.glassPhoto]}
+              style={[styles.photo, styles.glassPhoto]}
             />
           ) : (
-            <View style={[styles.photoFallback, GLASS_UI && styles.glassPhotoFallback]}>
+            <View style={[styles.photoFallback, styles.glassPhotoFallback]}>
               <Text style={styles.initials}>{memberInitials(member.name)}</Text>
             </View>
           )}
           <View style={styles.identityText}>
             <View style={styles.nameRow}>
               <Text style={styles.name}>{member.name}</Text>
-              <Text style={[styles.code, GLASS_UI && styles.glassCode]}>{member.memberCode}</Text>
+              <Text style={[styles.code, styles.glassCode]}>{member.memberCode}</Text>
             </View>
             <Text style={styles.memberSince}>
               {t('memberSince', { date: member.createdAtUtc.slice(0, 10) })}
@@ -175,18 +176,11 @@ export function MemberProfilePanel({
         </View>
         {featured ? (
           <View
-            style={
-              GLASS_UI
-                ? [
-                    styles.membershipBanner,
-                    styles.glassWell,
-                    featured.status === 'expired' && styles.glassDangerWell,
-                  ]
-                : [
-                    styles.membershipBanner,
-                    featured.status === 'expired' && styles.membershipBannerDanger,
-                  ]
-            }
+            style={[
+              styles.membershipBanner,
+              styles.glassWell,
+              featured.status === 'expired' && styles.glassDangerWell,
+            ]}
           >
             <View style={styles.membershipBannerCopy}>
               <Text style={styles.emptyMembershipTitle}>
@@ -210,13 +204,13 @@ export function MemberProfilePanel({
             />
           </View>
         ) : (
-          <View style={[styles.emptyMembership, GLASS_UI && styles.glassWell]}>
+          <View style={[styles.emptyMembership, styles.glassWell]}>
             <Text style={styles.emptyMembershipTitle}>{t('noCurrentMembership')}</Text>
             <Text style={styles.emptyMembershipText}>{t('membershipPhase3Message')}</Text>
           </View>
         )}
         {finance && finance.balanceMinor > 0 ? (
-          <View style={[styles.ledgerBanner, GLASS_UI && styles.glassDangerWell]}>
+          <View style={[styles.ledgerBanner, styles.glassDangerWell]}>
             <View style={styles.membershipBannerCopy}>
               <Text style={styles.ledgerTitle}>{t('pendingLedgerBalance')}</Text>
               <Text style={styles.ledgerMeta}>
@@ -293,7 +287,7 @@ export function MemberProfilePanel({
           </AppButton>
         </View>
       </View>
-      <View style={[styles.tabs, GLASS_UI && styles.glassTabs]}>
+      <View style={[styles.tabs, styles.glassTabs]}>
         <ProfileTabButton
           label={t('summary')}
           onPress={() => setActiveTab('summary')}
@@ -336,7 +330,7 @@ export function MemberProfilePanel({
           {featured.planDescription ? (
             <Text style={styles.subscriptionDescription}>{featured.planDescription}</Text>
           ) : null}
-          <View style={[styles.progressCard, GLASS_UI && styles.glassWell]}>
+          <View style={[styles.progressCard, styles.glassWell]}>
             <View style={styles.progressLabels}>
               <Text style={[styles.progressText, styles.progressTextStart]}>
                 {formatDateOnly(featured.startDate, settings)}
@@ -348,7 +342,7 @@ export function MemberProfilePanel({
                 {formatDateOnly(featured.endDate, settings)}
               </Text>
             </View>
-            <View style={[styles.progressTrack, GLASS_UI && styles.glassProgressTrack]}>
+            <View style={[styles.progressTrack, styles.glassProgressTrack]}>
               <View
                 style={[styles.progressFill, { width: `${Math.round(progress.ratio * 100)}%` }]}
               />
@@ -381,7 +375,7 @@ export function MemberProfilePanel({
             <Text style={styles.emptyText}>{t('noInvoices')}</Text>
           ) : (
             invoices.map((invoice) => (
-              <View key={invoice.id} style={[styles.historyItem, GLASS_UI && styles.glassWell]}>
+              <View key={invoice.id} style={[styles.historyItem, styles.glassWell]}>
                 <View style={styles.historyTop}>
                   <Text style={styles.historyName}>
                     {invoice.invoiceNumber} • {invoice.planName}
@@ -424,7 +418,7 @@ export function MemberProfilePanel({
             <Text style={styles.emptyText}>{t('noMembershipHistory')}</Text>
           ) : (
             memberships.map((membership) => (
-              <View key={membership.id} style={[styles.historyItem, GLASS_UI && styles.glassWell]}>
+              <View key={membership.id} style={[styles.historyItem, styles.glassWell]}>
                 <View style={styles.historyTop}>
                   <Text style={styles.historyName}>{membership.planName}</Text>
                   <StatusChip
@@ -465,7 +459,7 @@ export function MemberProfilePanel({
           ) : (
             events.map((event) => (
               <View key={event.id} style={styles.activity}>
-                <View style={[styles.activityDot, GLASS_UI && styles.glassActivityDot]} />
+                <View style={[styles.activityDot, styles.glassActivityDot]} />
                 <View style={styles.activityCopy}>
                   <Text style={styles.activityTitle}>
                     {t(event.eventType === 'renewed' ? 'membershipRenewed' : 'membershipEnrolled')}
@@ -485,7 +479,7 @@ export function MemberProfilePanel({
           <Text style={styles.sectionTitle}>{t('memberDetails')}</Text>
           <Detail label={t('emailOptional')} value={member.email || '—'} />
           <Detail label={t('dateOfBirth')} value={member.dateOfBirth || '—'} />
-          <Detail label={t('genderOptional')} value={member.gender || '—'} />
+          <Detail label={t('genderOptional')} value={genderLabel(member.gender, t) || '—'} />
           <Detail label={t('addressOptional')} value={member.address || '—'} />
           <Detail
             label={t('emergencyContact')}
@@ -508,7 +502,7 @@ export function MemberProfilePanel({
             <Text style={styles.emptyText}>{t('noNotes')}</Text>
           ) : (
             member.notes.map((note) => (
-              <View key={note.id} style={[styles.note, GLASS_UI && styles.glassWell]}>
+              <View key={note.id} style={[styles.note, styles.glassWell]}>
                 <Text style={styles.noteText}>{note.content}</Text>
                 <Text style={styles.noteDate}>{note.createdAtUtc.slice(0, 10)}</Text>
               </View>
@@ -527,7 +521,7 @@ export function MemberProfilePanel({
           ) : (
             member.audit.map((event) => (
               <View key={event.id} style={styles.activity}>
-                <View style={[styles.activityDot, GLASS_UI && styles.glassActivityDot]} />
+                <View style={[styles.activityDot, styles.glassActivityDot]} />
                 <View style={styles.activityCopy}>
                   <Text style={styles.activityTitle}>
                     {t(AUDIT_LABELS[event.summaryCode] ?? 'auditMemberUpdated')}
@@ -558,23 +552,19 @@ function ProfileTabButton({
       accessibilityRole="tab"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) =>
-        GLASS_UI
-          ? [
-              styles.tab,
-              styles.glassTab,
-              selected && styles.glassActiveTab,
-              pressed && actionPressed,
-            ]
-          : [styles.tab, selected && styles.activeTab, pressed && styles.pressedTab]
-      }
+      style={({ pressed }) => [
+        styles.tab,
+        styles.glassTab,
+        selected && styles.glassActiveTab,
+        pressed && actionPressed,
+      ]}
     >
       <Text
         style={[
           styles.tabText,
-          GLASS_UI && styles.glassTabText,
+          styles.glassTabText,
           selected && styles.activeTabText,
-          GLASS_UI && selected && styles.glassActiveTabText,
+          selected && styles.glassActiveTabText,
         ]}
         numberOfLines={2}
       >
@@ -586,7 +576,7 @@ function ProfileTabButton({
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <View style={[styles.detail, GLASS_UI && styles.glassDetail]}>
+    <View style={[styles.detail, styles.glassDetail]}>
       <Text style={styles.detailLabel}>{label}</Text>
       <Text style={styles.detailValue}>{value}</Text>
     </View>
@@ -603,13 +593,7 @@ function TermMetric({
   muted?: boolean;
 }) {
   return (
-    <View
-      style={
-        GLASS_UI
-          ? [styles.termMetric, styles.glassTermMetric, muted && styles.glassTermMetricMuted]
-          : [styles.termMetric, muted && styles.termMetricMuted]
-      }
-    >
+    <View style={[styles.termMetric, styles.glassTermMetric, muted && styles.glassTermMetricMuted]}>
       <Text style={styles.termLabel}>{label}</Text>
       <Text style={[styles.termValue, muted && styles.termValueMuted]}>{value}</Text>
     </View>
@@ -667,7 +651,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     backgroundColor: colors.surfaceHigh,
   },
-  membershipBannerDanger: { backgroundColor: colors.dangerSurface },
   ledgerBanner: {
     minHeight: 72,
     flexDirection: 'row',
@@ -716,10 +699,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     paddingHorizontal: spacing.xs,
   },
-  activeTab: {
-    backgroundColor: colors.surface,
-  },
-  pressedTab: { opacity: 0.7 },
   activeTabText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
   tabText: {
     color: colors.textMuted,
@@ -778,7 +757,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     backgroundColor: colors.surfaceContainer,
   },
-  termMetricMuted: { backgroundColor: colors.canvas },
   termLabel: {
     color: colors.textMuted,
     fontFamily: fonts.bold,

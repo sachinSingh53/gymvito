@@ -11,7 +11,7 @@ import { pickGymVitoBackup } from '@/platform/files/document-files';
 import { getRuntimeCapabilities } from '@/platform/runtime/runtime-capabilities';
 import { AppScreen } from '@/ui/components/app-screen';
 import { AppButton, AppCheckbox, AppChoice, AppField, Notice } from '@/ui/components/core-controls';
-import { GLASS_UI, colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, glass, radii, spacing } from '@/ui/theme/tokens';
 
 export default function RecoveryRoute() {
   const { state, previewRecoveryBackup, recoverFromBackup } = useAppSession();
@@ -65,7 +65,7 @@ export default function RecoveryRoute() {
   };
 
   return (
-    <AppScreen glass title={t('recoveryRestoreTitle')} subtitle={t('recoveryRestoreSubtitle')}>
+    <AppScreen title={t('recoveryRestoreTitle')} subtitle={t('recoveryRestoreSubtitle')}>
       <View accessibilityRole="radiogroup" style={styles.languageRow}>
         <AppChoice
           label="English"
@@ -101,7 +101,7 @@ export default function RecoveryRoute() {
         {busy && !preview ? t('validatingBackup') : t('validateAndPreview')}
       </AppButton>
       {preview ? (
-        <View style={[styles.preview, GLASS_UI && styles.glassPreview]}>
+        <View style={[styles.preview, styles.glassPreview]}>
           <Text style={styles.gym}>{preview.gymName}</Text>
           <Text style={styles.detail}>
             {new Intl.DateTimeFormat(i18n.language, {

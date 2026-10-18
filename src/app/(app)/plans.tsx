@@ -13,7 +13,7 @@ import {
   StatusChip,
   SurfaceCard,
 } from '@/ui/components/operational-shell';
-import { colors, fonts, GLASS_UI, glass, spacing } from '@/ui/theme/tokens';
+import { colors, fonts, glass, spacing } from '@/ui/theme/tokens';
 
 const DURATION_LABELS = {
   day: 'durationDay',
@@ -89,18 +89,9 @@ export default function PlansRoute() {
         </SurfaceCard>
       ) : (
         plans.map((plan) => (
-          <SurfaceCard
-            key={plan.id}
-            style={
-              GLASS_UI
-                ? styles.planCard
-                : [styles.planCard, styles.planCardAccent, { borderLeftColor: plan.colorHex }]
-            }
-          >
+          <SurfaceCard key={plan.id} style={styles.planCard}>
             <View style={styles.planHeader}>
-              {GLASS_UI ? (
-                <View style={[styles.planColorDot, { backgroundColor: plan.colorHex }]} />
-              ) : null}
+              <View style={[styles.planColorDot, { backgroundColor: plan.colorHex }]} />
               <View style={styles.planTitleBlock}>
                 <Text style={styles.planName}>{plan.name}</Text>
                 <Text style={styles.planDuration}>
@@ -161,7 +152,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   planCard: { gap: spacing.sm },
-  planCardAccent: { borderLeftWidth: 6 },
   planColorDot: {
     width: 14,
     height: 14,

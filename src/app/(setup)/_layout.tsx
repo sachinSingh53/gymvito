@@ -3,12 +3,11 @@ import { StyleSheet } from 'react-native';
 
 import { useAppSession } from '@/features/session/app-session-context';
 import { GlassBlurTarget, GlassProvider } from '@/ui/components/glass-context';
-import { GLASS_UI, colors } from '@/ui/theme/tokens';
+import { colors } from '@/ui/theme/tokens';
 
 export default function SetupLayout() {
   const { state } = useAppSession();
   if (state.status !== 'setup-required') return <Redirect href="/" />;
-  if (!GLASS_UI) return <Stack screenOptions={{ headerShown: false }} />;
   return (
     <GlassProvider>
       <GlassBlurTarget style={styles.root}>

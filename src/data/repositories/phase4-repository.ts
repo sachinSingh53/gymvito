@@ -121,6 +121,21 @@ export type FinancialDashboard = Readonly<{
   todayRecordedMinor: number;
 }>;
 
+/** Position after the last payment of a page, in `received_at_utc DESC, id DESC` order. */
+export type PaymentCursor = Readonly<{ receivedAtUtc: string; id: string }>;
+
+export type PaymentPage = Readonly<{
+  payments: readonly PaymentRecord[];
+  /** Null once the last page has been read. */
+  nextCursor: PaymentCursor | null;
+}>;
+
+export type PaymentSummary = Readonly<{
+  totalCount: number;
+  todayCount: number;
+  todayRecordedMinor: number;
+}>;
+
 export type PaymentMethodOption = Readonly<{
   code: PaymentMethod;
   label: string;
@@ -417,12 +432,61 @@ export class Phase4Repository {
     return rows.map((row) => mapInvoice(row, today));
   }
 
-  async listRecentPayments(limit = 100): Promise<readonly PaymentRecord[]> {
+  /** Newest payments first, `limit` at a time; pass the previous page's cursor for the next. */
+  async listPaymentsPage(
+    options: Readonly<{
+      limit: number;
+      after?: PaymentCursor | null;
+      receivedLocalDate?: DateOnly;
+    }>,
+  ): Promise<PaymentPage> {
+    const where: string[] = [];
+    const params: (string | number)[] = [];
+    if (options.receivedLocalDate) {
+      where.push('p.received_local_date = ?');
+      params.push(options.receivedLocalDate);
+    }
+    if (options.after) {
+      where.push('(p.received_at_utc < ? OR (p.received_at_utc = ? AND p.id < ?))');
+      params.push(options.after.receivedAtUtc, options.after.receivedAtUtc, options.after.id);
+    }
+    // One extra row tells us whether another page exists without a COUNT query.
     const rows = await this.database.getAllAsync<PaymentRow>(
-      `${PAYMENT_SELECT} ORDER BY p.received_at_utc DESC, p.id DESC LIMIT ?`,
-      limit,
+      `${PAYMENT_SELECT} ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+       ORDER BY p.received_at_utc DESC, p.id DESC LIMIT ?`,
+      ...params,
+      options.limit + 1,
     );
-    return rows.map(mapPayment);
+    const payments = rows.slice(0, options.limit).map(mapPayment);
+    const last = payments[payments.length - 1];
+    return {
+      payments,
+      nextCursor:
+        rows.length > options.limit && last
+          ? { receivedAtUtc: last.receivedAtUtc, id: last.id }
+          : null,
+    };
+  }
+
+  async getPaymentSummary(today: DateOnly): Promise<PaymentSummary> {
+    const row = await this.database.getFirstAsync<{
+      total_count: number;
+      today_count: number;
+      today_recorded_minor: number;
+    }>(
+      `SELECT COUNT(*) AS total_count,
+         COALESCE(SUM(received_local_date = ?), 0) AS today_count,
+         COALESCE(SUM(CASE WHEN received_local_date = ? AND state = 'recorded'
+           THEN amount_minor ELSE 0 END), 0) AS today_recorded_minor
+       FROM payment`,
+      today,
+      today,
+    );
+    return {
+      totalCount: row?.total_count ?? 0,
+      todayCount: row?.today_count ?? 0,
+      todayRecordedMinor: row?.today_recorded_minor ?? 0,
+    };
   }
 
   async getMemberFinanceSummary(memberId: string, today: DateOnly): Promise<MemberFinanceSummary> {

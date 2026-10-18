@@ -462,6 +462,82 @@ describe('Phase4Repository', () => {
     native.close();
   });
 
+  it('pages payment history newest first and summarises today', async () => {
+    const { database, native } = createDatabase();
+    const { memberId, planId } = await seed(database);
+    const repository = new Phase4Repository(database);
+    const { invoice } = await repository.finalizeMembershipWithBilling(
+      {
+        operationId: 'enroll-paged',
+        memberId,
+        planId,
+        startDate: '2026-10-08',
+        overrideReason: '',
+        acknowledgeOverlap: false,
+      },
+      'owner',
+      '2026-10-08',
+      null,
+    );
+    const days = ['2026-10-06', '2026-10-07', '2026-10-07', '2026-10-08', '2026-10-08'] as const;
+    const recorded = [];
+    for (const [index, day] of days.entries()) {
+      recorded.push(
+        await repository.recordPayment(
+          {
+            operationId: `paged-${index}`,
+            invoiceId: invoice.id,
+            amountMinor: 1_000 * (index + 1),
+            methodCode: 'cash',
+            methodLabel: 'Cash',
+            transactionReference: '',
+            note: '',
+            // The two 10-08 payments share a timestamp so the id breaks the tie.
+            receivedAtUtc: `${day}T0${index === 4 ? 3 : index}:00:00.000Z`,
+            receivedLocalDate: day,
+          },
+          'owner',
+          day,
+        ),
+      );
+    }
+    await repository.correctPayment('paged-correct', recorded[4]!.id, 'Duplicate entry', 'owner');
+
+    const first = await repository.listPaymentsPage({ limit: 2 });
+    const second = await repository.listPaymentsPage({ limit: 2, after: first.nextCursor });
+    const third = await repository.listPaymentsPage({ limit: 2, after: second.nextCursor });
+    const pagedIds = [...first.payments, ...second.payments, ...third.payments].map(
+      (payment) => payment.id,
+    );
+    expect(pagedIds).toHaveLength(5);
+    expect(new Set(pagedIds).size).toBe(5);
+    const timestamps = [...first.payments, ...second.payments, ...third.payments].map(
+      (payment) => payment.receivedAtUtc,
+    );
+    expect(timestamps).toEqual([...timestamps].sort().reverse());
+    expect(first.nextCursor).not.toBeNull();
+    expect(third.payments).toHaveLength(1);
+    expect(third.nextCursor).toBeNull();
+
+    const todayOnly = await repository.listPaymentsPage({
+      limit: 10,
+      receivedLocalDate: '2026-10-08',
+    });
+    expect(todayOnly.payments.map((payment) => payment.receivedLocalDate)).toEqual([
+      '2026-10-08',
+      '2026-10-08',
+    ]);
+    expect(todayOnly.nextCursor).toBeNull();
+
+    // The corrected payment still counts as a row but not towards today's collections.
+    await expect(repository.getPaymentSummary('2026-10-08')).resolves.toEqual({
+      totalCount: 5,
+      todayCount: 2,
+      todayRecordedMinor: 4_000,
+    });
+    native.close();
+  });
+
   it('persists owner-configured number prefixes and payment method labels', async () => {
     const { database, native } = createDatabase();
     const repository = new Phase4Repository(database);
